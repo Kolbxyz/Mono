@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
+import com.wander.mono.ui.components.readableColumn
 
 /**
  * First-run setup over home, until finished or skipped. One step per pane, each with one main
@@ -79,6 +80,7 @@ fun Onboarding(onboarding: OnboardingViewModel = viewModel()) {
             Modifier
                 .fillMaxSize()
                 .windowInsetsPadding(WindowInsets.safeDrawing)
+                .readableColumn()
                 .padding(24.dp),
         ) {
             AnimatedContent(

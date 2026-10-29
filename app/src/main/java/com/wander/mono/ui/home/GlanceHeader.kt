@@ -17,9 +17,12 @@ import com.wander.mono.R
 import java.util.Date
 import java.util.Locale
 
-/** Big clock, date, next alarm and next calendar event, formatted for the user's locale and 12/24-hour setting. */
+/**
+ * Big clock, date, next alarm and next calendar event, formatted for the user's locale and 12/24-hour
+ * setting. [compact] (a phone in landscape) trades the airy spacing and display size for list room.
+ */
 @Composable
-fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
+fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier, compact: Boolean = false) {
     val locale = LocalConfiguration.current.locales[0]
     // Re-read on every minute tick; flipping the setting also sends ACTION_TIME_CHANGED.
     val is24Hour = AndroidDateFormat.is24HourFormat(LocalContext.current)
@@ -30,9 +33,10 @@ fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
         remember(next, timeSkeleton, locale) { format(next, ALARM_DAY_SKELETON + timeSkeleton, locale) }
     }
 
-    Column(modifier.padding(top = 48.dp, bottom = 32.dp)) {
+    Column(modifier.padding(top = if (compact) 8.dp else 48.dp, bottom = if (compact) 16.dp else 32.dp)) {
         val typography = MaterialTheme.typography
-        Text(time, style = typography.displayLargeEmphasized.onWallpaper(), color = MaterialTheme.colorScheme.onSurface)
+        val clock = if (compact) typography.displayMediumEmphasized else typography.displayLargeEmphasized
+        Text(time, style = clock.onWallpaper(), color = MaterialTheme.colorScheme.onSurface)
         Text(date, style = typography.titleMedium.onWallpaper(), color = MaterialTheme.colorScheme.onSurfaceVariant)
         glance.nextEvent?.let { NextEventLine(it, glance.now, timeSkeleton) }
         if (alarm != null) {
