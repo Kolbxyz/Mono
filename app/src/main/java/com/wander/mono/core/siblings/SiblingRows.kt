@@ -26,20 +26,27 @@ data class RoomUnread(val roomId: String, val unread: Int, val markedUnread: Boo
 internal object SiblingRows {
     /** Up-next rows keep their `queue_id`, so tapping one still skips the session to it. */
     fun upNext(row: ProviderRow): QueueEntry? {
-        val id = row.long(Wanda.QUEUE_ID) ?: return null
-        val title = row.string(Wanda.TITLE)?.takeIf { it.isNotBlank() } ?: return null
-        return QueueEntry(id, title, row.string(Wanda.ARTIST)?.takeIf { it.isNotBlank() })
+        val id = row.long(Wanda.QUEUE_ID)
+        val title = row.text(Wanda.TITLE)
+        return if (id == null || title == null) null else QueueEntry(id, title, row.text(Wanda.ARTIST))
     }
 
     fun track(row: ProviderRow, packageName: String): WandaTrack? {
-        val id = row.string(Wanda.TRACK_ID) ?: return null
-        val title = row.string(Wanda.TITLE)?.takeIf { it.isNotBlank() } ?: return null
-        val uri = row.string(Wanda.PLAY_URI)?.takeIf { it.isNotBlank() } ?: return null
-        return WandaTrack(id, title, row.string(Wanda.ARTIST)?.takeIf { it.isNotBlank() }, uri, packageName)
+        val id = row.text(Wanda.TRACK_ID)
+        val title = row.text(Wanda.TITLE)
+        val uri = row.text(Wanda.PLAY_URI)
+        return if (id == null || title == null || uri == null) {
+            null
+        } else {
+            WandaTrack(id, title, row.text(Wanda.ARTIST), uri, packageName)
+        }
     }
 
+    /** A string column, with blank taken as missing. */
+    private fun ProviderRow.text(column: String): String? = string(column)?.takeIf { it.isNotBlank() }
+
     fun room(row: ProviderRow): RoomUnread? {
-        val id = row.string(Phalanx.ROOM_ID)?.takeIf { it.isNotBlank() } ?: return null
+        val id = row.text(Phalanx.ROOM_ID) ?: return null
         val unread = (row.long(Phalanx.UNREAD_COUNT) ?: 0L).coerceIn(0L, Int.MAX_VALUE.toLong()).toInt()
         val marked = row.long(Phalanx.IS_MARKED_UNREAD) == 1L
         return RoomUnread(id, unread, marked).takeIf { unread > 0 || marked }

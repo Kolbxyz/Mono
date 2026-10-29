@@ -25,7 +25,8 @@ class RoomUnreadTest {
 
     @Test
     fun `phalanx counts replace the notification counts`() {
-        val notified = mapOf(ConversationKey(PackageUser(pkg, 0), "!a") to 1, ConversationKey(PackageUser(pkg, 0), "!b") to 2)
+        val user = PackageUser(pkg, 0)
+        val notified = mapOf(ConversationKey(user, "!a") to 1, ConversationKey(user, "!b") to 2)
         val hits = listOf(room("!a"), room("!b"))
             .withUnread(notified, showCounts = true)
             .withRoomUnread(phalanx, showCounts = true)
@@ -45,7 +46,8 @@ class RoomUnreadTest {
         val other = room("!a", owner = "org.signal").copy(badge = AppBadge.Count(2))
         val work = room("!a", serial = 10).copy(badge = AppBadge.Count(1))
         val hits = listOf(other, work)
-        assertEquals(listOf(AppBadge.Count(2), AppBadge.Count(1)), badges(hits.withRoomUnread(phalanx, showCounts = true)))
+        val kept = hits.withRoomUnread(phalanx, showCounts = true)
+        assertEquals(listOf(AppBadge.Count(2), AppBadge.Count(1)), badges(kept))
         assertEquals(hits, hits.withRoomUnread(null, showCounts = true))
     }
 }

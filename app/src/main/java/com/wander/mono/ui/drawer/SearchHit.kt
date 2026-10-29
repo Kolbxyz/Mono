@@ -7,7 +7,10 @@ import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.ui.components.AppBadge
 
-/** One search result: an app (hidden ones included), a shortcut, a sum, a contact, a song, a settings page or the web. */
+/**
+ * One search result: an app (hidden ones included), a shortcut, a sum, a contact, a song, a
+ * settings page or the web.
+ */
 sealed interface SearchHit {
     val key: String
     val label: String

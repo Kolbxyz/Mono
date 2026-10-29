@@ -24,8 +24,15 @@ class WandaSearch @Inject constructor(
 ) {
     /** At most [limit] tracks for [query], ordered by Wanda (most played first); empty when Wanda is absent. */
     suspend fun find(query: String, limit: Int): List<WandaTrack> {
-        if (query.isBlank()) return emptyList()
-        val authority = withContext(Dispatchers.IO) { providers.authority(Wanda.packages) } ?: return emptyList()
+        val authority = if (query.isBlank()) {
+            null
+        } else {
+            withContext(Dispatchers.IO) { providers.authority(Wanda.packages) }
+        }
+        return if (authority == null) emptyList() else find(authority, query, limit)
+    }
+
+    private suspend fun find(authority: String, query: String, limit: Int): List<WandaTrack> {
         val packageName = SiblingContract.packageOf(authority)
         val uri = Uri.Builder().scheme("content").authority(authority).path(Wanda.PATH_SEARCH)
             .appendQueryParameter(SiblingContract.PARAM_QUERY, query.trim())

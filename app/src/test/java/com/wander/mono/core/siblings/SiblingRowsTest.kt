@@ -33,7 +33,13 @@ class SiblingRowsTest {
     @Test
     fun `unknown columns are ignored`() {
         val track = SiblingRows.track(
-            row("track_id" to "t1", "title" to "Song", "artist" to "Band", "play_uri" to "wanda://track?id=t1", "x" to 1),
+            row(
+                "track_id" to "t1",
+                "title" to "Song",
+                "artist" to "Band",
+                "play_uri" to "wanda://track?id=t1",
+                "x" to 1,
+            ),
             WANDA,
         )
         assertEquals(WandaTrack("t1", "Song", "Band", "wanda://track?id=t1", WANDA), track)
