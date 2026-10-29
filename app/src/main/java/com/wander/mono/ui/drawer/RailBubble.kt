@@ -30,9 +30,9 @@ import kotlin.math.roundToInt
 @Composable
 internal fun RailBubble(letter: String, visible: Boolean, fingerY: () -> Float, modifier: Modifier = Modifier) {
     val motion = MaterialTheme.motionScheme
-    val alpha by animateFloatAsState(if (visible) 1f else 0f, motion.defaultEffectsSpec())
+    val fade by animateFloatAsState(if (visible) 1f else 0f, motion.defaultEffectsSpec())
     val progress by animateFloatAsState(if (visible) 1f else 0f, motion.defaultSpatialSpec())
-    if (alpha == 0f) return
+    if (fade == 0f) return
 
     val morph = remember { Morph(MaterialShapes.Circle, MaterialShapes.Cookie9Sided) }
     val path = remember { Path() }
@@ -48,7 +48,7 @@ internal fun RailBubble(letter: String, visible: Boolean, fingerY: () -> Float, 
                 )
             }
             .size(BUBBLE_SIZE)
-            .graphicsLayer { this.alpha = alpha }
+            .graphicsLayer { alpha = fade }
             .drawBehind {
                 morph.toPath(progress.coerceIn(0f, 1f), path)
                 matrix.reset()

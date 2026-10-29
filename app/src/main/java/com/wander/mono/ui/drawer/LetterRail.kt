@@ -149,7 +149,7 @@ fun LetterRail(
 }
 
 /** Width of the rail's touch area, which the list leaves free at its end. */
-val RAIL_WIDTH = 48.dp
+internal val RAIL_WIDTH = 48.dp
 
 /** How far the letter under the finger moves out; its neighbours move less, over [RailMath.WAVE_REACH] letters. */
 internal val WAVE_AMPLITUDE = 24.dp
