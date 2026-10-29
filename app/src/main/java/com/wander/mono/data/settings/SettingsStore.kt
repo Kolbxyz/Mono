@@ -1,0 +1,30 @@
+package com.wander.mono.data.settings
+
+import android.content.Context
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.preferencesDataStore
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+
+private val Context.settingsStore by preferencesDataStore(name = "settings")
+
+/**
+ * Every [Setting], in a DataStore file of its own: the home list in `LauncherPrefs` is data, these
+ * are preferences, and keeping them apart lets each feature add a key without touching a shared file.
+ */
+@Singleton
+class SettingsStore @Inject constructor(@ApplicationContext context: Context) {
+    private val store = context.settingsStore
+
+    operator fun <T> get(setting: Setting<T>): Flow<T> = store.data
+        .map { setting.read(it) }
+        .distinctUntilChanged()
+
+    suspend fun <T> set(setting: Setting<T>, value: T) {
+        store.edit { setting.write(it, value) }
+    }
+}
