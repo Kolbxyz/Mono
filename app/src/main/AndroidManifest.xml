@@ -14,6 +14,17 @@
     <!-- Contacts in search: opt-in from settings, asked for only when the user switches it on. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
+    <!--
+      Sibling apps (Wanda, Phalanx): read-only providers guarded by a signature permission, so only
+      apps signed with Mono's key can serve or read them. Declared identically by all three, since any
+      may be installed first. See docs/design/sibling-contract.md.
+    -->
+    <permission
+        android:name="com.wander.permission.SIBLING_READ"
+        android:label="@string/sibling_permission_label"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.wander.permission.SIBLING_READ" />
+
     <!-- Package visibility: every app with a launcher entry, which is exactly what the drawer lists. -->
     <queries>
         <intent>
@@ -79,6 +90,11 @@
         <intent>
             <action android:name="android.intent.action.WEB_SEARCH" />
         </intent>
+        <!-- Sibling providers (core/siblings), release and debug builds. -->
+        <provider android:authorities="com.wander.android.mono" />
+        <provider android:authorities="com.wander.android.debug.mono" />
+        <provider android:authorities="org.phalanx.android.mono" />
+        <provider android:authorities="org.phalanx.android.debug.mono" />
     </queries>
 
     <!--
