@@ -12,7 +12,11 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.IconCache
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.apps.PrivateSpace
+import com.wander.mono.core.apps.ShortcutIcons
 import com.wander.mono.core.apps.ShortcutRepository
+import com.wander.mono.core.apps.WorkProfile
+import com.wander.mono.core.apps.WorkProfiles
 import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.notifications.ConversationKey
 import com.wander.mono.core.notifications.NotificationCounts
@@ -23,8 +27,12 @@ import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.siblings.PhalanxUnread
 import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.SettingsPage
+import com.wander.mono.core.system.SystemContrast
+import com.wander.mono.core.system.Wallpaper
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.settings.AccessibilitySettings
 import com.wander.mono.data.settings.BadgeSettings
+import com.wander.mono.data.settings.DrawerSettings
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.data.settings.IconSettings
 import com.wander.mono.data.settings.SettingsStore
@@ -55,6 +63,11 @@ class DrawerViewModel @Inject constructor(
     private val messages: UserMessages,
     private val sources: SearchSources,
     private val hiddenLock: HiddenAppsLock,
+    private val privateSpace: PrivateSpace,
+    private val workProfiles: WorkProfiles,
+    private val shortcutIcons: ShortcutIcons,
+    wallpaper: Wallpaper,
+    systemContrast: SystemContrast,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
     val query: StateFlow<String> = savedState.getStateFlow(QUERY, "")
@@ -81,21 +94,30 @@ class DrawerViewModel @Inject constructor(
 
     private val hidden = combine(prefs.hidden, hiddenLock.revealed, ::HiddenApps)
 
+    private val profiled = combine(entries, workProfiles.all, ::Profiled)
+
+    private val highContrast = combine(
+        settings[AccessibilitySettings.HighContrastText],
+        systemContrast.raised,
+    ) { own, system -> own || system }
+
+    private val look = combine(settings[DrawerSettings.Background], wallpaper.tone, highContrast, ::DrawerLook)
+
     val state: StateFlow<DrawerUiState> = combine(
-        entries,
+        profiled,
         hidden,
         searchable,
         query,
-        settings[IconSettings.Mode],
-    ) { all, hidden, extra, q, mode ->
-        val visible = all.filter { it.app.key !in hidden.keys }
+        combine(settings[IconSettings.Mode], look, ::Pair),
+    ) { (all, work), hidden, extra, q, (mode, drawerLook) ->
+        val lists = drawerLists(all, hidden.keys, work)
         DrawerUiState(
-            apps = visible,
-            sections = sectionsOf(visible.map { it.app.label }),
+            apps = lists.apps,
+            sections = sectionsOf(lists.apps.map { it.app.label }),
             results = SearchResults.assemble(
                 q,
-                hidden.searchableApps(all),
-                hidden.searchableShortcuts(extra.shortcuts),
+                hidden.searchableApps(searchableApps(all, work)),
+                hidden.searchableShortcuts(searchableShortcuts(extra.shortcuts, work)),
                 extra.contacts,
                 extra.tracks,
                 extra.pages,
@@ -103,8 +125,12 @@ class DrawerViewModel @Inject constructor(
             ),
             iconMode = mode,
             hiddenLocked = hidden.locked,
+            privateApps = lists.privateApps,
+            work = lists.work,
+            look = drawerLook,
         )
     }
+        .combine(privateSpace.state) { state, space -> state.copy(privateSpace = space) }
         .combine(
             combine(previews.conversations, phalanx.unread, settings[BadgeSettings.ShowCounts], ::ShortcutUnread),
         ) { state, unread ->
@@ -121,6 +147,21 @@ class DrawerViewModel @Inject constructor(
 
     suspend fun icon(key: AppKey, mode: IconMode, sizePx: Int): AppIconImage? =
         icons.icon(key, themed = mode == IconMode.Themed, sizePx)
+
+    /** The shortcut's own icon (a face, an avatar); null when it has none, so the row shows its app's. */
+    suspend fun shortcutIcon(shortcut: AppShortcut, sizePx: Int): AppIconImage? = shortcutIcons.icon(shortcut, sizePx)
+
+    fun setPrivateLocked(locked: Boolean) {
+        messages.report(privateSpace.setLocked(locked))
+    }
+
+    fun openPrivateSettings() {
+        messages.report(privateSpace.openSettings())
+    }
+
+    fun setWorkPaused(profile: WorkProfile, paused: Boolean) {
+        messages.report(workProfiles.setPaused(profile, paused))
+    }
 
     /** True when the app opened, so the caller can close the drawer. */
     fun launch(app: LaunchableApp): Boolean = messages.report(actions.launch(app.key))
@@ -154,6 +195,9 @@ class DrawerViewModel @Inject constructor(
     fun reportNoScreenLock() {
         messages.report(ActionResult.Failed(R.string.error_no_screen_lock))
     }
+
+    /** Every app, and the work profiles to list theirs apart. */
+    private data class Profiled(val all: List<DrawerEntry>, val work: List<WorkProfile>)
 
     /** Unread per conversation from notifications, and from Phalanx itself when it publishes it. */
     private data class ShortcutUnread(

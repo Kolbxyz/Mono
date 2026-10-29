@@ -4,6 +4,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -15,7 +16,7 @@ import java.util.concurrent.TimeUnit
 
 /** "Standup · 14:00", or "Standup · in 20 min" within the hour; recomposed on each minute tick. */
 @Composable
-fun NextEventLine(event: CalendarEvent, now: Long, timeSkeleton: String) {
+fun NextEventLine(event: CalendarEvent, now: Long, timeSkeleton: String, modifier: Modifier = Modifier) {
     val locale = LocalConfiguration.current.locales[0]
     val title = event.title.ifBlank { stringResource(R.string.calendar_untitled) }
     val minutes = minutesUntil(event.begin, now)
@@ -30,6 +31,7 @@ fun NextEventLine(event: CalendarEvent, now: Long, timeSkeleton: String) {
         color = secondaryTextColor(),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
+        modifier = modifier,
     )
 }
 

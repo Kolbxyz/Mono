@@ -1,5 +1,6 @@
 package com.wander.mono.ui.drawer
 
+import com.wander.mono.ui.components.rubberBand
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.ceil
@@ -34,6 +35,23 @@ internal object RailMath {
         val d = abs(distance)
         return if (d >= WAVE_REACH) 0f else ((cos(d / WAVE_REACH * PI) + 1.0) / 2.0).toFloat()
     }
+
+    /**
+     * How far the finger has slid off the rail toward the list since it touched down at [downX]:
+     * leftward in a left-to-right layout, rightward when [mirror] is -1 (right-to-left). Sliding back
+     * toward the screen edge never makes it negative.
+     */
+    fun travel(downX: Float, x: Float, mirror: Float): Float = ((downX - x) * mirror).coerceAtLeast(0f)
+
+    /**
+     * How far the letter under the finger bows out for a finger [travel] off the rail: it follows the
+     * finger one to one at first, then stiffens and never passes [limit], so the wave stays in reach
+     * of the bubble however far the finger goes.
+     */
+    fun bow(travel: Float, limit: Float): Float = rubberBand(travel.coerceAtLeast(0f), limit)
+
+    /** How far the letter at [index] moves out when the one under the finger, at [slot], bows out by [bow]. */
+    fun letterOffset(index: Int, slot: Float, bow: Float): Float = bow * waveFraction(index - slot)
 
     /**
      * Every how many letters one is drawn so each drawn letter gets at least [minSlot]: 1 on a

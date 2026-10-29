@@ -12,7 +12,8 @@ fun HomeLookSection(settings: SettingsViewModel) {
             settings,
             HomeLookSettings.TextShadow,
             title = R.string.settings_text_shadow,
-            summary = R.string.settings_text_shadow_summary,
+            summary = R.string.settings_text_shadow_short,
+            icon = R.drawable.sym_ev_shadow,
         )
     }
 }

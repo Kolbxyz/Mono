@@ -1,22 +1,14 @@
 package com.wander.mono.ui
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -26,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,12 +26,14 @@ import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.rememberCredentialPrompt
+import com.wander.mono.ui.components.rememberPullUpConnection
 import com.wander.mono.ui.drawer.DrawerScreen
 import com.wander.mono.ui.drawer.DrawerViewModel
 import com.wander.mono.ui.drawer.HitOutcome
 import com.wander.mono.ui.drawer.SearchHit
 import com.wander.mono.ui.edit.EditEffects
 import com.wander.mono.ui.edit.EditHomeViewModel
+import com.wander.mono.ui.drawer.PrivateSpaceActions
 import com.wander.mono.ui.edit.EditToolbar
 import com.wander.mono.ui.edit.rememberHomeEditing
 import com.wander.mono.ui.home.HomeLookViewModel
@@ -68,8 +63,12 @@ fun LauncherApp(
     rename: RenameViewModel = viewModel(),
     quiet: QuietViewModel = viewModel(),
     widgets: WidgetsViewModel = viewModel(),
+    gestures: GestureViewModel = viewModel(),
 ) {
     val drawerOpen by launcher.drawerOpen.collectAsStateWithLifecycle()
+    val focusSearch by launcher.focusSearch.collectAsStateWithLifecycle()
+    val doubleTapLock by gestures.doubleTapLock.collectAsStateWithLifecycle()
+    val swipeDownNotifications by gestures.swipeDownNotifications.collectAsStateWithLifecycle()
     val settingsOpen by launcher.settingsOpen.collectAsStateWithLifecycle()
     val homeOptionsOpen by launcher.homeOptionsOpen.collectAsStateWithLifecycle()
     val overlaysAnimate by launcher.overlaysAnimate.collectAsStateWithLifecycle()
@@ -97,7 +96,13 @@ fun LauncherApp(
     }
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
-    val motion = MaterialTheme.motionScheme
+    val drawerMotion = rememberDrawerMotion(drawerOpen) { open ->
+        if (open) launcher.openDrawer() else launcher.closeDrawer()
+    }
+    val homeGestures = rememberPullUpConnection(
+        drawerMotion,
+        onPullDown = if (swipeDownNotifications) gestures::openNotifications else null,
+    )
 
     val afterHit: (HitOutcome) -> Unit = { outcome ->
         when (outcome) {
@@ -116,6 +121,8 @@ fun LauncherApp(
     }
     // Every way of closing the drawer (back, swipe, launch, home press) starts the next search afresh.
     LaunchedEffect(drawerOpen) { if (!drawerOpen) drawer.setQuery("") }
+    // Taps, launches, home presses and back move the drawer here; drags and flings move it themselves.
+    LaunchedEffect(drawerOpen) { drawerMotion.follow(drawerOpen, overlaysAnimate) }
     EditEffects(editing, rows, homeList)
     // Back on home has nothing to go back to; it only ever closes what is open.
     BackHandler {
@@ -127,7 +134,7 @@ fun LauncherApp(
         }
     }
 
-    Box {
+    Box(Modifier.fillMaxSize().onSizeChanged { drawerMotion.travel = it.height * TRAVEL_FRACTION }) {
         HomeScreen(
             rows = rows,
             glance = glance,
@@ -146,20 +153,21 @@ fun LauncherApp(
             onOpenOutput = home::openOutputSwitcher,
             onGrantAccess = home::openListenerSettings,
             onOpenEvent = home::openEvent,
-            onOpenDrawer = launcher::openDrawer,
+            onOpenDrawer = { launcher.openDrawer() },
+            onSearch = { launcher.openDrawer(focusSearch = true) },
+            gestureScroll = homeGestures,
+            onDoubleTap = if (doubleTapLock) gestures::lockScreen else null,
             onHomeOptions = { launcher.showHomeOptions(true) },
             createWidgetView = widgets::createView,
             onWidgetLongPress = { widgets.showOptions(it.widget.placement.appWidgetId) },
+            modifier = Modifier.behindDrawer(drawerMotion),
         )
-        AnimatedVisibility(
-            visible = drawerOpen,
-            enter = slideInVertically(motion.defaultSpatialSpec()) { it / SLIDE_FRACTION } +
-                fadeIn(motion.defaultEffectsSpec()),
-            exit = if (overlaysAnimate) {
-                slideOutVertically(motion.fastSpatialSpec()) { it / SLIDE_FRACTION } + fadeOut(motion.fastEffectsSpec())
-            } else {
-                ExitTransition.None
-            },
+        DrawerLayer(
+            motion = drawerMotion,
+            open = drawerOpen,
+            // Settings over the drawer and a typed query each take back first.
+            backEnabled = !settingsOpen && query.isEmpty(),
+            onBack = launcher::closeDrawer,
         ) {
             // Hidden apps unlocked for this opening only.
             DisposableEffect(Unit) { onDispose(drawer::relockHidden) }
@@ -168,6 +176,7 @@ fun LauncherApp(
                     query = query,
                     state = drawerState,
                     loadIcon = drawer::icon,
+                    loadShortcutIcon = drawer::shortcutIcon,
                     onQueryChange = drawer::setQuery,
                     onSubmit = { afterHit(drawer.launchTopResult()) },
                     onLaunchApp = { if (pickingApp) pick(it) else if (drawer.launch(it)) launcher.closeDrawer() },
@@ -175,31 +184,25 @@ fun LauncherApp(
                         if (pickingApp && hit is SearchHit.App) pick(hit.entry.app) else afterHit(drawer.launch(hit))
                     },
                     onLongPress = { sheet.show(it.key) },
-                    onClose = launcher::closeDrawer,
                     onOpenSettings = launcher::openSettings,
                     onUnlockHidden = unlockHidden,
+                    privateActions = remember(drawer) {
+                        PrivateSpaceActions(drawer::setPrivateLocked, drawer::openPrivateSettings)
+                    },
+                    onSetWorkPaused = drawer::setWorkPaused,
                     pickingApp = pickingApp,
+                    focusSearch = focusSearch,
                 )
             }
         }
-        // Over the drawer when opened from it, so back from settings returns to the drawer.
-        AnimatedVisibility(
-            visible = settingsOpen,
-            enter = slideInHorizontally(motion.defaultSpatialSpec()) { it / SLIDE_FRACTION } +
-                fadeIn(motion.defaultEffectsSpec()),
-            exit = if (overlaysAnimate) {
-                slideOutHorizontally(motion.fastSpatialSpec()) { it / SLIDE_FRACTION } +
-                    fadeOut(motion.fastEffectsSpec())
-            } else {
-                ExitTransition.None
-            },
-        ) {
+        SettingsLayer(open = settingsOpen, animateExit = overlaysAnimate) {
             SettingsScreen(onBack = launcher::closeSettings)
         }
         EditToolbar(
             visible = editingOn && !drawerOpen && !settingsOpen,
             onDone = { launcher.setEditing(false) },
             onAddApp = launcher::pickApp,
+            onAddWidget = widgets::openPicker,
             onOpenSettings = launcher::openSettings,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
@@ -249,6 +252,3 @@ fun LauncherApp(
     }
     RenameDialog(rename)
 }
-
-/** Overlays slide in from a quarter of the screen away (below, or to the side), not from the edge. */
-private const val SLIDE_FRACTION = 4

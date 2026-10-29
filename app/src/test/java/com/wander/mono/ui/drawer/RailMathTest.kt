@@ -53,6 +53,35 @@ class RailMathTest {
         assertEquals(1, RailMath.labelStride(height = 300f, count = 0, minSlot = 16f))
     }
 
+    @Test
+    fun `travel counts only the slide toward the list, mirrored right to left`() {
+        assertEquals(30f, RailMath.travel(downX = 40f, x = 10f, mirror = 1f), DELTA)
+        assertEquals(0f, RailMath.travel(downX = 40f, x = 70f, mirror = 1f), DELTA)
+        assertEquals(30f, RailMath.travel(downX = 10f, x = 40f, mirror = -1f), DELTA)
+        assertEquals(0f, RailMath.travel(downX = 40f, x = 10f, mirror = -1f), DELTA)
+    }
+
+    @Test
+    fun `bow follows the finger at first and never passes its limit`() {
+        assertEquals(0f, RailMath.bow(travel = 0f, limit = 100f), DELTA)
+        assertEquals(0f, RailMath.bow(travel = -20f, limit = 100f), DELTA)
+        // A short slide moves the letter almost as far as the finger.
+        assertTrue(RailMath.bow(travel = 5f, limit = 100f) > 4.7f)
+        assertTrue(RailMath.bow(travel = 10_000f, limit = 100f) < 100f)
+        val samples = (0..50).map { it * 10f }
+        samples.zipWithNext().forEach { (near, far) ->
+            assertTrue(RailMath.bow(near, limit = 100f) < RailMath.bow(far, limit = 100f))
+        }
+    }
+
+    @Test
+    fun `letters under the finger move furthest and the wave scales with the bow`() {
+        assertEquals(40f, RailMath.letterOffset(index = 3, slot = 3f, bow = 40f), DELTA)
+        assertEquals(20f, RailMath.letterOffset(index = 5, slot = 3f, bow = 40f), DELTA)
+        assertEquals(0f, RailMath.letterOffset(index = 9, slot = 3f, bow = 40f), DELTA)
+        assertEquals(0f, RailMath.letterOffset(index = 3, slot = 3f, bow = 0f), DELTA)
+    }
+
     private companion object {
         const val DELTA = 1e-4f
     }

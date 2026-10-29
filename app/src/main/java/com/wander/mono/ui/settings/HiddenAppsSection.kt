@@ -48,12 +48,13 @@ fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
                     }
                 },
                 title = R.string.settings_hidden_lock,
-                summary = R.string.settings_hidden_lock_summary,
+                summary = R.string.settings_hidden_lock_short,
+                icon = R.drawable.sym_lock,
             )
         }
         val list = apps
         when {
-            revealed == false -> ActionRow(R.string.settings_hidden_show) {
+            revealed == false -> ActionRow(R.string.settings_hidden_show, icon = R.drawable.sym_visibility) {
                 turnOffAfterUnlock = false
                 prompt()
             }

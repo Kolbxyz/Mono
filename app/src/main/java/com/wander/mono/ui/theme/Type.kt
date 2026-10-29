@@ -4,12 +4,14 @@ import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontSynthesis
 import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.wander.mono.R
+import com.wander.mono.data.settings.ClockFont
 
 /*
  * One bundled variable font, Google Sans Flex (OFL), the same file Wanda and Phalanx ship, so the
@@ -80,19 +82,48 @@ internal val MonoTypography = Typography(
 )
 
 /**
- * The home clock: the display face, extra-bold and tight, with tabular figures so the minutes do
- * not shift the line every tick. [compact] is the landscape size.
+ * The home clock in the user's [font], at [weight] on its `wght` axis (clamped to what the font
+ * has; a static font ignores it) and [size]. Tight tracking for the proportional faces and tabular
+ * figures, so the minutes do not shift the line every tick.
  */
-internal fun clockStyle(compact: Boolean): TextStyle =
-    title(
-        FontWeight.ExtraBold,
-        if (compact) CompactClockSize else ClockSize,
-        if (compact) CompactClockLine else ClockLine,
-        ClockTracking,
-    ).copy(fontFeatureSettings = "tnum")
+internal fun clockStyle(font: ClockFont, weight: Int, size: TextUnit): TextStyle {
+    val tracking = if (font == ClockFont.Mono) 0f else size.value * CLOCK_TRACKING
+    val axis = weight.coerceIn(font.weights)
+    return TextStyle(
+        fontFamily = clockFamily(font, axis),
+        lineHeightStyle = FullLineHeight,
+        // The same weight the family's one font is declared at, so Compose never fakes a bold.
+        fontWeight = FontWeight(axis),
+        fontSynthesis = FontSynthesis.None,
+        fontSize = size,
+        lineHeight = (size.value * CLOCK_LINE).sp,
+        letterSpacing = tracking.sp,
+        fontFeatureSettings = "tnum",
+    )
+}
 
-private val ClockSize = 88.sp
-private val ClockLine = 92.sp
-private val CompactClockSize = 56.sp
-private val CompactClockLine = 60.sp
-private val ClockTracking = (-2).sp
+/** One family per face and weight, built once: a new family each tick would re-resolve the font. */
+private val clockFamilies = HashMap<Pair<ClockFont, Int>, FontFamily>()
+
+private fun clockFamily(font: ClockFont, weight: Int): FontFamily = clockFamilies.getOrPut(font to weight) {
+    val resId = when (font) {
+        ClockFont.Flex -> R.font.google_sans_flex
+        ClockFont.Rounded -> R.font.nunito
+        ClockFont.Serif -> R.font.dm_serif_display
+        ClockFont.Mono -> R.font.jetbrains_mono
+        ClockFont.Condensed -> R.font.oswald
+    }
+    val settings = when {
+        font == ClockFont.Flex -> FontVariation.Settings(
+            FontVariation.weight(weight),
+            FontVariation.Setting("ROND", TITLE_ROUNDNESS),
+        )
+        font.isVariable -> FontVariation.Settings(FontVariation.weight(weight))
+        else -> FontVariation.Settings()
+    }
+    FontFamily(Font(resId, weight = FontWeight(weight), variationSettings = settings))
+}
+
+/** Line height and tracking relative to the clock's size, as the original 88/92 sp, -2 sp face. */
+private const val CLOCK_LINE = 1.05f
+private const val CLOCK_TRACKING = -0.023f

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Playback time under the seek bar: minutes and seconds, then hours, minutes and seconds. -->
+    <string name="media_time_minutes" translatable="false">%1$d:%2$02d</string>
+    <string name="media_time_hours" translatable="false">%1$d:%2$02d:%3$02d</string>
+    <!-- Time left in the track, shown at the end of the seek bar. -->
+    <string name="media_time_remaining">−%1$s</string>
+</resources>

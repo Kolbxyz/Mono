@@ -30,8 +30,8 @@ import com.wander.mono.ui.home.HomeRow
 /**
  * A favourite on home, in or out of edit mode. The gestures live here, around both looks, so a
  * hold-and-drag that starts edit mode carries on as the row turns into its edit form.
- * [siblings] are the favourites' keys in shown order; the row's place among them sets its
- * TalkBack move actions.
+ * [siblings] are the movable rows' keys (favourites and, in edit mode, widgets) in shown order:
+ * what a drag moves among.
  */
 @Composable
 fun ReorderableFavorite(
@@ -77,7 +77,7 @@ fun ReorderableFavorite(
     }
     Box(
         placed
-            .favoriteSemantics(row, siblings, editing, onLaunch, onLongPress, onAppInfo)
+            .favoriteSemantics(row, siblings, rows, editing, onLaunch, onLongPress, onAppInfo)
             // The edit form draws its own container and lift shadow, which a clip would cut off.
             .then(if (editing.active) Modifier else Modifier.pressShrink(interactions).clip(MaterialTheme.shapes.large))
             .indication(interactions, if (editing.active) null else ripple())
@@ -100,49 +100,38 @@ fun ReorderableFavorite(
 }
 
 /**
- * Outside edit mode the row is one button (open, options) offering App info and the moves as
- * custom actions, so TalkBack can reorder without entering edit mode. In edit mode its buttons and switches
- * stay separate nodes, and the row offers TalkBack the moves a drag does.
+ * Outside edit mode the row is one button (open, options) offering App info and the moves among
+ * the favourites as custom actions, so TalkBack can reorder without entering edit mode. In edit
+ * mode its buttons and switches stay separate nodes, and the row offers TalkBack the moves a drag
+ * does, among favourites and widgets alike.
  */
 @Composable
 private fun Modifier.favoriteSemantics(
     row: HomeRow.App,
     siblings: List<String>,
+    rows: List<HomeRow>,
     editing: HomeEditing,
     onLaunch: () -> Unit,
     onLongPress: () -> Unit,
     onAppInfo: () -> Unit,
 ): Modifier {
+    if (editing.active) return moveSemantics(row.key, siblings, rows, editing)
     val openLabel = stringResource(R.string.action_open)
     val optionsLabel = stringResource(R.string.action_app_options)
     val moveUp = stringResource(R.string.sheet_move_up)
     val moveDown = stringResource(R.string.sheet_move_down)
-    val moveToTop = stringResource(R.string.edit_move_to_top)
     val appInfo = stringResource(R.string.sheet_app_info)
-    val index = siblings.indexOf(row.key)
+    val favorites = rows.filterIsInstance<HomeRow.App>()
+    val index = favorites.indexOfFirst { it.key == row.key }
     val key = row.app.key
-    return if (editing.active) {
-        semantics {
-            customActions = buildList {
-                if (index > 0) {
-                    add(CustomAccessibilityAction(moveToTop) { editing.onMove(key, -index).let { true } })
-                    add(CustomAccessibilityAction(moveUp) { editing.onMove(key, -1).let { true } })
-                }
-                if (index in 0 until siblings.lastIndex) {
-                    add(CustomAccessibilityAction(moveDown) { editing.onMove(key, 1).let { true } })
-                }
-            }
-        }
-    } else {
-        semantics(mergeDescendants = true) {
-            onClick(openLabel) { onLaunch().let { true } }
-            onLongClick(optionsLabel) { onLongPress().let { true } }
-            customActions = buildList {
-                add(CustomAccessibilityAction(appInfo) { onAppInfo().let { true } })
-                if (index > 0) add(CustomAccessibilityAction(moveUp) { editing.onMove(key, -1).let { true } })
-                if (index in 0 until siblings.lastIndex) {
-                    add(CustomAccessibilityAction(moveDown) { editing.onMove(key, 1).let { true } })
-                }
+    return semantics(mergeDescendants = true) {
+        onClick(openLabel) { onLaunch().let { true } }
+        onLongClick(optionsLabel) { onLongPress().let { true } }
+        customActions = buildList {
+            add(CustomAccessibilityAction(appInfo) { onAppInfo().let { true } })
+            if (index > 0) add(CustomAccessibilityAction(moveUp) { editing.onMove(key, -1).let { true } })
+            if (index in 0 until favorites.lastIndex) {
+                add(CustomAccessibilityAction(moveDown) { editing.onMove(key, 1).let { true } })
             }
         }
     }

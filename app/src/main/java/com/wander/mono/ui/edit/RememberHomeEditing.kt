@@ -23,10 +23,12 @@ fun rememberHomeEditing(
         toggles = toggles,
         reorder = reorder,
         onEnter = onEnter,
-        onReorder = edit::reorder,
+        onArrange = edit::arrange,
         onMove = edit::move,
         onRemove = edit::remove,
         onRename = onRename,
         onSetLiveRow = edit::setLiveRow,
+        onResizeWidget = edit::resizeWidget,
+        onRemoveWidget = edit::removeWidget,
     )
 }

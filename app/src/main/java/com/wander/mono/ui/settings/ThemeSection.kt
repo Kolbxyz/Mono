@@ -9,7 +9,7 @@ import com.wander.mono.data.settings.ThemeSettings
 @Composable
 fun ThemeSection(settings: SettingsViewModel) {
     SettingsGroup(R.string.settings_theme) {
-        ChoiceSetting(settings, ThemeSettings.Mode, R.string.settings_theme_mode) { mode ->
+        ChoiceSetting(settings, ThemeSettings.Mode, R.string.settings_theme_mode, R.drawable.sym_dark_mode) { mode ->
             when (mode) {
                 ThemeMode.System -> R.string.settings_theme_system
                 ThemeMode.Light -> R.string.settings_theme_light
@@ -20,7 +20,7 @@ fun ThemeSection(settings: SettingsViewModel) {
             settings,
             ThemeSettings.AmoledBlack,
             title = R.string.settings_amoled_black,
-            summary = R.string.settings_amoled_black_summary,
+            icon = R.drawable.sym_invert_colors,
         )
     }
 }

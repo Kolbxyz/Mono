@@ -15,13 +15,17 @@ import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.quiet.QuietMode
 import com.wander.mono.core.siblings.WandaUpNext
+import com.wander.mono.core.system.Battery
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.settings.BadgeSettings
+import com.wander.mono.data.settings.ClockSettings
 import com.wander.mono.data.settings.PreviewSettings
+import com.wander.mono.data.settings.QuietSettings
 import com.wander.mono.data.settings.SettingsStore
+import com.wander.mono.data.settings.clockLook
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,6 +33,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 
 @HiltViewModel
@@ -39,6 +45,8 @@ class HomeViewModel @Inject constructor(
     previews: NotificationPreviews,
     settings: SettingsStore,
     time: SystemTime,
+    battery: Battery,
+    quietTimer: QuietTimer,
     liveRows: LiveRowPrefs,
     quiet: QuietMode,
     calendar: CalendarEvents,
@@ -68,17 +76,27 @@ class HomeViewModel @Inject constructor(
         .combine(quiet.state, ::quietHomeRows)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
+    /** The clock lines; also where a timed quiet mode ends, on the tick this already receives. */
     val glance: StateFlow<Glance> = combine(
-        time.now,
-        time.nextAlarm,
-        calendar.agenda,
-        rows,
-    ) { now, alarm, agenda, home -> Glance(now, alarm, glanceEvent(agenda, now, home)) }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-            Glance(System.currentTimeMillis(), null),
+        combine(time.now, time.nextAlarm, calendar.agenda, rows) { now, alarm, agenda, home ->
+            Glance(now, alarmWithinDay(alarm, now), glanceEvent(agenda, now, home))
+        },
+        // The battery receiver is registered only while its chip may show.
+        settings[ClockSettings.ShowBattery].flatMapLatest { on -> if (on) battery.state else flowOf(null) },
+        combine(quiet.enabled, settings[QuietSettings.Until], ::Pair),
+        settings.clockLook(),
+    ) { base, power, (quietOn, until), look ->
+        quietTimer.settle(base.now, quietOn, until)
+        base.copy(
+            battery = glanceBattery(power),
+            quiet = if (quietOn) QuietGlance(until) else null,
+            look = look,
         )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+        Glance(System.currentTimeMillis(), null),
+    )
 
     fun launch(app: LaunchableApp) {
         messages.report(actions.launch(app.key))

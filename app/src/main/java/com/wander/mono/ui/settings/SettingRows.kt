@@ -1,40 +1,26 @@
 package com.wander.mono.ui.settings
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.ToggleButton
-import androidx.compose.material3.ToggleButtonColors
-import androidx.compose.material3.ToggleButtonDefaults
-import androidx.compose.material3.ToggleButtonShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.data.settings.BooleanSetting
-import com.wander.mono.data.settings.EnumSetting
-import com.wander.mono.data.settings.StoredEnum
 import com.wander.mono.ui.components.CheckSwitch
 import com.wander.mono.ui.components.SegmentedColumn
-import com.wander.mono.ui.theme.isLargeFontScale
 
 /** A titled group of setting rows, drawn as one segmented card. */
 @Composable
@@ -56,81 +42,39 @@ fun SettingsGroup(@StringRes title: Int, content: @Composable () -> Unit) {
 @Composable
 fun settingRowColors(): ListItemColors = ListItemDefaults.colors(containerColor = Color.Transparent)
 
-/** An on/off setting: the whole row toggles it. */
+/** An on/off setting: the whole row toggles it. [summary] is one short line, only where the title needs it. */
 @Composable
 fun SwitchSetting(
     settings: SettingsViewModel,
     setting: BooleanSetting,
     @StringRes title: Int,
     @StringRes summary: Int? = null,
+    @DrawableRes icon: Int? = null,
 ) {
     val checked = settings.collect(setting) ?: return
-    ListItem(
-        colors = settingRowColors(),
-        supportingContent = summary?.let { { Text(stringResource(it)) } },
-        trailingContent = { CheckSwitch(checked) },
-        modifier = Modifier.toggleable(checked, role = Role.Switch) { settings.set(setting, it) },
-    ) {
-        Text(stringResource(title))
-    }
+    SwitchRow(checked, { settings.set(setting, it) }, title, summary, icon)
 }
 
 /**
- * A choice among an enum's values, as a connected button group under the title. Above 1.5× font
- * scale the buttons wrap onto as many lines as their labels need instead of squeezing into one.
+ * The row every on/off setting draws: leading badge, title, an optional one-line [summary], the
+ * switch. [SwitchRow] and [SwitchSetting] are this with their own source of truth.
  */
 @Composable
-fun <E> ChoiceSetting(
-    settings: SettingsViewModel,
-    setting: EnumSetting<E>,
-    @StringRes title: Int,
-    label: (E) -> Int,
-) where E : Enum<E>, E : StoredEnum {
-    val selected = settings.collect(setting) ?: return
-    val last = setting.values.lastIndex
-    // Connected shapes only make sense in one row; wrapped buttons keep the standalone shape.
-    val choice: @Composable (E, ToggleButtonShapes?, Modifier) -> Unit = { value, shapes, modifier ->
-        val checked = value == selected
-        val onChecked: (Boolean) -> Unit = { settings.set(setting, value) }
-        val radio = modifier.semantics { role = Role.RadioButton }
-        val content: @Composable RowScope.() -> Unit = { Text(stringResource(label(value))) }
-        if (shapes == null) {
-            ToggleButton(checked, onChecked, radio, colors = choiceColors(), content = content)
-        } else {
-            ToggleButton(checked, onChecked, radio, shapes = shapes, colors = choiceColors(), content = content)
-        }
-    }
+internal fun SwitchListItem(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    title: String,
+    @DrawableRes icon: Int?,
+    summary: String?,
+    enabled: Boolean = true,
+) {
     ListItem(
         colors = settingRowColors(),
-        supportingContent = {
-            val group = Modifier.fillMaxWidth().padding(top = 8.dp).selectableGroup()
-            if (isLargeFontScale()) {
-                FlowRow(
-                    group,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    setting.values.forEach { choice(it, null, Modifier) }
-                }
-            } else {
-                Row(group, horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween)) {
-                    setting.values.forEachIndexed { index, value ->
-                        val shapes = when (index) {
-                            0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                            last -> ButtonGroupDefaults.connectedTrailingButtonShapes()
-                            else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
-                        }
-                        choice(value, shapes, Modifier.weight(1f))
-                    }
-                }
-            }
-        },
+        leadingContent = leadingBadge(icon, enabled),
+        supportingContent = summary?.let { { Text(it) } },
+        trailingContent = { CheckSwitch(checked) },
+        modifier = Modifier.toggleable(checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange),
     ) {
-        Text(stringResource(title))
+        Text(title)
     }
 }
-
-/** Unchecked choices sit a step above the group's strip, so they read as buttons on it. */
-@Composable
-private fun choiceColors(): ToggleButtonColors =
-    ToggleButtonDefaults.toggleButtonColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest)

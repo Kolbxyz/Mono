@@ -2,20 +2,41 @@ package com.wander.mono.ui.settings
 
 import androidx.compose.runtime.Composable
 
+/** A settings section: a group of rows, from its own `*Section.kt` file. */
+internal typealias SettingsSection = @Composable (SettingsViewModel) -> Unit
+
 /**
- * The settings screen's sections, top to bottom. A feature adds its section with one line here;
- * the section itself lives in its own `*Section.kt` file.
+ * Each hub page's sections, top to bottom. A feature adds its section with one line in the page
+ * it belongs to; the section itself lives in its own `*Section.kt` file.
  */
-internal val settingsSections: List<@Composable (SettingsViewModel) -> Unit> = listOf(
-    { ThemeSection(it) },
-    { HomeLookSection(it) },
-    { AccessibilitySection(it) },
-    { IconSection(it) },
-    { BadgeSection(it) },
-    { PreviewSection(it) },
-    { CalendarSection() },
-    { SearchSection(it) },
-    { QuietSection() },
-    { HiddenAppsSection() },
-    { UsageSection(it) },
-)
+internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = when (category) {
+    SettingsCategory.HomeClock -> listOf(
+        { ClockPreviewSection() },
+        { ClockSection(it) },
+        { GlanceLinesSection(it) },
+        { HomeLookSection(it) },
+        { CalendarSection() },
+    )
+    SettingsCategory.DrawerSearch -> listOf(
+        { DrawerSection(it) },
+        { SearchSection(it) },
+    )
+    SettingsCategory.Appearance -> listOf(
+        { ThemeSection(it) },
+        { IconSection(it) },
+        { AccessibilitySection(it) },
+    )
+    SettingsCategory.Notifications -> listOf(
+        { BadgeSection(it) },
+        { PreviewSection(it) },
+        { QuietSection() },
+    )
+    SettingsCategory.Gestures -> listOf(
+        { GestureSection(it) },
+    )
+    SettingsCategory.PrivacyAbout -> listOf(
+        { HiddenAppsSection() },
+        { UsageSection(it) },
+        { AboutSection() },
+    )
+}

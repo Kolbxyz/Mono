@@ -12,7 +12,7 @@ fun PreviewSection(settings: SettingsViewModel) {
             settings,
             PreviewSettings.ShowPreviews,
             title = R.string.settings_previews_show,
-            summary = R.string.settings_previews_show_summary,
+            icon = R.drawable.sym_chat,
         )
     }
 }

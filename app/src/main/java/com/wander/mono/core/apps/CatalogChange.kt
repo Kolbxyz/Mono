@@ -6,6 +6,6 @@ sealed interface CatalogChange {
 
     data class Shortcuts(val packageName: String) : CatalogChange
 
-    /** A profile was added, removed, paused or resumed: everything may have changed. */
+    /** A profile was added, removed, paused, resumed, locked or unlocked: everything may have changed. */
     data object Profiles : CatalogChange
 }

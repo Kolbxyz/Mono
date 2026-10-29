@@ -1,38 +1,45 @@
 package com.wander.mono.ui.home
 
+import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.IconButtonShapes
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.media.PlayingMedia
+import com.wander.mono.ui.components.instantPress
+import com.wander.mono.ui.home.media.rememberConnectedShape
+import com.wander.mono.ui.home.media.rememberPlayPauseShape
 
 /**
- * Play/pause, filled with the card's content colour and its icon cut out in the card's [tint], so it
- * reads on any artwork. Its corners say
- * the state, as in Wanda: a round pill while paused, a squarer one while playing, tighter still
- * under the finger. Fires the confirming haptic the spec gives transport actions.
+ * Play/pause, filled with the card's content colour and its icon cut out in the card's [tint], so
+ * it reads on any artwork. Its shape says the state (pill paused, rounded square playing, tighter
+ * under the finger) and it widens a little while pressed. Fires the confirming haptic the spec
+ * gives transport actions.
  */
 @Composable
 internal fun PlayPauseButton(
@@ -42,30 +49,26 @@ internal fun PlayPauseButton(
     modifier: Modifier = Modifier,
     size: DpSize = COLLAPSED_PLAY,
 ) {
-    val haptics = LocalHapticFeedback.current
-    val content = LocalContentColor.current
-    val corner by animateDpAsState(
-        if (isPlaying) size.height * PLAYING_CORNER else size.height / 2,
-        MaterialTheme.motionScheme.fastSpatialSpec(),
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    TransportButton(
+        icon = if (isPlaying) R.drawable.sym_pause_filled else R.drawable.sym_play_arrow_filled,
+        label = if (isPlaying) R.string.media_pause else R.string.media_play,
+        shape = rememberPlayPauseShape(isPlaying, pressed),
+        size = size,
+        container = LocalContentColor.current,
+        content = tint,
+        interaction = interaction,
+        onClick = onTogglePlay,
+        modifier = modifier,
     )
-    FilledIconButton(
-        onClick = {
-            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
-            onTogglePlay()
-        },
-        modifier = modifier.size(size),
-        shapes = IconButtonShapes(RoundedCornerShape(corner), RoundedCornerShape(size.height * PRESSED_CORNER)),
-        colors = IconButtonDefaults.filledIconButtonColors(containerColor = content, contentColor = tint),
-    ) {
-        if (isPlaying) {
-            Icon(painterResource(R.drawable.sym_pause_filled), stringResource(R.string.media_pause))
-        } else {
-            Icon(painterResource(R.drawable.sym_play_arrow_filled), stringResource(R.string.media_play))
-        }
-    }
 }
 
-/** Previous, a wide play/pause and next, shown when the card is expanded. Skips the session cannot do are left out. */
+/**
+ * Previous, a wide play/pause and next as one connected Expressive button group, centred. The skips
+ * are round on their outer side and tight towards play/pause; a skip the session cannot do is left
+ * out and play/pause stays centred.
+ */
 @Composable
 internal fun MediaTransport(
     media: PlayingMedia,
@@ -77,45 +80,85 @@ internal fun MediaTransport(
 ) {
     Row(
         modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(TRANSPORT_SPACING, Alignment.CenterHorizontally),
+        horizontalArrangement = Arrangement.spacedBy(
+            ButtonGroupDefaults.ConnectedSpaceBetween,
+            Alignment.CenterHorizontally,
+        ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (media.canSkipPrevious) {
-            SkipButton(R.drawable.sym_skip_previous_filled, R.string.media_previous, onSkipPrevious)
+            SkipButton(R.drawable.sym_skip_previous_filled, R.string.media_previous, leading = true, onSkipPrevious)
         }
         PlayPauseButton(media.isPlaying, tint, onTogglePlay, size = EXPANDED_PLAY)
         if (media.canSkipNext) {
-            SkipButton(R.drawable.sym_skip_next_filled, R.string.media_next, onSkipNext)
+            SkipButton(R.drawable.sym_skip_next_filled, R.string.media_next, leading = false, onSkipNext)
         }
     }
 }
 
-/** A round tonal skip button, a veil of the card's content colour. */
+/** A tonal skip button, a veil of the card's content colour, connected to play/pause on one side. */
 @Composable
-private fun SkipButton(icon: Int, label: Int, onClick: () -> Unit) {
+private fun SkipButton(@DrawableRes icon: Int, @StringRes label: Int, leading: Boolean, onClick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
     val content = LocalContentColor.current
-    FilledTonalIconButton(
+    TransportButton(
+        icon = icon,
+        label = label,
+        shape = rememberConnectedShape(leading, pressed),
+        size = SKIP_SIZE,
+        container = content.copy(alpha = SKIP_VEIL),
+        content = content,
+        interaction = interaction,
         onClick = onClick,
-        modifier = Modifier.size(SKIP_SIZE),
-        shapes = IconButtonShapes(CircleShape, RoundedCornerShape(SKIP_SIZE * PRESSED_CORNER)),
-        colors = IconButtonDefaults.filledTonalIconButtonColors(
-            containerColor = content.copy(alpha = SKIP_VEIL),
-            contentColor = content,
-        ),
+    )
+}
+
+/** One button of the transport: grows wider under the finger, on the fast spatial spring. */
+@Composable
+private fun TransportButton(
+    @DrawableRes icon: Int,
+    @StringRes label: Int,
+    shape: Shape,
+    size: DpSize,
+    container: Color,
+    content: Color,
+    interaction: MutableInteractionSource,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val haptics = LocalHapticFeedback.current
+    val pressed by interaction.collectIsPressedAsState()
+    val width by animateDpAsState(
+        if (pressed) size.width + PRESSED_GROWTH else size.width,
+        MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "transport-width",
+    )
+    Surface(
+        onClick = {
+            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+            onClick()
+        },
+        modifier = modifier.size(width, size.height).instantPress(interaction),
+        shape = shape,
+        color = container,
+        contentColor = content,
+        interactionSource = interaction,
     ) {
-        Icon(painterResource(icon), stringResource(label))
+        // Surface hands its size down as minimum constraints; the box keeps the icon at its own size.
+        Box(contentAlignment = Alignment.Center) {
+            Icon(painterResource(icon), stringResource(label))
+        }
     }
 }
 
-private val COLLAPSED_PLAY = DpSize(64.dp, 48.dp)
+/** Collapsed, as tall as the artwork beside it, so the row is symmetrical. */
+private val COLLAPSED_PLAY = DpSize(56.dp, 56.dp)
 private val EXPANDED_PLAY = DpSize(96.dp, 64.dp)
-private val SKIP_SIZE = 56.dp
-private val TRANSPORT_SPACING = 12.dp
+private val SKIP_SIZE = DpSize(64.dp, 64.dp)
 
-/** Corner radius as a share of the height: playing, and under the finger. */
-private const val PLAYING_CORNER = 0.3f
-private const val PRESSED_CORNER = 0.2f
+/** How much wider a pressed transport button gets. */
+private val PRESSED_GROWTH: Dp = 12.dp
 
 /** How strongly the skip buttons' container shows the content colour. */
 private const val SKIP_VEIL = 0.16f
-

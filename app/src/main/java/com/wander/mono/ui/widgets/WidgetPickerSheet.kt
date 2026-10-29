@@ -15,9 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,7 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.widgets.WidgetApp
 import com.wander.mono.core.widgets.WidgetChoice
-import com.wander.mono.ui.components.ReadableLayout
+import com.wander.mono.ui.components.MonoSheet
+import com.wander.mono.ui.sheet.SheetHeader
 
 /**
  * Every widget installed apps offer, grouped under their app (work-profile apps marked), each with
@@ -41,16 +40,8 @@ fun WidgetPickerSheet(
     onPick: (AppWidgetProviderInfo) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(
-        onDismissRequest = onDismiss,
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        sheetMaxWidth = ReadableLayout.MaxColumnWidth,
-    ) {
-        Text(
-            stringResource(R.string.widget_picker_title),
-            style = MaterialTheme.typography.titleLarge,
-            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
-        )
+    MonoSheet(onDismissRequest = onDismiss) {
+        SheetHeader(stringResource(R.string.widget_picker_title))
         when {
             apps == null -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
                 LoadingIndicator()
