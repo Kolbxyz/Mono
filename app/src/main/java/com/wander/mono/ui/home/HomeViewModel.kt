@@ -13,7 +13,9 @@ import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.NotificationPreviews
+import com.wander.mono.core.quiet.QuietMode
 import com.wander.mono.core.system.SystemTime
+import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.settings.BadgeSettings
@@ -37,8 +39,10 @@ class HomeViewModel @Inject constructor(
     settings: SettingsStore,
     time: SystemTime,
     liveRows: LiveRowPrefs,
+    quiet: QuietMode,
     calendar: CalendarEvents,
     private val calendarActions: CalendarActions,
+    widgets: Widgets,
     private val media: MediaSessions,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
@@ -58,6 +62,8 @@ class HomeViewModel @Inject constructor(
         },
         ::withPreviews,
     ).combine(combine(calendar.agenda, liveRows.hidden, CalendarAgenda?::unlessHidden), ::withCalendarRow)
+        .combine(widgets.placed, ::withWidgetRows)
+        .combine(quiet.state, ::quietHomeRows)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     val glance: StateFlow<Glance> = combine(

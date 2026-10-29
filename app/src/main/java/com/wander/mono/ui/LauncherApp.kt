@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -29,6 +30,8 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.R
+import com.wander.mono.ui.components.rememberCredentialPrompt
 import com.wander.mono.ui.drawer.DrawerScreen
 import com.wander.mono.ui.drawer.SearchHit
 import com.wander.mono.ui.edit.EditEffects
@@ -41,12 +44,16 @@ import com.wander.mono.ui.drawer.HitOutcome
 import com.wander.mono.ui.home.HomeLookViewModel
 import com.wander.mono.ui.home.HomeScreen
 import com.wander.mono.ui.home.HomeViewModel
+import com.wander.mono.ui.quiet.QuietDrawerGate
+import com.wander.mono.ui.quiet.QuietViewModel
 import com.wander.mono.ui.sheet.AppSheet
 import com.wander.mono.ui.settings.SettingsScreen
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.sheet.HomeSheet
 import com.wander.mono.ui.sheet.RenameDialog
 import com.wander.mono.ui.sheet.RenameViewModel
+import com.wander.mono.ui.widgets.WidgetSheets
+import com.wander.mono.ui.widgets.WidgetsViewModel
 
 /** Home, with the drawer and settings sliding over it, the long-press sheets and the error snackbar. */
 @Composable
@@ -58,6 +65,8 @@ fun LauncherApp(
     sheet: AppSheetViewModel = viewModel(),
     edit: EditHomeViewModel = viewModel(),
     rename: RenameViewModel = viewModel(),
+    quiet: QuietViewModel = viewModel(),
+    widgets: WidgetsViewModel = viewModel(),
 ) {
     val drawerOpen by launcher.drawerOpen.collectAsStateWithLifecycle()
     val settingsOpen by launcher.settingsOpen.collectAsStateWithLifecycle()
@@ -73,6 +82,13 @@ fun LauncherApp(
     val pickingApp by launcher.pickingApp.collectAsStateWithLifecycle()
     val liveRowToggles by edit.toggles.collectAsStateWithLifecycle()
     val renaming by rename.app.collectAsStateWithLifecycle()
+    val sheetUsage by sheet.usageToday.collectAsStateWithLifecycle()
+    val quietOn by quiet.enabled.collectAsStateWithLifecycle()
+    val unlockHidden = rememberCredentialPrompt(
+        R.string.hidden_unlock_title,
+        onSuccess = drawer::unlockHidden,
+        onNoScreenLock = drawer::reportNoScreenLock,
+    )
     val homeList = rememberLazyListState()
     val reorder = remember(homeList) { ReorderState(homeList) }
     val editing = HomeEditing(
@@ -136,6 +152,8 @@ fun LauncherApp(
             onOpenEvent = home::openEvent,
             onOpenDrawer = launcher::openDrawer,
             onHomeOptions = { launcher.showHomeOptions(true) },
+            createWidgetView = widgets::createView,
+            onWidgetLongPress = { widgets.showOptions(it.widget.placement.appWidgetId) },
         )
         AnimatedVisibility(
             visible = drawerOpen,
@@ -147,21 +165,26 @@ fun LauncherApp(
                 ExitTransition.None
             },
         ) {
-            DrawerScreen(
-                query = query,
-                state = drawerState,
-                loadIcon = drawer::icon,
-                onQueryChange = drawer::setQuery,
-                onSubmit = { afterHit(drawer.launchTopResult()) },
-                onLaunchApp = { if (pickingApp) pick(it) else if (drawer.launch(it)) launcher.closeDrawer() },
-                onLaunchHit = { hit ->
-                    if (pickingApp && hit is SearchHit.App) pick(hit.entry.app) else afterHit(drawer.launch(hit))
-                },
-                onLongPress = { sheet.show(it.key) },
-                onClose = launcher::closeDrawer,
-                onOpenSettings = launcher::openSettings,
-                pickingApp = pickingApp,
-            )
+            // Hidden apps unlocked for this opening only.
+            DisposableEffect(Unit) { onDispose(drawer::relockHidden) }
+            QuietDrawerGate(quiet = quietOn, onClose = launcher::closeDrawer) {
+                DrawerScreen(
+                    query = query,
+                    state = drawerState,
+                    loadIcon = drawer::icon,
+                    onQueryChange = drawer::setQuery,
+                    onSubmit = { afterHit(drawer.launchTopResult()) },
+                    onLaunchApp = { if (pickingApp) pick(it) else if (drawer.launch(it)) launcher.closeDrawer() },
+                    onLaunchHit = { hit ->
+                        if (pickingApp && hit is SearchHit.App) pick(hit.entry.app) else afterHit(drawer.launch(hit))
+                    },
+                    onLongPress = { sheet.show(it.key) },
+                    onClose = launcher::closeDrawer,
+                    onOpenSettings = launcher::openSettings,
+                    onUnlockHidden = unlockHidden,
+                    pickingApp = pickingApp,
+                )
+            }
         }
         // Over the drawer when opened from it, so back from settings returns to the drawer.
         AnimatedVisibility(
@@ -199,14 +222,25 @@ fun LauncherApp(
 
     if (homeOptionsOpen) {
         HomeSheet(
+            quiet = quietOn,
             onDismiss = { launcher.showHomeOptions(false) },
+            onSetQuiet = {
+                launcher.showHomeOptions(false)
+                quiet.setEnabled(it)
+            },
             onOpenSettings = launcher::openSettings,
+            onAddWidget = {
+                launcher.showHomeOptions(false)
+                widgets.openPicker()
+            },
             onEditHome = { launcher.setEditing(true) },
         )
     }
+    WidgetSheets(widgets)
     sheetState?.let { state ->
         AppSheet(
             state = state,
+            usageToday = sheetUsage,
             onDismiss = sheet::dismiss,
             onShortcut = sheet::launchShortcut,
             onAddToHome = sheet::addToHome,

@@ -53,6 +53,7 @@ fun DrawerScreen(
     onLongPress: (LaunchableApp) -> Unit,
     onClose: () -> Unit,
     onOpenSettings: () -> Unit,
+    onUnlockHidden: () -> Unit,
     modifier: Modifier = Modifier,
     pickingApp: Boolean = false,
 ) {
@@ -81,6 +82,7 @@ fun DrawerScreen(
                     onLongPress = onLongPress,
                     contentPadding = bottom,
                     modifier = Modifier.nestedScroll(swipeDown),
+                    onUnlockHidden = onUnlockHidden.takeIf { state.hiddenLocked },
                 )
             }
         }

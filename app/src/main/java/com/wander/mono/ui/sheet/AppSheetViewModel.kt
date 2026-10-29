@@ -9,14 +9,20 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.ActionResult
 import com.wander.mono.core.apps.ShortcutRepository
+import com.wander.mono.core.usage.AppUsage
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.settings.SettingsStore
+import com.wander.mono.data.settings.UsageSettings
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 
 /** The long-press sheet. Its target is kept in saved state, so an open sheet survives rotation. */
@@ -28,6 +34,8 @@ class AppSheetViewModel @Inject constructor(
     private val prefs: LauncherPrefs,
     private val actions: AppActions,
     private val messages: UserMessages,
+    settings: SettingsStore,
+    private val usage: AppUsage,
 ) : ViewModel() {
     private val target: StateFlow<String?> = savedState.getStateFlow(TARGET, null)
 
@@ -49,6 +57,18 @@ class AppSheetViewModel @Inject constructor(
             shortcuts = allShortcuts.filter { it.packageName == key.packageName && it.userSerial == key.userSerial },
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+
+    /** Today's time in the sheet's app, read once as it opens; null when off, not granted or elsewhere. */
+    val usageToday: StateFlow<Long?> = combine(
+        state.map { it?.app }.distinctUntilChanged(),
+        settings[UsageSettings.ShowInSheet],
+    ) { app, show -> app.takeIf { show } }
+        .transformLatest { app ->
+            // Nothing while reading, so one app's time never shows on another's sheet.
+            emit(null)
+            if (app != null) emit(usage.todayMillis(app))
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     fun show(key: AppKey) {
         savedState[TARGET] = key.encode()
