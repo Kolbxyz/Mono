@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.ui.theme.LocalReducedMotion
+import com.wander.mono.ui.theme.capFontScale
 import kotlin.math.roundToInt
 
 /**
@@ -128,7 +129,8 @@ fun LetterRail(
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     Text(
                         section.letter,
-                        style = MaterialTheme.typography.labelMedium,
+                        // The letters share the rail's height: past 1.3× they would overlap; the bubble shows it large.
+                        style = MaterialTheme.typography.labelMedium.capFontScale(LETTER_MAX_FONT_SCALE),
                         fontWeight = if (lit) FontWeight.Bold else null,
                         color = if (lit) {
                             MaterialTheme.colorScheme.primary
@@ -154,6 +156,9 @@ fun LetterRail(
 
 /** Width of the rail's touch area, which the list leaves free at its end. */
 internal val RAIL_WIDTH = 48.dp
+
+/** The rail's letters grow with the font scale up to this, so 27 of them still fit a phone's height. */
+private const val LETTER_MAX_FONT_SCALE = 1.3f
 
 /** How far the letter under the finger moves out; its neighbours move less, over [RailMath.WAVE_REACH] letters. */
 internal val WAVE_AMPLITUDE = 24.dp
