@@ -3,10 +3,38 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-      No INTERNET permission, ever: a launcher has nothing to fetch. Uninstall is the only
-      permission asked for, and it is a normal one: the system still shows its own confirmation.
+      No INTERNET permission, ever: a launcher has nothing to fetch. Uninstall is a normal
+      permission: the system still shows its own confirmation.
     -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!--
+      Opt-in, each from its own settings row, and granted by the user in Android's settings:
+      Do Not Disturb access (quiet mode can switch Mono's own Android mode) and usage access
+      (today's time in an app's long-press options). USE_BIOMETRIC is a normal permission for the
+      system prompt that guards hidden apps when the user locks them.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Upcoming events on home. Opt-in: asked for only when the Calendar setting is switched on. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
+    <!-- Contacts in search: opt-in from settings, asked for only when the user switches it on. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!--
+      Sibling apps (Wanda, Phalanx): read-only providers guarded by a signature permission, so only
+      apps signed with Mono's key can serve or read them. Declared identically by all three, since any
+      may be installed first. See docs/design/sibling-contract.md.
+    -->
+    <permission
+        android:name="com.wander.permission.SIBLING_READ"
+        android:label="@string/sibling_permission_label"
+        android:protectionLevel="signature" />
+    <uses-permission android:name="com.wander.permission.SIBLING_READ" />
 
     <!-- Package visibility: every app with a launcher entry, which is exactly what the drawer lists. -->
     <queries>
@@ -14,6 +42,74 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Widget providers, so apps that only offer widgets show up in the widget picker too. -->
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent>
+        <!-- SystemUI's media output switcher, so the now-playing chip shows only where it can open. -->
+        <intent>
+            <action android:name="com.android.systemui.action.LAUNCH_MEDIA_OUTPUT_DIALOG" />
+        </intent>
+        <!-- Search: the settings pages it offers (core/system/SettingsPages) and the browser's web search. -->
+        <intent>
+            <action android:name="android.settings.WIFI_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.BLUETOOTH_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.WIRELESS_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.DISPLAY_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.POWER_USAGE_SUMMARY" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.SOUND_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.ALL_APPS_NOTIFICATION_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.APPLICATION_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.MANAGE_DEFAULT_APPS_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.INTERNAL_STORAGE_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.LOCATION_SOURCE_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.SECURITY_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.PRIVACY_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.ACCESSIBILITY_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.DATE_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.LOCALE_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.settings.DEVICE_INFO_SETTINGS" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.WEB_SEARCH" />
+        </intent>
+        <!-- Sibling providers (core/siblings), release and debug builds. -->
+        <provider android:authorities="com.wander.android.mono" />
+        <provider android:authorities="com.wander.android.debug.mono" />
+        <provider android:authorities="org.phalanx.android.mono" />
+        <provider android:authorities="org.phalanx.android.debug.mono" />
     </queries>
 
     <!--
@@ -36,10 +132,14 @@
           The home screen. singleTask keeps one instance, so pressing home while it is in front
           arrives as onNewIntent (closes the drawer or scrolls to the top). stateNotNeeded is not
           set: the drawer and search survive process death through the saved state.
+          configChanges: rotating, folding and resizing only change the window size, which Compose
+          re-lays out in place; recreating would drop the open sheet and scroll, and flash the
+          wallpaper while the theme is read again.
         -->
         <activity
             android:name=".MainActivity"
             android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTask"
@@ -64,6 +164,21 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
+        </service>
+
+        <!-- Quick Settings tile switching quiet mode; a toggle, so TalkBack announces on/off. -->
+        <service
+            android:name=".core.quiet.QuietTileService"
+            android:exported="true"
+            android:icon="@drawable/sym_quiet"
+            android:label="@string/quiet_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
         </service>
     </application>
 </manifest>

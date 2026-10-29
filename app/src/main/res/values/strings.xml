@@ -3,7 +3,10 @@
     <string name="app_name">Mono</string>
 
     <!-- Home -->
-    <string name="home_empty">No favourites yet. Open all apps, long-press an app and choose Add to home.</string>
+    <string name="home_empty_title">Your calm place.</string>
+    <string name="home_empty_body">Pick the few apps you use every day.</string>
+    <string name="home_empty_choose">Choose favourites</string>
+    <string name="home_empty_hint">Swipe up for all apps</string>
     <string name="home_next_alarm">Alarm %1$s</string>
     <string name="home_listener_prompt">Allow notification access for music and notification dots</string>
 
@@ -11,6 +14,10 @@
     <string name="action_open">Open</string>
     <string name="action_app_options">App options</string>
     <string name="action_open_drawer">All apps</string>
+    <string name="action_home_options">Home options</string>
+    <string name="action_back">Back</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_search">Search</string>
 
     <!-- States announced by TalkBack -->
     <string name="state_has_notifications">Has notifications</string>
@@ -21,10 +28,27 @@
     <string name="media_play">Play</string>
     <string name="media_pause">Pause</string>
     <string name="media_next">Next</string>
+    <string name="media_previous">Previous</string>
+    <string name="media_expand">Show controls</string>
+    <string name="media_collapse">Hide controls</string>
+    <string name="media_progress">Playback position</string>
+    <string name="media_up_next">Up next</string>
+    <string name="media_play_this">Play this</string>
+    <string name="media_output_remote">Another device</string>
+    <string name="media_output_switch">Switch output</string>
+
+    <!-- Badges: the number, then the same number capped (shown as 99+) -->
+    <string name="badge_count">%1$d</string>
+    <string name="badge_count_capped">%1$d+</string>
+    <plurals name="state_notification_count">
+        <item quantity="one">%1$d notification</item>
+        <item quantity="other">%1$d notifications</item>
+    </plurals>
 
     <!-- Drawer -->
-    <string name="drawer_search_hint">Search apps and shortcuts</string>
+    <string name="drawer_search_hint">Search apps, settings and more</string>
     <string name="drawer_no_results">Nothing matches</string>
+    <string name="drawer_rail">Jump to letter</string>
 
     <!-- Long-press sheet -->
     <string name="sheet_add_to_home">Add to home</string>
@@ -36,10 +60,225 @@
     <string name="sheet_app_info">App info</string>
     <string name="sheet_uninstall">Uninstall</string>
 
+    <!-- Long-press options for home itself -->
+    <string name="home_sheet_settings">Mono settings</string>
+    <string name="home_sheet_add_widget">Add widget</string>
+
+    <!-- Widgets -->
+    <string name="widget_picker_title">Widgets</string>
+    <string name="widget_picker_empty">No installed app offers widgets</string>
+    <string name="widget_picker_work_app">%1$s · %2$s</string>
+    <string name="widget_size">Size</string>
+    <string name="widget_size_small">Small</string>
+    <string name="widget_size_medium">Medium</string>
+    <string name="widget_size_large">Large</string>
+    <string name="widget_reconfigure">Widget settings</string>
+    <string name="widget_remove">Remove widget</string>
+    <string name="action_widget_options">Widget options</string>
+    <string name="action_add_widget">Add to home</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_mode">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_amoled_black">AMOLED black</string>
+    <string name="settings_amoled_black_summary">Pure black background in dark theme</string>
+    <string name="settings_home_look">Home</string>
+    <string name="settings_text_shadow">Text shadow</string>
+    <string name="settings_text_shadow_summary">Shadow under home text instead of dimming the wallpaper</string>
+    <string name="settings_accessibility">Accessibility</string>
+    <string name="settings_high_contrast_text">High contrast text</string>
+    <string name="settings_high_contrast_text_summary">Stronger backdrop behind home text and no dimmed lines. Also on when Android asks for more contrast.</string>
+    <string name="settings_icons">Icons</string>
+    <string name="settings_icon_mode">App icons</string>
+    <string name="settings_icon_colour">Full colour</string>
+    <string name="settings_icon_themed">Themed</string>
+    <string name="settings_icon_text_only">Text only</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_welcome_title">A calm home for your phone</string>
+    <string name="onboarding_welcome_body">One short list of the apps you use, everything else a swipe up away. Nothing you do here leaves your phone.</string>
+    <string name="onboarding_home_title">Make Mono your home screen</string>
+    <string name="onboarding_home_body">Android will ask you to confirm. If you say no, you can change it later in Settings, Apps, Default apps.</string>
+    <string name="onboarding_home_action">Set as home app</string>
+    <string name="onboarding_access_title">Music and notification counts</string>
+    <string name="onboarding_access_body">With notification access, Mono shows what is playing and how many notifications each app has, next to the app. Mono only reads them; nothing is sent anywhere.</string>
+    <string name="onboarding_access_action">Allow notification access</string>
+    <string name="onboarding_access_retry">Try again</string>
+    <string name="onboarding_restricted_title">Is the switch greyed out?</string>
+    <string name="onboarding_restricted_body">Android blocks this for apps installed outside an app store. It is an Android safety step, not something Mono asks for.</string>
+    <string name="onboarding_restricted_step1">1. Open Mono\'s App info</string>
+    <string name="onboarding_restricted_step2">2. Tap ⋮ in the top corner, then Allow restricted settings, and confirm</string>
+    <string name="onboarding_restricted_step3">3. Come back here and tap Try again</string>
+    <string name="onboarding_restricted_action">Open App info</string>
+    <string name="onboarding_done_title">You are set</string>
+    <string name="onboarding_done_body">Swipe up for all apps. Long-press an app to add it to home.</string>
+    <string name="onboarding_done_action">Start</string>
+
+    <!-- Badges -->
+    <string name="settings_badges">Notification badges</string>
+    <string name="settings_badge_counts">Show unread count</string>
+    <string name="settings_badge_counts_summary">Off shows a dot instead</string>
+
+    <!-- Quiet mode -->
+    <string name="home_sheet_quiet_on">Turn on quiet mode</string>
+    <string name="home_sheet_quiet_off">Turn off quiet mode</string>
+    <string name="quiet_tile_label">Quiet mode</string>
+    <string name="quiet_zen_rule_name">Mono quiet mode</string>
+    <string name="quiet_gate_title">Quiet mode is on</string>
+    <string name="quiet_gate_body">Your quiet apps are on home. Everything else can wait.</string>
+    <string name="quiet_gate_show_all">Show all apps</string>
+    <string name="quiet_gate_back">Back to home</string>
+    <string name="settings_quiet">Quiet mode</string>
+    <string name="settings_quiet_mode">Quiet mode</string>
+    <string name="settings_quiet_mode_summary">Home shows only your quiet apps, without badges or previews. All apps take one more tap.</string>
+    <string name="settings_quiet_apps">Apps that stay on home</string>
+    <string name="settings_quiet_apps_empty">Add favourites to home first</string>
+    <string name="settings_quiet_dnd">Turn on Do Not Disturb with quiet mode</string>
+    <string name="settings_quiet_dnd_summary">Uses a mode of Mono\'s own, with your Do Not Disturb exceptions</string>
+    <string name="settings_quiet_dnd_grant">Do Not Disturb with quiet mode</string>
+    <string name="settings_quiet_dnd_grant_summary">To switch Do Not Disturb with quiet mode, Mono needs Do Not Disturb access. Tap to allow it in Android settings. Mono uses it only for its own mode.</string>
+
+    <!-- Hidden apps -->
+    <string name="drawer_unlock_hidden">Search hidden apps too</string>
+    <string name="hidden_unlock_title">Show hidden apps</string>
+    <string name="settings_hidden">Hidden apps</string>
+    <string name="settings_hidden_lock">Lock hidden apps</string>
+    <string name="settings_hidden_lock_summary">Ask for your screen lock before hidden apps show in search or here</string>
+    <string name="settings_hidden_show">Show hidden apps</string>
+    <string name="settings_hidden_empty">No hidden apps</string>
+
+    <!-- App usage -->
+    <string name="sheet_usage_under_minute">Today: under a minute</string>
+    <string name="sheet_usage_minutes">Today: %1$d min</string>
+    <string name="sheet_usage_hours">Today: %1$d h %2$d min</string>
+    <string name="settings_usage">App usage</string>
+    <string name="settings_usage_in_sheet">Show today\'s time in app options</string>
+    <string name="settings_usage_summary">Long-press an app to see how long you used it today. Read on your phone only.</string>
+    <string name="settings_usage_grant_summary">Needs usage access. Tap to allow it in Android settings; Mono reads it only when you long-press an app.</string>
+    <!-- Notification previews -->
+    <string name="settings_previews">Notification previews</string>
+    <string name="settings_previews_show">Show notification previews</string>
+    <string name="settings_previews_show_summary">The latest notification under each favourite. What apps hide from the lock screen stays hidden.</string>
+    <string name="preview_hidden">New notification</string>
+    <string name="preview_reply">Reply</string>
+    <string name="preview_reply_hint">Message</string>
+    <string name="preview_send">Send</string>
+    <string name="preview_dismiss">Dismiss</string>
+    <string name="preview_open">Open notification</string>
+    <plurals name="state_unread_messages">
+        <item quantity="one">%1$d unread message</item>
+        <item quantity="other">%1$d unread messages</item>
+    </plurals>
+    <!-- Calendar -->
+    <string name="home_next_event">%1$s · %2$s</string>
+    <string name="home_event_now">now</string>
+    <plurals name="home_event_in_minutes">
+        <item quantity="one">in %1$d min</item>
+        <item quantity="other">in %1$d min</item>
+    </plurals>
+    <string name="calendar_all_day">All day</string>
+    <string name="calendar_now">Now</string>
+    <string name="calendar_untitled">(No title)</string>
+    <string name="action_open_event">Open event</string>
+    <string name="settings_calendar">Calendar</string>
+    <string name="settings_calendar_show">Show upcoming events</string>
+    <string name="settings_calendar_summary">Your next events under the clock and in the list. Needs calendar access; Mono only reads them and nothing leaves your phone.</string>
+    <string name="settings_calendar_denied">Calendar access was refused. Tap to open App info and allow Calendar there.</string>
+
+    <!-- Search results beyond apps -->
+    <string name="search_calculator_result">= %1$s</string>
+    <string name="search_calculator_copy">Tap to copy</string>
+    <string name="search_calculator_clip">Calculator result</string>
+    <string name="search_copied">Result copied</string>
+    <string name="search_contact">Contact</string>
+    <string name="search_web_in">Search in %1$s</string>
+    <string name="search_web">Search the web</string>
+    <string name="settings_search">Search</string>
+    <string name="settings_search_contacts">Search contacts</string>
+    <string name="settings_search_contacts_summary">Find people by name. Needs access to your contacts; they are read only while you type and never stored.</string>
+
+    <!-- Settings pages search can open, with extra comma-separated words each is found by -->
+    <string name="page_wifi">Wi‑Fi</string>
+    <string name="page_wifi_keywords">wifi, wlan, internet, network</string>
+    <string name="page_bluetooth">Bluetooth</string>
+    <string name="page_bluetooth_keywords">pair, headphones, devices</string>
+    <string name="page_network">Network &amp; internet</string>
+    <string name="page_network_keywords">mobile data, sim, airplane mode, hotspot</string>
+    <string name="page_display">Display</string>
+    <string name="page_display_keywords">brightness, screen, dark theme, font size</string>
+    <string name="page_battery">Battery</string>
+    <string name="page_battery_keywords">power, battery saver, charging</string>
+    <string name="page_sound">Sound &amp; vibration</string>
+    <string name="page_sound_keywords">volume, ringtone, vibrate, do not disturb</string>
+    <string name="page_notifications">Notifications</string>
+    <string name="page_notifications_keywords">alerts, app notifications</string>
+    <string name="page_apps">Apps</string>
+    <string name="page_apps_keywords">applications, app info, permissions</string>
+    <string name="page_default_apps">Default apps</string>
+    <string name="page_default_apps_keywords">home app, launcher, browser, sms</string>
+    <string name="page_storage">Storage</string>
+    <string name="page_storage_keywords">space, free up, files</string>
+    <string name="page_location">Location</string>
+    <string name="page_location_keywords">gps</string>
+    <string name="page_security">Security</string>
+    <string name="page_security_keywords">screen lock, pin, password, fingerprint</string>
+    <string name="page_privacy">Privacy</string>
+    <string name="page_privacy_keywords">permission manager, camera access, microphone access</string>
+    <string name="page_accessibility">Accessibility</string>
+    <string name="page_accessibility_keywords">talkback, magnification, captions</string>
+    <string name="page_date">Date &amp; time</string>
+    <string name="page_date_keywords">clock, time zone</string>
+    <string name="page_languages">Languages</string>
+    <string name="page_languages_keywords">language, locale, keyboard</string>
+    <string name="page_about">About phone</string>
+    <string name="page_about_keywords">android version, build number, device name</string>
+    <string name="page_mono_keywords">launcher settings, mono</string>
+
+    <!-- Edit mode -->
+    <string name="home_sheet_edit">Edit home</string>
+    <string name="edit_done">Done</string>
+    <string name="edit_add_app">Add app</string>
+    <string name="edit_settings">Settings</string>
+    <string name="edit_drag_handle">Drag to reorder</string>
+    <string name="edit_rename">Rename</string>
+    <string name="edit_remove">Remove from home</string>
+    <string name="edit_move_to_top">Move to top</string>
+    <string name="edit_pick_hint">Pick an app to add to home</string>
+    <string name="state_editing">Editing home</string>
+    <string name="live_row_now_playing">Now playing</string>
+    <string name="live_row_notification_preview">Notification preview</string>
+    <string name="live_row_calendar">Calendar</string>
+
+    <!-- Rename -->
+    <string name="sheet_rename">Rename</string>
+    <string name="rename_title">Rename app</string>
+    <string name="rename_field">Name</string>
+    <string name="rename_original">Original name: %1$s</string>
+    <string name="rename_save">Save</string>
+    <string name="rename_reset">Use original name</string>
+    <string name="rename_cancel">Cancel</string>
+
     <!-- Errors -->
+    <string name="error_no_screen_lock">Set a screen lock in Android settings first</string>
+    <string name="error_notification_gone">This notification is no longer available</string>
     <string name="error_app_missing">This app is no longer installed</string>
     <string name="error_not_allowed">Android did not allow opening this</string>
     <string name="error_profile_locked">The work profile is paused or locked</string>
     <string name="error_profile_gone">This profile no longer exists</string>
+    <string name="error_calendar_missing">No app can open this event</string>
     <string name="error_settings_missing">This settings page is not available on this phone</string>
+    <string name="error_no_browser">No browser can search the web</string>
+    <string name="error_no_contacts_app">No app can show this contact</string>
+
+    <!-- Sibling apps (Wanda, Phalanx) -->
+    <string name="sibling_permission_label">read what Mono shows from its sibling apps</string>
+    <string name="search_track">Song in Wanda</string>
+    <string name="search_track_by">%1$s · %2$s</string>
+    <string name="error_wanda_missing">Wanda can\'t open this song</string>
 </resources>

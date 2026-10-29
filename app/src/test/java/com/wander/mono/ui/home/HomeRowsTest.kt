@@ -5,6 +5,7 @@ import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.media.MediaState
 import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.ui.components.AppBadge
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -19,47 +20,78 @@ class HomeRowsTest {
         LaunchableApp(AppKey(pkg, "$pkg.Main", serial), label, main)
 
     private fun playing(pkg: String) = MediaState.Active(
-        PlayingMedia(pkg, "Song", "Artist", art = null, artColor = null, isPlaying = true, canSkipNext = true),
+        PlayingMedia(
+            pkg,
+            "Song",
+            "Artist",
+            art = null,
+            artColor = null,
+            isPlaying = true,
+            canSkipNext = true,
+            canSkipPrevious = true,
+            canSeek = true,
+            progress = null,
+            upNext = emptyList(),
+            output = null,
+        ),
     )
+
+    private fun rows(
+        favorites: List<AppKey>,
+        media: MediaState = MediaState.Idle,
+        badges: Map<PackageUser, Int> = emptyMap(),
+        showCounts: Boolean = true,
+    ) = assembleHomeRows(favorites, catalog, badges, media, showCounts)
 
     private fun shape(rows: List<HomeRow>) = rows.map {
         when (it) {
             is HomeRow.App -> it.app.label + if (it.app.isMainProfile) "" else " (work)"
             is HomeRow.NowPlaying -> "now:" + it.media.packageName
             HomeRow.ListenerPrompt -> "prompt"
+            is NotificationRow -> "notification:" + it.app.label
+            is CalendarRow -> "calendar"
+            is WidgetHomeRow -> "widget:" + it.widget.placement.appWidgetId
         }
     }
 
     @Test
     fun `favourites keep the user's order and skip apps that are not installed`() {
         val missing = AppKey("gone.app", "gone.app.Main", 0)
-        val rows = assembleHomeRows(listOf(clock.key, missing, phalanx.key), catalog, emptyMap(), MediaState.Idle)
-        assertEquals(listOf("Clock", "Phalanx"), shape(rows))
+        assertEquals(listOf("Clock", "Phalanx"), shape(rows(listOf(clock.key, missing, phalanx.key))))
     }
 
     @Test
     fun `now playing sits right under the main-profile favourite that owns the session`() {
         val favorites = listOf(workWanda.key, phalanx.key, wanda.key, clock.key)
-        val rows = assembleHomeRows(favorites, catalog, emptyMap(), playing("com.wander.android"))
-        assertEquals(listOf("Wanda (work)", "Phalanx", "Wanda", "now:com.wander.android", "Clock"), shape(rows))
+        assertEquals(
+            listOf("Wanda (work)", "Phalanx", "Wanda", "now:com.wander.android", "Clock"),
+            shape(rows(favorites, playing("com.wander.android"))),
+        )
     }
 
     @Test
     fun `now playing goes first when its app is not a favourite`() {
-        val rows = assembleHomeRows(listOf(phalanx.key), catalog, emptyMap(), playing("com.wander.android"))
-        assertEquals(listOf("now:com.wander.android", "Phalanx"), shape(rows))
+        val result = rows(listOf(phalanx.key), playing("com.wander.android"))
+        assertEquals(listOf("now:com.wander.android", "Phalanx"), shape(result))
     }
 
     @Test
     fun `missing notification access adds one prompt row at the end`() {
-        val rows = assembleHomeRows(listOf(phalanx.key, clock.key), catalog, emptyMap(), MediaState.NoAccess)
-        assertEquals(listOf("Phalanx", "Clock", "prompt"), shape(rows))
+        val result = rows(listOf(phalanx.key, clock.key), MediaState.NoAccess)
+        assertEquals(listOf("Phalanx", "Clock", "prompt"), shape(result))
     }
 
     @Test
-    fun `dots are per app and per profile`() {
+    fun `badges are per app and per profile`() {
         val badges = mapOf(PackageUser("com.wander.android", 10) to 2)
-        val rows = assembleHomeRows(listOf(wanda.key, workWanda.key), catalog, badges, MediaState.Idle)
-        assertEquals(listOf(false, true), rows.map { (it as HomeRow.App).hasNotifications })
+        val result = rows(listOf(wanda.key, workWanda.key), badges = badges)
+        assertEquals(listOf(AppBadge.None, AppBadge.Count(2)), result.map { (it as HomeRow.App).badge })
+    }
+
+    @Test
+    fun `badges fall back to dots when counts are off`() {
+        val badges = mapOf(PackageUser("org.phalanx.android", 0) to 3)
+        val result = rows(listOf(phalanx.key), badges = badges, showCounts = false)
+        assertEquals(listOf(AppBadge.Dot), result.map { (it as HomeRow.App).badge })
     }
 }
