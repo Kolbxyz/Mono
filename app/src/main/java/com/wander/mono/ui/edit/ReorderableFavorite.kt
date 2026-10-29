@@ -1,0 +1,135 @@
+package com.wander.mono.ui.edit
+
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.zIndex
+import com.wander.mono.R
+import com.wander.mono.ui.home.FavoriteRow
+import com.wander.mono.ui.home.HomeRow
+
+/**
+ * A favourite on home, in or out of edit mode. The gestures live here, around both looks, so a
+ * hold-and-drag that starts edit mode carries on as the row turns into its edit form.
+ * [siblings] are the favourites' keys in shown order; the row's place among them sets its
+ * TalkBack move actions.
+ */
+@Composable
+fun ReorderableFavorite(
+    row: HomeRow.App,
+    siblings: List<String>,
+    rows: List<HomeRow>,
+    editing: HomeEditing,
+    onLaunch: () -> Unit,
+    onLongPress: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val haptics = LocalHapticFeedback.current
+    val interactions = remember { MutableInteractionSource() }
+    val reorder = editing.reorder
+    val lifted = reorder.dragging == row.key
+    val callbacks = rememberUpdatedState(
+        FavoriteGestureCallbacks(
+            editing = editing.active,
+            onTap = onLaunch,
+            onHeld = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
+            onHold = onLongPress,
+            onLift = {
+                if (!editing.active) editing.onEnter()
+                reorder.start(row.key, siblings)
+            },
+            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) },
+            onDrop = {
+                if (reorder.dragging == row.key) {
+                    haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                    editing.drop(rows)
+                }
+            },
+        ),
+    )
+    val placed = if (lifted) {
+        Modifier
+            .zIndex(1f)
+            .graphicsLayer { translationY = reorder.displacement }
+    } else {
+        modifier
+    }
+    Box(
+        placed
+            .favoriteSemantics(row, siblings, editing, onLaunch, onLongPress)
+            // The edit form draws its own container and lift shadow, which a clip would cut off.
+            .then(if (editing.active) Modifier else Modifier.clip(MaterialTheme.shapes.medium))
+            .indication(interactions, if (editing.active) null else ripple())
+            .pointerInput(row.key) { detectFavoriteGestures(interactions, callbacks) },
+    ) {
+        if (editing.active) {
+            EditFavoriteRow(
+                row = row,
+                toggles = editing.toggles[row.app.key].orEmpty(),
+                lifted = lifted,
+                onRename = { editing.onRename(row.app.key) },
+                onRemove = { editing.onRemove(row.app.key) },
+                onSetLiveRow = editing.onSetLiveRow,
+                handle = Modifier.pointerInput(row.key) { detectHandleDrag(callbacks) },
+            )
+        } else {
+            FavoriteRow(row)
+        }
+    }
+}
+
+/**
+ * Outside edit mode the row is one button (open, options). In edit mode its buttons and switches
+ * stay separate nodes, and the row offers TalkBack the moves a drag does.
+ */
+@Composable
+private fun Modifier.favoriteSemantics(
+    row: HomeRow.App,
+    siblings: List<String>,
+    editing: HomeEditing,
+    onLaunch: () -> Unit,
+    onLongPress: () -> Unit,
+): Modifier {
+    val openLabel = stringResource(R.string.action_open)
+    val optionsLabel = stringResource(R.string.action_app_options)
+    val moveUp = stringResource(R.string.sheet_move_up)
+    val moveDown = stringResource(R.string.sheet_move_down)
+    val moveToTop = stringResource(R.string.edit_move_to_top)
+    val index = siblings.indexOf(row.key)
+    val key = row.app.key
+    return if (editing.active) {
+        semantics {
+            customActions = buildList {
+                if (index > 0) {
+                    add(CustomAccessibilityAction(moveToTop) { editing.onMove(key, -index).let { true } })
+                    add(CustomAccessibilityAction(moveUp) { editing.onMove(key, -1).let { true } })
+                }
+                if (index in 0 until siblings.lastIndex) {
+                    add(CustomAccessibilityAction(moveDown) { editing.onMove(key, 1).let { true } })
+                }
+            }
+        }
+    } else {
+        semantics(mergeDescendants = true) {
+            onClick(openLabel) { onLaunch().let { true } }
+            onLongClick(optionsLabel) { onLongPress().let { true } }
+        }
+    }
+}

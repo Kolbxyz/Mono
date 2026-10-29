@@ -12,4 +12,17 @@ class ListMovesTest {
         assertEquals(listOf("b", "c", "a"), list.moved("a", 5))
         assertEquals(list, list.moved("z", 1))
     }
+
+    @Test
+    fun `reorders the given items in their own places and leaves the rest`() {
+        val list = listOf("a", "gone", "b", "c")
+        assertEquals(listOf("c", "gone", "a", "b"), list.reordered(listOf("c", "a", "b")))
+    }
+
+    @Test
+    fun `reordering ignores unknown items and keeps unlisted ones`() {
+        val list = listOf("a", "b", "c")
+        assertEquals(listOf("b", "a", "c"), list.reordered(listOf("b", "z", "a")))
+        assertEquals(list, list.reordered(emptyList()))
+    }
 }
