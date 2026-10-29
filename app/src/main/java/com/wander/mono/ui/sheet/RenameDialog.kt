@@ -26,15 +26,25 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
+
+/** The rename dialog of [rename], while it has an app to rename. */
+@Composable
+fun RenameDialog(rename: RenameViewModel) {
+    val app by rename.app.collectAsStateWithLifecycle()
+    app?.let { target ->
+        RenameDialog(target, onRename = { rename.rename(target.key, it) }, onDismiss = rename::dismiss)
+    }
+}
 
 /**
  * Renames [app] on home, in the drawer and in search. Starts on the current name, all selected;
  * saving a blank name, or "Use original name", goes back to the app's own.
  */
 @Composable
-fun RenameDialog(app: LaunchableApp, onRename: (String?) -> Unit, onDismiss: () -> Unit) {
+private fun RenameDialog(app: LaunchableApp, onRename: (String?) -> Unit, onDismiss: () -> Unit) {
     var text by rememberSaveable(app.key, stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(app.label, TextRange(0, app.label.length)))
     }

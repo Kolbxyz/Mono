@@ -37,8 +37,7 @@ import com.wander.mono.ui.drawer.SearchHit
 import com.wander.mono.ui.edit.EditEffects
 import com.wander.mono.ui.edit.EditHomeViewModel
 import com.wander.mono.ui.edit.EditToolbar
-import com.wander.mono.ui.edit.HomeEditing
-import com.wander.mono.ui.edit.ReorderState
+import com.wander.mono.ui.edit.rememberHomeEditing
 import com.wander.mono.ui.drawer.DrawerViewModel
 import com.wander.mono.ui.drawer.HitOutcome
 import com.wander.mono.ui.home.HomeLookViewModel
@@ -80,8 +79,6 @@ fun LauncherApp(
     val sheetState by sheet.state.collectAsStateWithLifecycle()
     val editingOn by launcher.editing.collectAsStateWithLifecycle()
     val pickingApp by launcher.pickingApp.collectAsStateWithLifecycle()
-    val liveRowToggles by edit.toggles.collectAsStateWithLifecycle()
-    val renaming by rename.app.collectAsStateWithLifecycle()
     val sheetUsage by sheet.usageToday.collectAsStateWithLifecycle()
     val quietOn by quiet.enabled.collectAsStateWithLifecycle()
     val unlockHidden = rememberCredentialPrompt(
@@ -90,18 +87,7 @@ fun LauncherApp(
         onNoScreenLock = drawer::reportNoScreenLock,
     )
     val homeList = rememberLazyListState()
-    val reorder = remember(homeList) { ReorderState(homeList) }
-    val editing = HomeEditing(
-        active = editingOn,
-        toggles = liveRowToggles,
-        reorder = reorder,
-        onEnter = { launcher.setEditing(true) },
-        onReorder = edit::reorder,
-        onMove = edit::move,
-        onRemove = edit::remove,
-        onRename = rename::show,
-        onSetLiveRow = edit::setLiveRow,
-    )
+    val editing = rememberHomeEditing(editingOn, homeList, edit, { launcher.setEditing(true) }, rename::show)
     val pick: (LaunchableApp) -> Unit = { app ->
         edit.add(app.key)
         launcher.closeDrawer()
@@ -200,18 +186,13 @@ fun LauncherApp(
         ) {
             SettingsScreen(onBack = launcher::closeSettings)
         }
-        AnimatedVisibility(
+        EditToolbar(
             visible = editingOn && !drawerOpen && !settingsOpen,
+            onDone = { launcher.setEditing(false) },
+            onAddApp = launcher::pickApp,
+            onOpenSettings = launcher::openSettings,
             modifier = Modifier.align(Alignment.BottomCenter),
-            enter = slideInVertically(motion.defaultSpatialSpec()) { it } + fadeIn(motion.defaultEffectsSpec()),
-            exit = slideOutVertically(motion.fastSpatialSpec()) { it } + fadeOut(motion.fastEffectsSpec()),
-        ) {
-            EditToolbar(
-                onDone = { launcher.setEditing(false) },
-                onAddApp = launcher::pickApp,
-                onOpenSettings = launcher::openSettings,
-            )
-        }
+        )
         SnackbarHost(
             snackbar,
             Modifier
@@ -255,9 +236,7 @@ fun LauncherApp(
             onUninstall = sheet::uninstall,
         )
     }
-    renaming?.let { app ->
-        RenameDialog(app, onRename = { rename.rename(app.key, it) }, onDismiss = rename::dismiss)
-    }
+    RenameDialog(rename)
 }
 
 /** Overlays slide in from a quarter of the screen away (below, or to the side), not from the edge. */

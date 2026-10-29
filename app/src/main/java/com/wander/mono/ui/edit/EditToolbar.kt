@@ -1,5 +1,10 @@
 package com.wander.mono.ui.edit
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
@@ -12,6 +17,7 @@ import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,15 +28,34 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 
-/** Edit mode's floating toolbar, in the thumb zone: add an app, settings, and Done. */
+/** Edit mode's floating toolbar, in the thumb zone: add an app, settings, and Done. Slides up while [visible]. */
+@Composable
+fun EditToolbar(
+    visible: Boolean,
+    onDone: () -> Unit,
+    onAddApp: () -> Unit,
+    onOpenSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val motion = MaterialTheme.motionScheme
+    AnimatedVisibility(
+        visible = visible,
+        modifier = modifier,
+        enter = slideInVertically(motion.defaultSpatialSpec()) { it } + fadeIn(motion.defaultEffectsSpec()),
+        exit = slideOutVertically(motion.fastSpatialSpec()) { it } + fadeOut(motion.fastEffectsSpec()),
+    ) {
+        Toolbar(onDone, onAddApp, onOpenSettings)
+    }
+}
+
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun EditToolbar(onDone: () -> Unit, onAddApp: () -> Unit, onOpenSettings: () -> Unit, modifier: Modifier = Modifier) {
+private fun Toolbar(onDone: () -> Unit, onAddApp: () -> Unit, onOpenSettings: () -> Unit) {
     val editingLabel = stringResource(R.string.state_editing)
     HorizontalFloatingToolbar(
         expanded = true,
         colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
-        modifier = modifier
+        modifier = Modifier
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
             .padding(bottom = 16.dp)
             .semantics { paneTitle = editingLabel },
