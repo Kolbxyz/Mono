@@ -19,6 +19,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,8 +118,12 @@ private fun AppList(
                 )
             }
         }
+        val current by remember(state.sections) {
+            derivedStateOf { RailMath.sectionIndexFor(state.sections, listState.firstVisibleItemIndex) }
+        }
         LetterRail(
             sections = state.sections,
+            current = current,
             onSelect = { section -> scope.launch { listState.scrollToItem(section.index) } },
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -124,5 +131,3 @@ private fun AppList(
         )
     }
 }
-
-private val RAIL_WIDTH = 32.dp

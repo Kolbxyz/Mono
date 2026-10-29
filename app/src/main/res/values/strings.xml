@@ -25,6 +25,7 @@
     <!-- Drawer -->
     <string name="drawer_search_hint">Search apps and shortcuts</string>
     <string name="drawer_no_results">Nothing matches</string>
+    <string name="drawer_rail">Jump to letter</string>
 
     <!-- Long-press sheet -->
     <string name="sheet_add_to_home">Add to home</string>
