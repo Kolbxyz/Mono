@@ -50,7 +50,7 @@ class ShortcutRepository @Inject constructor(
         hostAllowed.value = launcherApps.hasShortcutHostPermission()
     }
 
-    private fun query(): List<AppShortcut> = launcherApps.profiles.flatMap { user -> queryProfile(user) }
+    private fun query(): List<AppShortcut> = profiles.listed().flatMap { user -> queryProfile(user) }
 
     private fun queryProfile(user: UserHandle): List<AppShortcut> {
         val serial = profiles.serialOf(user)

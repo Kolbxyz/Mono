@@ -22,6 +22,13 @@
     <!-- Upcoming events on home. Opt-in: asked for only when the Calendar setting is switched on. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 
+    <!--
+      Android 15's private space. A normal permission, but Android honours it only for the default
+      home app (the HOME role): only then does LauncherApps list the private profile, its apps and
+      its settings. Any other app holding it still sees no private space.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
+
     <!-- Contacts in search: opt-in from settings, asked for only when the user switches it on. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 

@@ -67,8 +67,10 @@ private fun NameRow(app: LaunchableApp, badge: AppBadge, style: TextStyle) {
         )
         if (!app.isMainProfile) {
             Icon(
-                painterResource(R.drawable.sym_work),
-                contentDescription = stringResource(R.string.state_work_profile),
+                painterResource(if (app.isPrivate) R.drawable.sym_lock else R.drawable.sym_work),
+                contentDescription = stringResource(
+                    if (app.isPrivate) R.string.state_private_space else R.string.state_work_profile,
+                ),
                 tint = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.size(16.dp),
             )

@@ -65,7 +65,7 @@ fun AppSheet(
                         onSetLiftsWithHeadphones(key, it)
                     }
                 }
-            } else {
+            } else if (state.canGoOnHome) {
                 SheetAction(stringResource(R.string.sheet_add_to_home)) { onAddToHome(key) }
             }
             SheetAction(stringResource(R.string.sheet_rename)) { onRename(key) }

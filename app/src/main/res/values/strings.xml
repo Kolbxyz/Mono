@@ -22,6 +22,7 @@
     <!-- States announced by TalkBack -->
     <string name="state_has_notifications">Has notifications</string>
     <string name="state_work_profile">Work profile</string>
+    <string name="state_private_space">Private space</string>
 
     <!-- Now playing -->
     <string name="media_artwork">Artwork</string>
@@ -146,6 +147,11 @@
 
     <!-- Hidden apps -->
     <string name="drawer_unlock_hidden">Search hidden apps too</string>
+    <string name="drawer_private">Private</string>
+    <string name="drawer_private_unlock">Unlock private space</string>
+    <string name="drawer_private_lock">Lock private space</string>
+    <string name="drawer_private_settings">Private space settings</string>
+    <string name="drawer_private_locked">Locked</string>
     <string name="hidden_unlock_title">Show hidden apps</string>
     <string name="settings_hidden">Hidden apps</string>
     <string name="settings_hidden_lock">Lock hidden apps</string>

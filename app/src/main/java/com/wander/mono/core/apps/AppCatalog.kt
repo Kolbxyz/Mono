@@ -57,13 +57,15 @@ class AppCatalog @Inject constructor(
         loaded?.let { withCustomLabels(it, labels).sortedWith(byLabel) }
     }.flowOn(Dispatchers.Default).stateIn(scope, SharingStarted.Eagerly, null)
 
-    private fun load(): List<LaunchableApp> = launcherApps.profiles.flatMap { user ->
+    /** A locked private space lists nothing: its apps are neither shown nor searchable until it is unlocked. */
+    private fun load(): List<LaunchableApp> = profiles.listed().flatMap { user ->
         val serial = profiles.serialOf(user)
         val isMain = user == profiles.main
+        val isPrivate = profiles.isPrivate(user)
         launcherApps.getActivityList(null, user).map { info ->
             val component = info.componentName
             val key = AppKey(component.packageName, component.className, serial)
-            val app = LaunchableApp(key, info.label.toString(), isMain)
+            val app = LaunchableApp(key, info.label.toString(), isMain, isPrivate = isPrivate)
             LabeledActivity(app, info.applicationInfo.loadLabel(packageManager).toString())
         }
     }.let(::resolveLabelClashes)

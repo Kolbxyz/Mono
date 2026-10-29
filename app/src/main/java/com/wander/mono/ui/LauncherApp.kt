@@ -40,6 +40,7 @@ import com.wander.mono.ui.edit.EditToolbar
 import com.wander.mono.ui.edit.rememberHomeEditing
 import com.wander.mono.ui.drawer.DrawerViewModel
 import com.wander.mono.ui.drawer.HitOutcome
+import com.wander.mono.ui.drawer.PrivateSpaceActions
 import com.wander.mono.ui.home.HomeLookViewModel
 import com.wander.mono.ui.home.HomeScreen
 import com.wander.mono.ui.home.HomeViewModel
@@ -90,6 +91,7 @@ fun LauncherApp(
     )
     val homeList = rememberLazyListState()
     val editing = rememberHomeEditing(editingOn, homeList, edit, { launcher.setEditing(true) }, rename::show)
+    val privateActions = remember(drawer) { PrivateSpaceActions(drawer::setPrivateLocked, drawer::openPrivateSettings) }
     val pick: (LaunchableApp) -> Unit = { app ->
         edit.add(app.key)
         launcher.closeDrawer()
@@ -177,6 +179,7 @@ fun LauncherApp(
                     onClose = launcher::closeDrawer,
                     onOpenSettings = launcher::openSettings,
                     onUnlockHidden = unlockHidden,
+                    privateActions = privateActions,
                     pickingApp = pickingApp,
                 )
             }
