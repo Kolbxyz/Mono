@@ -12,12 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.ui.theme.secondaryTextColor
 
 /** Home with no favourite yet (spec 4.5): what home is for and the way to fill it, in the thumb zone. */
 @Composable
 fun EmptyHome(onChooseFavorites: () -> Unit, modifier: Modifier = Modifier) {
     val typography = MaterialTheme.typography
-    val secondary = MaterialTheme.colorScheme.onSurfaceVariant
+    val secondary = secondaryTextColor()
     Column(modifier.padding(vertical = 8.dp)) {
         Text(stringResource(R.string.home_empty_title), style = typography.headlineMedium.onWallpaper())
         Spacer(Modifier.height(8.dp))

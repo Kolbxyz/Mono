@@ -39,6 +39,7 @@ fun ReorderableFavorite(
     editing: HomeEditing,
     onLaunch: () -> Unit,
     onLongPress: () -> Unit,
+    onAppInfo: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val haptics = LocalHapticFeedback.current
@@ -73,7 +74,7 @@ fun ReorderableFavorite(
     }
     Box(
         placed
-            .favoriteSemantics(row, siblings, editing, onLaunch, onLongPress)
+            .favoriteSemantics(row, siblings, editing, onLaunch, onLongPress, onAppInfo)
             // The edit form draws its own container and lift shadow, which a clip would cut off.
             .then(if (editing.active) Modifier else Modifier.clip(MaterialTheme.shapes.medium))
             .indication(interactions, if (editing.active) null else ripple())
@@ -96,7 +97,8 @@ fun ReorderableFavorite(
 }
 
 /**
- * Outside edit mode the row is one button (open, options). In edit mode its buttons and switches
+ * Outside edit mode the row is one button (open, options) offering App info and the moves as
+ * custom actions, so TalkBack can reorder without entering edit mode. In edit mode its buttons and switches
  * stay separate nodes, and the row offers TalkBack the moves a drag does.
  */
 @Composable
@@ -106,12 +108,14 @@ private fun Modifier.favoriteSemantics(
     editing: HomeEditing,
     onLaunch: () -> Unit,
     onLongPress: () -> Unit,
+    onAppInfo: () -> Unit,
 ): Modifier {
     val openLabel = stringResource(R.string.action_open)
     val optionsLabel = stringResource(R.string.action_app_options)
     val moveUp = stringResource(R.string.sheet_move_up)
     val moveDown = stringResource(R.string.sheet_move_down)
     val moveToTop = stringResource(R.string.edit_move_to_top)
+    val appInfo = stringResource(R.string.sheet_app_info)
     val index = siblings.indexOf(row.key)
     val key = row.app.key
     return if (editing.active) {
@@ -130,6 +134,13 @@ private fun Modifier.favoriteSemantics(
         semantics(mergeDescendants = true) {
             onClick(openLabel) { onLaunch().let { true } }
             onLongClick(optionsLabel) { onLongPress().let { true } }
+            customActions = buildList {
+                add(CustomAccessibilityAction(appInfo) { onAppInfo().let { true } })
+                if (index > 0) add(CustomAccessibilityAction(moveUp) { editing.onMove(key, -1).let { true } })
+                if (index in 0 until siblings.lastIndex) {
+                    add(CustomAccessibilityAction(moveDown) { editing.onMove(key, 1).let { true } })
+                }
+            }
         }
     }
 }

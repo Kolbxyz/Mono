@@ -53,6 +53,7 @@ import com.wander.mono.core.widgets.MonoWidgetHostView
 import com.wander.mono.ui.components.ReadableLayout
 import com.wander.mono.ui.components.readableColumn
 import com.wander.mono.ui.components.rememberOverscrollSwipe
+import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
  * The home screen over the wallpaper: the glance header at the top, the rows anchored to the
@@ -69,6 +70,7 @@ fun HomeScreen(
     editing: HomeEditing,
     onLaunch: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
+    onAppInfo: (LaunchableApp) -> Unit,
     onTogglePlay: () -> Unit,
     onSkipNext: () -> Unit,
     onSkipPrevious: () -> Unit,
@@ -91,15 +93,12 @@ fun HomeScreen(
     val density = LocalDensity.current
     val headerBottom = remember { mutableFloatStateOf(0f) }
     val listViewportTop = remember { mutableFloatStateOf(0f) }
+    val legibleAlpha = remember(look.tone, scheme.surface, scheme.onSurface) {
+        scrimAlpha(look.tone, scheme.surface.toArgb(), scheme.onSurface.toArgb())
+    }
     // Edit mode dims the wallpaper (spec 4.6).
     val editDim = animateFloatAsState(if (editing.active) EDIT_DIM else 0f, motion.defaultEffectsSpec())
-    val scrimAlpha = if (look.textShadow) {
-        0f
-    } else {
-        remember(look.tone, scheme.surface, scheme.onSurface) {
-            scrimAlpha(look.tone, scheme.surface.toArgb(), scheme.onSurface.toArgb())
-        }
-    }
+    val scrimAlpha = homeScrimAlpha(legibleAlpha, look.textShadow, look.highContrast)
     val shadow = if (look.textShadow) {
         with(density) {
             Shadow(scheme.scrim.copy(alpha = SHADOW_ALPHA), Offset(0f, 1.dp.toPx()), blurRadius = 4.dp.toPx())
@@ -109,7 +108,11 @@ fun HomeScreen(
     }
 
     // Without onSurface as the content colour, the clock and favourites would fall back to black.
-    CompositionLocalProvider(LocalContentColor provides scheme.onSurface, LocalWallpaperTextShadow provides shadow) {
+    CompositionLocalProvider(
+        LocalContentColor provides scheme.onSurface,
+        LocalWallpaperTextShadow provides shadow,
+        LocalHighContrast provides look.highContrast,
+    ) {
         BoxWithConstraints(
             modifier
                 .fillMaxSize()
@@ -179,6 +182,7 @@ fun HomeScreen(
                                 editing = editing,
                                 onLaunch = { onLaunch(row.app) },
                                 onLongPress = { onLongPress(row.app) },
+                                onAppInfo = { onAppInfo(row.app) },
                                 modifier = animated,
                             )
                             is HomeRow.NowPlaying -> NowPlayingCard(

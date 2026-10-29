@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ fun DrawerAppRow(
     Row(
         modifier
             .fillMaxWidth()
+            .heightIn(min = MIN_ROW_HEIGHT)
             .combinedClickable(
                 onClickLabel = stringResource(R.string.action_open),
                 onLongClickLabel = stringResource(R.string.action_app_options),
@@ -58,6 +60,7 @@ fun ShortcutRow(
     Row(
         modifier
             .fillMaxWidth()
+            .heightIn(min = MIN_ROW_HEIGHT)
             .clickable(onClickLabel = stringResource(R.string.action_open), onClick = onLaunch)
             .unreadState(hit.badge)
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -84,7 +87,11 @@ fun ShortcutRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
 }
+
+/** A full touch target even in text-only mode, where no icon props the row up (spec 9). */
+internal val MIN_ROW_HEIGHT = 48.dp

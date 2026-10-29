@@ -51,6 +51,7 @@ import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.sheet.HomeSheet
 import com.wander.mono.ui.sheet.RenameDialog
 import com.wander.mono.ui.sheet.RenameViewModel
+import com.wander.mono.ui.theme.LocalReducedMotion
 import com.wander.mono.ui.widgets.WidgetSheets
 import com.wander.mono.ui.widgets.WidgetsViewModel
 
@@ -105,7 +106,12 @@ fun LauncherApp(
     }
 
     LaunchedEffect(launcher) { launcher.messages.collect { snackbar.showSnackbar(resources.getString(it)) } }
-    LaunchedEffect(launcher) { launcher.scrollToTop.collect { homeList.animateScrollToItem(0) } }
+    val reducedMotion = LocalReducedMotion.current
+    LaunchedEffect(launcher, reducedMotion) {
+        launcher.scrollToTop.collect {
+            if (reducedMotion) homeList.scrollToItem(0) else homeList.animateScrollToItem(0)
+        }
+    }
     // Every way of closing the drawer (back, swipe, launch, home press) starts the next search afresh.
     LaunchedEffect(drawerOpen) { if (!drawerOpen) drawer.setQuery("") }
     EditEffects(editing, rows, homeList)
@@ -128,6 +134,7 @@ fun LauncherApp(
             editing = editing,
             onLaunch = home::launch,
             onLongPress = { sheet.show(it.key) },
+            onAppInfo = { sheet.openAppInfo(it.key) },
             onTogglePlay = home::togglePlayPause,
             onSkipNext = home::skipNext,
             onSkipPrevious = home::skipPrevious,

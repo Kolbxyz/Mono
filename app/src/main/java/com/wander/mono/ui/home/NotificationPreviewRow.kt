@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Text
@@ -38,12 +40,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.Redaction
+import com.wander.mono.ui.theme.isLargeFontScale
+import com.wander.mono.ui.theme.secondaryTextColor
 import kotlinx.coroutines.launch
 
 /**
  * The latest notification under its favourite: "title · text" on at most two quiet lines. Tap
  * opens it, a sideways swipe dismisses it (when the shade would let it), and Reply opens an inline
- * field when the notification takes text. Hidden content only says there is something new.
+ * field when the notification takes text. Hidden content only says there is something new. For
+ * TalkBack the swipe is a Dismiss action on the text, which is the row's focusable node.
  */
 @Composable
 fun NotificationPreviewRow(
@@ -60,20 +65,22 @@ fun NotificationPreviewRow(
     key(row.preview.key) {
         val swipe = rememberSwipeToDismissBoxState()
         val dismissLabel = stringResource(R.string.preview_dismiss)
+        val actions = if (row.preview.isClearable) {
+            listOf(CustomAccessibilityAction(dismissLabel) { previews.dismiss(row) })
+        } else {
+            emptyList()
+        }
         SwipeToDismissBox(
             state = swipe,
             backgroundContent = {},
-            modifier = modifier.semantics {
-                if (row.preview.isClearable) {
-                    customActions = listOf(CustomAccessibilityAction(dismissLabel) { previews.dismiss(row) })
-                }
-            },
+            modifier = modifier,
             gesturesEnabled = row.preview.isClearable && !expanded,
             onDismiss = { if (!previews.dismiss(row)) scope.launch { swipe.reset() } },
         ) {
             PreviewContent(
                 preview = row.preview,
                 expanded = expanded,
+                actions = actions,
                 onOpen = { previews.open(row) },
                 onReplyToggle = { previews.setReplying(row, open = true) },
                 onSend = { previews.reply(row, it) },
@@ -86,11 +93,13 @@ fun NotificationPreviewRow(
 private fun PreviewContent(
     preview: NotificationPreview,
     expanded: Boolean,
+    actions: List<CustomAccessibilityAction>,
     onOpen: () -> Unit,
     onReplyToggle: () -> Unit,
     onSend: (String) -> Boolean,
 ) {
     val motion = MaterialTheme.motionScheme
+    val stacked = isLargeFontScale()
     Column(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -99,21 +108,21 @@ private fun PreviewContent(
             Text(
                 previewText(preview),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = secondaryTextColor(),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .weight(1f)
+                    .heightIn(min = MIN_TOUCH)
                     .clip(MaterialTheme.shapes.small)
                     .clickable(onClickLabel = stringResource(R.string.preview_open), onClick = onOpen)
+                    .semantics { customActions = actions }
+                    .wrapContentHeight(Alignment.CenterVertically)
                     .padding(vertical = 4.dp),
             )
-            preview.reply?.takeIf { !expanded }?.let { reply ->
-                TextButton(onClick = onReplyToggle) {
-                    Text(reply.label.ifBlank { stringResource(R.string.preview_reply) })
-                }
-            }
+            if (!stacked) ReplyButton(preview, expanded, onReplyToggle)
         }
+        if (stacked) ReplyButton(preview, expanded, onReplyToggle, Modifier.align(Alignment.End))
         AnimatedVisibility(
             visible = expanded,
             enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
@@ -121,6 +130,19 @@ private fun PreviewContent(
         ) {
             ReplyField(hint = preview.reply?.hint, onSend = onSend, modifier = Modifier.padding(top = 4.dp))
         }
+    }
+}
+
+@Composable
+private fun ReplyButton(
+    preview: NotificationPreview,
+    expanded: Boolean,
+    onReplyToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val reply = preview.reply?.takeIf { !expanded } ?: return
+    TextButton(onClick = onReplyToggle, modifier = modifier) {
+        Text(reply.label.ifBlank { stringResource(R.string.preview_reply) })
     }
 }
 
@@ -136,3 +158,5 @@ private fun previewText(preview: NotificationPreview) = buildAnnotatedString {
     }
     preview.text?.let(::append)
 }
+
+private val MIN_TOUCH = 48.dp

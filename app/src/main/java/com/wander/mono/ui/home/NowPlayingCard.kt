@@ -39,13 +39,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.media.PlayingMedia
+import com.wander.mono.ui.theme.isLargeFontScale
 import kotlin.math.abs
 
 /**
  * The playing media, inline under its app and tinted by the artwork. Collapsed it is one calm line:
  * artwork, title, artist, play/pause and the wavy progress. A tap expands it to bigger artwork and
  * previous / play / next, the output device, a draggable bar to seek and what plays next; a
- * horizontal swipe skips either way.
+ * horizontal swipe skips either way. Above 1.5× font scale the collapsed play/pause moves under the
+ * text so the title keeps its width.
  */
 @Composable
 fun NowPlayingCard(
@@ -66,7 +68,8 @@ fun NowPlayingCard(
     val container by animateColorAsState(tint, motion.defaultEffectsSpec(), label = "art-tint")
     val content = mostContrasting(container, scheme.onSurface, scheme.inverseOnSurface)
     val artSize by animateDpAsState(if (expanded) ART_EXPANDED else ART_COLLAPSED, motion.defaultSpatialSpec())
-    val skipActions = skipActions(media, onSkipNext, onSkipPrevious)
+    val mediaActions = mediaActions(media, onTogglePlay, onSkipNext, onSkipPrevious)
+    val stacked = isLargeFontScale()
 
     Card(
         modifier = modifier
@@ -86,7 +89,7 @@ fun NowPlayingCard(
                 .clickable(
                     onClickLabel = stringResource(if (expanded) R.string.media_collapse else R.string.media_expand),
                 ) { expanded = !expanded }
-                .semantics { customActions = skipActions }
+                .semantics { customActions = mediaActions }
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
@@ -118,7 +121,10 @@ fun NowPlayingCard(
                         )
                     }
                 }
-                if (!expanded) PlayPauseButton(media.isPlaying, onTogglePlay)
+                if (!expanded && !stacked) PlayPauseButton(media.isPlaying, onTogglePlay)
+            }
+            if (!expanded && stacked) {
+                PlayPauseButton(media.isPlaying, onTogglePlay, Modifier.align(Alignment.End))
             }
             ExpandedPart(expanded) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -153,16 +159,27 @@ private fun ExpandedPart(expanded: Boolean, content: @Composable () -> Unit) {
     }
 }
 
-/** The swipe is not reachable with TalkBack, so its skips are also offered as actions. */
+/**
+ * The swipe is not reachable with TalkBack and the transport hides while collapsed, so play/pause
+ * and the skips are also offered as actions on the card itself.
+ */
 @Composable
-private fun skipActions(
+private fun mediaActions(
     media: PlayingMedia,
+    onTogglePlay: () -> Unit,
     onSkipNext: () -> Unit,
     onSkipPrevious: () -> Unit,
 ): List<CustomAccessibilityAction> {
     val previous = stringResource(R.string.media_previous)
     val next = stringResource(R.string.media_next)
+    val toggle = stringResource(if (media.isPlaying) R.string.media_pause else R.string.media_play)
     return buildList {
+        add(
+            CustomAccessibilityAction(toggle) {
+                onTogglePlay()
+                true
+            },
+        )
         if (media.canSkipPrevious) {
             add(
                 CustomAccessibilityAction(previous) {
