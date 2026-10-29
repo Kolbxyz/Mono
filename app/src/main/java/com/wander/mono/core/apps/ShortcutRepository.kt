@@ -3,6 +3,7 @@ package com.wander.mono.core.apps
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.content.pm.LauncherApps.ShortcutQuery
+import android.content.pm.ShortcutInfo
 import android.os.Build
 import android.os.UserHandle
 import com.wander.mono.di.AppScope
@@ -53,17 +54,22 @@ class ShortcutRepository @Inject constructor(
 
     private fun queryProfile(user: UserHandle): List<AppShortcut> {
         val serial = profiles.serialOf(user)
-        val shortcuts = try {
-            launcherApps.getShortcuts(ShortcutQuery().setQueryFlags(QUERY_FLAGS), user).orEmpty()
-        } catch (_: IllegalStateException) {
-            // A paused or locked profile has no readable shortcuts until it is unlocked; the
-            // unlock broadcast reloads this.
-            return emptyList()
-        }
-        return shortcuts.filter { it.isEnabled }.mapNotNull { info ->
+        return readShortcuts(user).filter { it.isEnabled }.mapNotNull { info ->
             val label = info.shortLabel ?: info.longLabel ?: return@mapNotNull null
             AppShortcut(info.`package`, info.id, serial, label.toString())
         }
+    }
+
+    private fun readShortcuts(user: UserHandle): List<ShortcutInfo> = try {
+        launcherApps.getShortcuts(ShortcutQuery().setQueryFlags(QUERY_FLAGS), user).orEmpty()
+    } catch (_: IllegalStateException) {
+        // A paused or locked profile has no readable shortcuts until it is unlocked; the
+        // unlock broadcast reloads this.
+        emptyList()
+    } catch (_: SecurityException) {
+        // Another app became the default home between the permission check and this read.
+        hostAllowed.value = false
+        emptyList()
     }
 
     private companion object {

@@ -1,5 +1,6 @@
 package com.wander.mono.ui.home
 
+import android.content.Context
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -44,8 +45,12 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarEvent
+<<<<<<< HEAD
 import com.wander.mono.ui.components.ReadableLayout
 import com.wander.mono.ui.components.readableColumn
+=======
+import com.wander.mono.core.widgets.MonoWidgetHostView
+>>>>>>> v0.2
 import com.wander.mono.ui.components.rememberOverscrollSwipe
 
 /**
@@ -72,6 +77,8 @@ fun HomeScreen(
     onOpenEvent: (CalendarEvent) -> Unit,
     onOpenDrawer: () -> Unit,
     onHomeOptions: () -> Unit,
+    createWidgetView: (Context, Int) -> MonoWidgetHostView,
+    onWidgetLongPress: (WidgetHomeRow) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val swipeUp = rememberOverscrollSwipe(upward = true, onSwipe = onOpenDrawer)
@@ -177,6 +184,12 @@ fun HomeScreen(
                             HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
                             is NotificationRow -> NotificationPreviewRow(row, animated)
                             is CalendarRow -> CalendarCard(row, onOpenEvent, animated)
+                            is WidgetHomeRow -> WidgetRow(
+                                row = row,
+                                createView = createWidgetView,
+                                onLongPress = { onWidgetLongPress(row) },
+                                modifier = animated,
+                            )
                         }
                     }
                 }

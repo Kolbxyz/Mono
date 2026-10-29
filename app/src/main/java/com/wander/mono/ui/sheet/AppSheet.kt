@@ -25,6 +25,7 @@ import com.wander.mono.ui.components.ReadableLayout
 @Composable
 fun AppSheet(
     state: AppSheetState,
+    usageToday: Long?,
     onDismiss: () -> Unit,
     onShortcut: (AppShortcut) -> Unit,
     onAddToHome: (AppKey) -> Unit,
@@ -42,6 +43,7 @@ fun AppSheet(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
+            usageToday?.let { UsageLine(it) }
             state.shortcuts.forEach { shortcut -> SheetAction(shortcut.label) { onShortcut(shortcut) } }
             if (state.shortcuts.isNotEmpty()) HorizontalDivider(Modifier.padding(vertical = 8.dp))
             if (state.isFavorite) {
