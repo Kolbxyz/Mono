@@ -4,8 +4,17 @@ import com.wander.mono.core.media.QueueEntry
 import com.wander.mono.core.siblings.SiblingContract.Phalanx
 import com.wander.mono.core.siblings.SiblingContract.Wanda
 
-/** A song in Wanda's local library, as drawer search shows it. [playUri] is what Wanda opens. */
-data class WandaTrack(val trackId: String, val title: String, val artist: String?, val playUri: String)
+/**
+ * A song in Wanda's local library, as drawer search shows it. [playUri] is what Wanda opens;
+ * [packageName] is the Wanda build that answered, so the link goes back to it.
+ */
+data class WandaTrack(
+    val trackId: String,
+    val title: String,
+    val artist: String?,
+    val playUri: String,
+    val packageName: String,
+)
 
 /** A Phalanx room with something unread. Its id is also the id of its conversation shortcut. */
 data class RoomUnread(val roomId: String, val unread: Int, val markedUnread: Boolean)
@@ -22,11 +31,11 @@ internal object SiblingRows {
         return QueueEntry(id, title, row.string(Wanda.ARTIST)?.takeIf { it.isNotBlank() })
     }
 
-    fun track(row: ProviderRow): WandaTrack? {
+    fun track(row: ProviderRow, packageName: String): WandaTrack? {
         val id = row.string(Wanda.TRACK_ID) ?: return null
         val title = row.string(Wanda.TITLE)?.takeIf { it.isNotBlank() } ?: return null
         val uri = row.string(Wanda.PLAY_URI)?.takeIf { it.isNotBlank() } ?: return null
-        return WandaTrack(id, title, row.string(Wanda.ARTIST)?.takeIf { it.isNotBlank() }, uri)
+        return WandaTrack(id, title, row.string(Wanda.ARTIST)?.takeIf { it.isNotBlank() }, uri, packageName)
     }
 
     fun room(row: ProviderRow): RoomUnread? {

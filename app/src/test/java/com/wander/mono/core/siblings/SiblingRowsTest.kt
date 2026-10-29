@@ -34,14 +34,15 @@ class SiblingRowsTest {
     fun `unknown columns are ignored`() {
         val track = SiblingRows.track(
             row("track_id" to "t1", "title" to "Song", "artist" to "Band", "play_uri" to "wanda://track?id=t1", "x" to 1),
+            WANDA,
         )
-        assertEquals(WandaTrack("t1", "Song", "Band", "wanda://track?id=t1"), track)
+        assertEquals(WandaTrack("t1", "Song", "Band", "wanda://track?id=t1", WANDA), track)
     }
 
     @Test
     fun `a track that cannot be played is not offered`() {
-        assertNull(SiblingRows.track(row("track_id" to "t1", "title" to "Song")))
-        assertNull(SiblingRows.track(row("title" to "Song", "play_uri" to "wanda://track")))
+        assertNull(SiblingRows.track(row("track_id" to "t1", "title" to "Song"), WANDA))
+        assertNull(SiblingRows.track(row("title" to "Song", "play_uri" to "wanda://track"), WANDA))
     }
 
     @Test
@@ -65,5 +66,9 @@ class SiblingRowsTest {
         assertTrue(SiblingRows.isFresh(null, nowMs = 10 * day))
         assertTrue(SiblingRows.isFresh(9 * day, nowMs = 10 * day))
         assertFalse(SiblingRows.isFresh(8 * day, nowMs = 10 * day))
+    }
+
+    private companion object {
+        const val WANDA = "com.wander.android"
     }
 }
