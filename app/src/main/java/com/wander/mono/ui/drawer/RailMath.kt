@@ -2,6 +2,7 @@ package com.wander.mono.ui.drawer
 
 import kotlin.math.PI
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.cos
 
 /**
@@ -37,6 +38,15 @@ internal object RailMath {
     /** The section whose letter covers list item [itemIndex]: the last one starting at or before it. */
     fun sectionIndexFor(sections: List<Section>, itemIndex: Int): Int =
         sections.indexOfLast { it.index <= itemIndex }.coerceAtLeast(0).coerceAtMost(sections.lastIndex)
+
+    /**
+     * Every how many letters one is drawn so each drawn letter gets at least [minSlot]: 1 on a
+     * phone in portrait, more on a short rail (landscape), where the skipped ones still scrub.
+     */
+    fun labelStride(height: Float, count: Int, minSlot: Float): Int {
+        if (count <= 0 || height <= 0f) return 1
+        return ceil(minSlot * count / height).toInt().coerceAtLeast(1)
+    }
 
     private const val HALF = 0.5f
 }

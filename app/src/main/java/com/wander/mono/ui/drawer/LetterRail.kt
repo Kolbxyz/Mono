@@ -60,6 +60,8 @@ fun LetterRail(
     val reducedMotion = LocalReducedMotion.current
     val mirror = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
     val amplitude = with(LocalDensity.current) { WAVE_AMPLITUDE.toPx() }
+    // A drawn letter needs one labelMedium line, at the user's font scale.
+    val minSlot = with(LocalDensity.current) { MaterialTheme.typography.labelMedium.lineHeight.toPx() }
     val currentSections by rememberUpdatedState(sections)
     val currentOnSelect by rememberUpdatedState(onSelect)
 
@@ -122,24 +124,28 @@ fun LetterRail(
                 }
             },
     ) {
+        // A short rail (landscape) draws every other or third letter; all of them still scrub.
+        val stride = RailMath.labelStride(height.toFloat(), sections.size, minSlot)
         Column(Modifier.fillMaxHeight()) {
             sections.forEachIndexed { index, section ->
                 val lit = scrubbing && index == active
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    Text(
-                        section.letter,
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = if (lit) FontWeight.Bold else null,
-                        color = if (lit) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        modifier = Modifier.graphicsLayer {
-                            val slot = RailMath.fingerSlot(fingerY, height.toFloat(), sections.size)
-                            translationX = -mirror * amplitude * wave * RailMath.waveFraction(index - slot)
-                        },
-                    )
+                    if (lit || index % stride == 0) {
+                        Text(
+                            section.letter,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = if (lit) FontWeight.Bold else null,
+                            color = if (lit) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                            modifier = Modifier.graphicsLayer {
+                                val slot = RailMath.fingerSlot(fingerY, height.toFloat(), sections.size)
+                                translationX = -mirror * amplitude * wave * RailMath.waveFraction(index - slot)
+                            },
+                        )
+                    }
                 }
             }
         }
