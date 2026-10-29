@@ -36,12 +36,16 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var settings: SettingsStore
 
+    @Inject
+    lateinit var widgetResults: WidgetActivityResults
+
     private val launcher: LauncherViewModel by viewModels()
     private val sheet: AppSheetViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        widgetResults.attach(this)
         setContent {
             // Nothing is drawn until the theme is read (a few ms, once per process): drawing the
             // default first would flash the wrong theme on every cold start.
@@ -85,6 +89,13 @@ class MainActivity : ComponentActivity() {
         val alreadyOnHome = hasWindowFocus() && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT == 0
         sheet.dismiss()
         launcher.onHomePressed(alreadyOnHome)
+    }
+
+    @Deprecated("Widget configure activities only report here; see WidgetActivityResults.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (!widgetResults.onActivityResult(requestCode, resultCode)) {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
     }
 
     private companion object {
