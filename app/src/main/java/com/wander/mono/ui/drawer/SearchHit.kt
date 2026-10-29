@@ -2,6 +2,7 @@ package com.wander.mono.ui.drawer
 
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.ui.components.AppBadge
 
 /** One search result: an app (hidden ones included) or one of an app's shortcuts. */
 sealed interface SearchHit {
@@ -13,8 +14,15 @@ sealed interface SearchHit {
         override val label: String get() = entry.app.label
     }
 
-    /** [owner] is the app that published it, for its icon and name; null when it has no launcher entry. */
-    data class Shortcut(val shortcut: AppShortcut, val owner: LaunchableApp?) : SearchHit {
+    /**
+     * [owner] is the app that published it, for its icon and name; null when it has no launcher entry.
+     * [badge] marks a conversation shortcut with unread messages.
+     */
+    data class Shortcut(
+        val shortcut: AppShortcut,
+        val owner: LaunchableApp?,
+        val badge: AppBadge = AppBadge.None,
+    ) : SearchHit {
         override val key: String get() = "shortcut:${shortcut.userSerial}/${shortcut.packageName}/${shortcut.id}"
         override val label: String get() = shortcut.label
     }

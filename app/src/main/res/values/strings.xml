@@ -96,7 +96,23 @@
     <string name="settings_badge_counts">Show unread count</string>
     <string name="settings_badge_counts_summary">Off shows a dot instead</string>
 
+    <!-- Notification previews -->
+    <string name="settings_previews">Notification previews</string>
+    <string name="settings_previews_show">Show notification previews</string>
+    <string name="settings_previews_show_summary">The latest notification under each favourite. What apps hide from the lock screen stays hidden.</string>
+    <string name="preview_hidden">New notification</string>
+    <string name="preview_reply">Reply</string>
+    <string name="preview_reply_hint">Message</string>
+    <string name="preview_send">Send</string>
+    <string name="preview_dismiss">Dismiss</string>
+    <string name="preview_open">Open notification</string>
+    <plurals name="state_unread_messages">
+        <item quantity="one">%1$d unread message</item>
+        <item quantity="other">%1$d unread messages</item>
+    </plurals>
+
     <!-- Errors -->
+    <string name="error_notification_gone">This notification is no longer available</string>
     <string name="error_app_missing">This app is no longer installed</string>
     <string name="error_not_allowed">Android did not allow opening this</string>
     <string name="error_profile_locked">The work profile is paused or locked</string>

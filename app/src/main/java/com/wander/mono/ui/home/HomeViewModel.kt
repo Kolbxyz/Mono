@@ -8,9 +8,11 @@ import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
+import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.BadgeSettings
+import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +28,7 @@ class HomeViewModel @Inject constructor(
     catalog: AppCatalog,
     prefs: LauncherPrefs,
     counts: NotificationCounts,
+    previews: NotificationPreviews,
     settings: SettingsStore,
     time: SystemTime,
     private val media: MediaSessions,
@@ -41,6 +44,9 @@ class HomeViewModel @Inject constructor(
         media.state,
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
+    ).combine(
+        combine(previews.previews, settings[PreviewSettings.ShowPreviews]) { all, on -> if (on) all else emptyMap() },
+        ::withPreviews,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, ::Glance)

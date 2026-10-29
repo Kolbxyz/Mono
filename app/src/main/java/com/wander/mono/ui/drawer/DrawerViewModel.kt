@@ -11,6 +11,7 @@ import com.wander.mono.core.apps.IconCache
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.notifications.NotificationCounts
+import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.BadgeSettings
@@ -37,6 +38,7 @@ class DrawerViewModel @Inject constructor(
     settings: SettingsStore,
     shortcuts: ShortcutRepository,
     counts: NotificationCounts,
+    previews: NotificationPreviews,
     private val actions: AppActions,
     private val icons: IconCache,
     private val messages: UserMessages,
@@ -70,6 +72,9 @@ class DrawerViewModel @Inject constructor(
             iconMode = mode,
         )
     }
+        .combine(combine(previews.conversations, settings[BadgeSettings.ShowCounts], ::Pair)) { state, unread ->
+            state.copy(results = state.results.withUnread(unread.first, unread.second))
+        }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DrawerUiState())
 

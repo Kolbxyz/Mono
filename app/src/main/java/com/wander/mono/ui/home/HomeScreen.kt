@@ -118,6 +118,7 @@ fun HomeScreen(
                             modifier = animated,
                         )
                         HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
+                        is NotificationRow -> NotificationPreviewRow(row, animated)
                     }
                 }
             }
