@@ -31,6 +31,7 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
+import com.wander.mono.ui.components.readableColumn
 import com.wander.mono.ui.components.rememberOverscrollSwipe
 import kotlinx.coroutines.launch
 
@@ -57,7 +58,7 @@ fun DrawerScreen(
     val bottom = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom).asPaddingValues()
     val topAndSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Column(Modifier.windowInsetsPadding(topAndSides)) {
+        Column(Modifier.windowInsetsPadding(topAndSides).readableColumn()) {
             SearchField(query, onQueryChange, onSubmit, onOpenSettings, Modifier.fillMaxWidth().padding(16.dp))
             if (query.isBlank()) {
                 AppList(state, icons, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
