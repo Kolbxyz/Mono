@@ -3,10 +3,11 @@ package com.wander.mono.ui.drawer
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.contacts.Contact
+import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.ui.components.AppBadge
 
-/** One search result: an app (hidden ones included), a shortcut, a sum, a contact, a settings page or the web. */
+/** One search result: an app (hidden ones included), a shortcut, a sum, a contact, a song, a settings page or the web. */
 sealed interface SearchHit {
     val key: String
     val label: String
@@ -38,6 +39,12 @@ sealed interface SearchHit {
     data class Person(val contact: Contact) : SearchHit {
         override val key: String get() = "contact:${contact.id}"
         override val label: String get() = contact.name
+    }
+
+    /** A song in Wanda's library; tapping hands it to Wanda to play. */
+    data class Track(val track: WandaTrack) : SearchHit {
+        override val key: String get() = "track:${track.packageName}/${track.trackId}"
+        override val label: String get() = track.title
     }
 
     data class Setting(val page: SettingsPage) : SearchHit {

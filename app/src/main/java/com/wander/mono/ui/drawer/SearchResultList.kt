@@ -62,6 +62,7 @@ private fun ResultRow(hit: SearchHit, icons: AppIcons, onLaunch: () -> Unit, onL
         is SearchHit.Shortcut -> ShortcutRow(hit, icons, onLaunch)
         is SearchHit.Calculation -> CalculationRow(hit, icons, onCopy = onLaunch)
         is SearchHit.Person -> PersonRow(hit, icons, onOpen = onLaunch)
+        is SearchHit.Track -> TrackRow(hit, icons, onPlay = onLaunch)
         is SearchHit.Setting -> SettingRow(hit, icons, onOpen = onLaunch)
         is SearchHit.Web -> WebRow(hit, icons, onSearch = onLaunch)
     }

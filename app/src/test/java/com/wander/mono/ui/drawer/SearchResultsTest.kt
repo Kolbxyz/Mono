@@ -4,6 +4,7 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.contacts.Contact
+import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.WebSearchTarget
 import com.wander.mono.ui.components.AppBadge
@@ -26,9 +27,34 @@ class SearchResultsTest {
         apps: List<DrawerEntry> = emptyList(),
         shortcuts: List<AppShortcut> = emptyList(),
         contacts: List<Contact> = emptyList(),
+        tracks: List<WandaTrack> = emptyList(),
         pages: List<SettingsPage> = emptyList(),
         web: WebSearchTarget? = browser,
-    ) = SearchResults.assemble(query, apps, shortcuts, contacts, pages) { web }
+    ) = SearchResults.assemble(query, apps, shortcuts, contacts, tracks, pages) { web }
+
+    private fun track(title: String) = WandaTrack(title, title, null, "wanda://track?id=$title", "com.wander.android")
+
+    @Test
+    fun `wanda songs come after contacts and before settings, in wanda's order, capped`() {
+        val songs = listOf(track("Song b"), track("Song a"), track("Song c"), track("Song d"))
+        val hits = search(
+            "song",
+            contacts = listOf(Contact(1, "k", "Song Person")),
+            tracks = songs,
+            pages = listOf(page("Song settings")),
+        )
+        assertEquals(
+            listOf(SearchHit.Person::class) + List(SearchResults.MAX_TRACKS) { SearchHit.Track::class } +
+                SearchHit.Setting::class,
+            hits.map { it::class },
+        )
+        assertEquals(songs.take(SearchResults.MAX_TRACKS), hits.filterIsInstance<SearchHit.Track>().map { it.track })
+    }
+
+    @Test
+    fun `a wanda song is a match, so the web is not offered`() {
+        assertEquals(listOf(SearchHit.Track::class), search("xyz", tracks = listOf(track("Xyz"))).map { it::class })
+    }
 
     @Test
     fun `groups come in order calculator, apps, shortcuts, contacts, settings`() {
