@@ -31,6 +31,10 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Widget providers, so apps that only offer widgets show up in the widget picker too. -->
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent>
         <!-- SystemUI's media output switcher, so the now-playing chip shows only where it can open. -->
         <intent>
             <action android:name="com.android.systemui.action.LAUNCH_MEDIA_OUTPUT_DIALOG" />
