@@ -1,8 +1,10 @@
 package com.wander.mono.ui.home
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -36,12 +38,14 @@ internal fun UpNextList(entries: List<QueueEntry>, onPlay: (id: Long) -> Unit, m
             Column(
                 Modifier
                     .fillMaxWidth()
+                    .heightIn(min = 48.dp)
                     .clip(MaterialTheme.shapes.small)
                     .clickable(onClickLabel = playLabel) {
                         haptics.performHapticFeedback(HapticFeedbackType.Confirm)
                         onPlay(entry.id)
                     }
                     .padding(vertical = 6.dp),
+                verticalArrangement = Arrangement.Center,
             ) {
                 Text(
                     entry.title,
