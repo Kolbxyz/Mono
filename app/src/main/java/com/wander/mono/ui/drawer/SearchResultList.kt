@@ -63,6 +63,8 @@ private fun ResultRow(hit: SearchHit, icons: AppIcons, onLaunch: () -> Unit, onL
         is SearchHit.App -> DrawerAppRow(hit.entry, icons, onLaunch, onLongPress = { onLongPress(hit.entry.app) })
         is SearchHit.Shortcut -> ShortcutRow(hit, icons, onLaunch)
         is SearchHit.Calculation -> CalculationRow(hit, icons, onCopy = onLaunch)
+        is SearchHit.Timer -> TimerRow(hit, icons, onSet = onLaunch)
+        is SearchHit.Alarm -> AlarmRow(hit, icons, onSet = onLaunch)
         is SearchHit.Person -> PersonRow(hit, icons, onOpen = onLaunch)
         is SearchHit.Track -> TrackRow(hit, icons, onPlay = onLaunch)
         is SearchHit.Setting -> SettingRow(hit, icons, onOpen = onLaunch)

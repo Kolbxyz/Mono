@@ -22,6 +22,12 @@
     <!-- Upcoming events on home. Opt-in: asked for only when the Calendar setting is switched on. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 
+    <!--
+      Search hands "timer 10m" or "alarm 7:30" to the clock app (core/system/ClockActions). A normal
+      permission: the clock app requires it of callers, and opens its own screen to confirm.
+    -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
     <!-- Contacts in search: opt-in from settings, asked for only when the user switches it on. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
@@ -104,6 +110,13 @@
         </intent>
         <intent>
             <action android:name="android.intent.action.WEB_SEARCH" />
+        </intent>
+        <!-- Search: the clock app that takes timers and alarms (core/system/ClockActions). -->
+        <intent>
+            <action android:name="android.intent.action.SET_TIMER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SET_ALARM" />
         </intent>
         <!-- Sibling providers (core/siblings), release and debug builds. -->
         <provider android:authorities="com.wander.android.mono" />

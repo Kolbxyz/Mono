@@ -22,6 +22,7 @@ import com.wander.mono.core.security.HiddenAppsLock
 import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.siblings.PhalanxUnread
 import com.wander.mono.core.siblings.WandaTrack
+import com.wander.mono.core.system.ClockActions
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.BadgeSettings
@@ -54,6 +55,7 @@ class DrawerViewModel @Inject constructor(
     private val icons: IconCache,
     private val messages: UserMessages,
     private val sources: SearchSources,
+    private val clock: ClockActions,
     private val hiddenLock: HiddenAppsLock,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
@@ -94,6 +96,7 @@ class DrawerViewModel @Inject constructor(
             sections = sectionsOf(visible.map { it.app.label }),
             results = SearchResults.assemble(
                 q,
+                sources.actions(q),
                 hidden.searchableApps(all),
                 hidden.searchableShortcuts(extra.shortcuts),
                 extra.contacts,
@@ -129,6 +132,8 @@ class DrawerViewModel @Inject constructor(
         is SearchHit.App -> opened(launch(hit.entry.app))
         is SearchHit.Shortcut -> opened(messages.report(actions.launchShortcut(hit.shortcut)))
         is SearchHit.Calculation -> sources.copy(hit)
+        is SearchHit.Timer -> opened(messages.report(clock.setTimer(hit.seconds)))
+        is SearchHit.Alarm -> opened(messages.report(clock.setAlarm(hit.time.hour, hit.time.minute)))
         is SearchHit.Person -> sources.open(hit)
         is SearchHit.Track -> sources.open(hit)
         is SearchHit.Setting -> sources.open(hit)

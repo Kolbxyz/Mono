@@ -199,6 +199,13 @@
     <string name="search_contact">Contact</string>
     <string name="search_web_in">Search in %1$s</string>
     <string name="search_web">Search the web</string>
+    <!-- %1$s is a duration such as "10 min" or "1 hr, 30 min". -->
+    <string name="search_timer">Set a %1$s timer</string>
+    <string name="search_timer_kind">Timer in your clock app</string>
+    <!-- %1$s is a time of day such as "7:30 AM". -->
+    <string name="search_alarm">Set an alarm for %1$s</string>
+    <string name="search_alarm_kind">Alarm in your clock app</string>
+    <string name="action_set">Set</string>
     <string name="settings_search">Search</string>
     <string name="settings_search_contacts">Search contacts</string>
     <string name="settings_search_contacts_summary">Find people by name. Needs access to your contacts; they are read only while you type and never stored.</string>
@@ -274,6 +281,7 @@
     <string name="error_calendar_missing">No app can open this event</string>
     <string name="error_settings_missing">This settings page is not available on this phone</string>
     <string name="error_no_browser">No browser can search the web</string>
+    <string name="error_no_clock_app">No clock app can set this</string>
     <string name="error_no_contacts_app">No app can show this contact</string>
 
     <!-- Sibling apps (Wanda, Phalanx) -->

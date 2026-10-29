@@ -30,7 +30,7 @@ class SearchResultsTest {
         tracks: List<WandaTrack> = emptyList(),
         pages: List<SettingsPage> = emptyList(),
         web: WebSearchTarget? = browser,
-    ) = SearchResults.assemble(query, apps, shortcuts, contacts, tracks, pages) { web }
+    ) = SearchResults.assemble(query, SearchActions.of(query), apps, shortcuts, contacts, tracks, pages) { web }
 
     private fun track(title: String) = WandaTrack(title, title, null, "wanda://track?id=$title", "com.wander.android")
 
@@ -114,6 +114,13 @@ class SearchResultsTest {
         assertEquals(listOf(SearchHit.Web("weather paris", "Vanadium")), search(" weather paris "))
         assertTrue(search("maps", apps = listOf(entry("Maps"))).none { it is SearchHit.Web })
         assertTrue(search("1+1").none { it is SearchHit.Web })
+    }
+
+    @Test
+    fun `a conversion, a timer or an alarm comes first and keeps the web out`() {
+        assertEquals(listOf(SearchHit.Timer(600)), search("timer 10m"))
+        assertEquals(listOf(SearchHit.Alarm(AlarmTime(7, 30))), search("alarm 7:30"))
+        assertEquals(listOf(SearchHit.Calculation("3.10686 mi")), search("5 km in mi"))
     }
 
     @Test

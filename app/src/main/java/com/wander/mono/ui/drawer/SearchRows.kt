@@ -102,7 +102,7 @@ fun WebRow(hit: SearchHit.Web, icons: AppIcons, onSearch: () -> Unit, modifier: 
  * like apps), a title and what kind of result it is underneath.
  */
 @Composable
-private fun SymbolRow(
+internal fun SymbolRow(
     @DrawableRes symbol: Int,
     title: String,
     subtitle: String,
