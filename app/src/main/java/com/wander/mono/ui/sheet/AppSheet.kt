@@ -31,6 +31,7 @@ fun AppSheet(
     onRemoveFromHome: (AppKey) -> Unit,
     onMove: (AppKey, Int) -> Unit,
     onSetHidden: (AppKey, Boolean) -> Unit,
+    onRename: (AppKey) -> Unit,
     onAppInfo: (AppKey) -> Unit,
     onUninstall: (AppKey) -> Unit,
 ) {
@@ -52,6 +53,7 @@ fun AppSheet(
             } else {
                 SheetAction(stringResource(R.string.sheet_add_to_home)) { onAddToHome(key) }
             }
+            SheetAction(stringResource(R.string.sheet_rename)) { onRename(key) }
             if (state.isHidden) {
                 SheetAction(stringResource(R.string.sheet_unhide)) { onSetHidden(key, false) }
             } else {

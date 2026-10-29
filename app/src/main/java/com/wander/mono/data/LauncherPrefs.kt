@@ -40,6 +40,9 @@ class LauncherPrefs @Inject constructor(@ApplicationContext context: Context) {
 
     suspend fun moveFavorite(key: AppKey, by: Int) = editFavorites { it.moved(key, by) }
 
+    /** Saves a drag in edit mode: [order] is the shown favourites, in their new order. */
+    suspend fun reorderFavorites(order: List<AppKey>) = editFavorites { it.reordered(order) }
+
     suspend fun setHidden(key: AppKey, hidden: Boolean) {
         store.edit { prefs ->
             val current = prefs[HIDDEN].orEmpty()

@@ -17,9 +17,11 @@ fun HomeSheet(
     onSetQuiet: (Boolean) -> Unit,
     onOpenSettings: () -> Unit,
     onAddWidget: () -> Unit,
+    onEditHome: () -> Unit,
 ) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(bottom = 16.dp)) {
+            SheetAction(stringResource(R.string.home_sheet_edit), onEditHome)
             val quietLabel = if (quiet) R.string.home_sheet_quiet_off else R.string.home_sheet_quiet_on
             SheetAction(stringResource(quietLabel)) { onSetQuiet(!quiet) }
             SheetAction(stringResource(R.string.home_sheet_add_widget), onAddWidget)

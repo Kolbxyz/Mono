@@ -6,9 +6,9 @@ import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarActions
+import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.calendar.CalendarEvents
-import com.wander.mono.core.calendar.headerEvent
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
@@ -17,6 +17,7 @@ import com.wander.mono.core.quiet.QuietMode
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.SettingsStore
@@ -37,6 +38,7 @@ class HomeViewModel @Inject constructor(
     previews: NotificationPreviews,
     settings: SettingsStore,
     time: SystemTime,
+    liveRows: LiveRowPrefs,
     quiet: QuietMode,
     calendar: CalendarEvents,
     private val calendarActions: CalendarActions,
@@ -51,20 +53,25 @@ class HomeViewModel @Inject constructor(
         prefs.favorites,
         catalog.apps.filterNotNull(),
         counts.counts,
-        media.state,
+        combine(media.state, liveRows.hidden) { state, hidden -> state.unlessHidden(hidden) },
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
     ).combine(
-        combine(previews.previews, settings[PreviewSettings.ShowPreviews]) { all, on -> if (on) all else emptyMap() },
+        combine(previews.previews, settings[PreviewSettings.ShowPreviews], liveRows.hidden) { all, on, hidden ->
+            if (on) all.unlessHidden(hidden) else emptyMap()
+        },
         ::withPreviews,
-    ).combine(calendar.agenda, ::withCalendarRow)
+    ).combine(combine(calendar.agenda, liveRows.hidden, CalendarAgenda?::unlessHidden), ::withCalendarRow)
         .combine(widgets.placed, ::withWidgetRows)
         .combine(quiet.state, ::quietHomeRows)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, calendar.agenda) { now, alarm, agenda ->
-        Glance(now, alarm, agenda?.let { headerEvent(it.events, now) })
-    }
+    val glance: StateFlow<Glance> = combine(
+        time.now,
+        time.nextAlarm,
+        calendar.agenda,
+        rows,
+    ) { now, alarm, agenda, home -> Glance(now, alarm, glanceEvent(agenda, now, home)) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
