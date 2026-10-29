@@ -294,7 +294,7 @@ Each step is a full-screen pane with one primary action and a "Skip" text button
 ### 7.4 Searching & launching
 
 1. Swipe up anywhere on home (or tap ⌕) → drawer; tapping ⌕ or swiping up a second time from drawer top focuses search and opens IME.
-2. Typing filters instantly (case/accent-insensitive, initials match — existing ranking). Results order: apps → shortcuts (e.g. Phalanx rooms) → settings → calculator result → contacts (later).
+2. Typing filters instantly (case/accent-insensitive, initials match — existing ranking). Results order: calculator result → apps (best first) → shortcuts (e.g. Phalanx rooms) → contacts (opt-in) → settings → "Search in <browser>" (only when nothing else matched; the browser does the searching).
 3. *Go* on keyboard launches the top result; the top result has a tonal highlight so users know what Go does.
 4. Launch: app opens with the system launch animation from the row's bounds (`ActivityOptions.makeClipRevealAnimation` / `makeScaleUpAnimation`).
 5. Back/home returns to a cleared search.

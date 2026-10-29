@@ -30,6 +30,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.ui.drawer.DrawerScreen
 import com.wander.mono.ui.drawer.DrawerViewModel
+import com.wander.mono.ui.drawer.HitOutcome
 import com.wander.mono.ui.home.HomeLookViewModel
 import com.wander.mono.ui.home.HomeScreen
 import com.wander.mono.ui.home.HomeViewModel
@@ -61,6 +62,14 @@ fun LauncherApp(
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val motion = MaterialTheme.motionScheme
+
+    val afterHit: (HitOutcome) -> Unit = { outcome ->
+        when (outcome) {
+            HitOutcome.Opened -> launcher.closeDrawer()
+            HitOutcome.OpenMonoSettings -> launcher.openSettings()
+            HitOutcome.Stayed -> Unit
+        }
+    }
 
     LaunchedEffect(launcher) { launcher.messages.collect { snackbar.showSnackbar(resources.getString(it)) } }
     LaunchedEffect(launcher) { launcher.scrollToTop.collect { homeList.animateScrollToItem(0) } }
@@ -105,9 +114,9 @@ fun LauncherApp(
                 state = drawerState,
                 loadIcon = drawer::icon,
                 onQueryChange = drawer::setQuery,
-                onSubmit = { if (drawer.launchTopResult()) launcher.closeDrawer() },
+                onSubmit = { afterHit(drawer.launchTopResult()) },
                 onLaunchApp = { if (drawer.launch(it)) launcher.closeDrawer() },
-                onLaunchHit = { if (drawer.launch(it)) launcher.closeDrawer() },
+                onLaunchHit = { afterHit(drawer.launch(it)) },
                 onLongPress = { sheet.show(it.key) },
                 onClose = launcher::closeDrawer,
                 onOpenSettings = launcher::openSettings,
