@@ -10,15 +10,24 @@ import androidx.datastore.preferences.core.stringPreferencesKey
  * Features declare theirs as constants in their own `*Settings.kt` file next to this one.
  */
 sealed interface Setting<T> {
+    /** The stored key's name, also the setting's name in a backup file. */
+    val name: String
+
     val default: T
 
     fun read(prefs: Preferences): T
 
     fun write(prefs: MutablePreferences, value: T)
+
+    /** [value] as a backup file holds it: a boolean, or an enum's [StoredEnum.stored] string. */
+    fun toStored(value: T): Any
+
+    /** A value read from a backup file; null when it is not of this setting's type. */
+    fun fromStored(value: Any): T?
 }
 
 /** An on/off setting. */
-class BooleanSetting(name: String, override val default: Boolean) : Setting<Boolean> {
+class BooleanSetting(override val name: String, override val default: Boolean) : Setting<Boolean> {
     private val key = booleanPreferencesKey(name)
 
     override fun read(prefs: Preferences): Boolean = prefs[key] ?: default
@@ -26,6 +35,10 @@ class BooleanSetting(name: String, override val default: Boolean) : Setting<Bool
     override fun write(prefs: MutablePreferences, value: Boolean) {
         prefs[key] = value
     }
+
+    override fun toStored(value: Boolean): Any = value
+
+    override fun fromStored(value: Any): Boolean? = value as? Boolean
 }
 
 /** An enum whose stored form is fixed by [stored], so constants can be renamed without losing choices. */
@@ -38,7 +51,7 @@ interface StoredEnum {
  * downgraded) reads as [default], the same as never having chosen.
  */
 class EnumSetting<E>(
-    name: String,
+    override val name: String,
     override val default: E,
     val values: List<E>,
 ) : Setting<E> where E : Enum<E>, E : StoredEnum {
@@ -55,4 +68,9 @@ class EnumSetting<E>(
     override fun write(prefs: MutablePreferences, value: E) {
         prefs[key] = value.stored
     }
+
+    override fun toStored(value: E): Any = value.stored
+
+    /** Any string: one no constant claims reads as [default], as in [decode]. */
+    override fun fromStored(value: Any): E? = (value as? String)?.let(::decode)
 }

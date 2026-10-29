@@ -34,4 +34,14 @@ class CustomLabels @Inject constructor(@ApplicationContext context: Context) {
         val trimmed = label?.trim().orEmpty()
         store.edit { prefs -> if (trimmed.isEmpty()) prefs.remove(key) else prefs[key] = trimmed }
     }
+
+    /** Replaces every custom name, for a restored backup; blank names are skipped as in [setLabel]. */
+    suspend fun replace(labels: Map<AppKey, String>) {
+        store.edit { prefs ->
+            prefs.clear()
+            labels.forEach { (app, label) ->
+                label.trim().takeIf { it.isNotEmpty() }?.let { prefs[stringPreferencesKey(app.encode())] = it }
+            }
+        }
+    }
 }

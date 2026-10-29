@@ -8,6 +8,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
 private val Context.settingsStore by preferencesDataStore(name = "settings")
@@ -26,5 +27,16 @@ class SettingsStore @Inject constructor(@ApplicationContext context: Context) {
 
     suspend fun <T> set(setting: Setting<T>, value: T) {
         store.edit { setting.write(it, value) }
+    }
+
+    /** The current value of each of [settings], for a backup. */
+    suspend fun snapshot(settings: List<Setting<*>>): List<SettingValue<*>> {
+        val prefs = store.data.first()
+        return settings.map { SettingValue.of(it, prefs) }
+    }
+
+    /** Writes all of [values] in one edit, so a restore never leaves half the settings changed. */
+    suspend fun restore(values: List<SettingValue<*>>) {
+        store.edit { prefs -> values.forEach { it.writeTo(prefs) } }
     }
 }

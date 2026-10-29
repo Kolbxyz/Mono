@@ -161,6 +161,26 @@
     <string name="settings_usage_in_sheet">Show today\'s time in app options</string>
     <string name="settings_usage_summary">Long-press an app to see how long you used it today. Read on your phone only.</string>
     <string name="settings_usage_grant_summary">Needs usage access. Tap to allow it in Android settings; Mono reads it only when you long-press an app.</string>
+
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_export">Save to a file</string>
+    <string name="settings_backup_export_summary">Favourites, hidden apps, names, live rows, quiet apps and settings, in a file you choose. Widgets are not included.</string>
+    <string name="settings_backup_import">Restore from a file</string>
+    <string name="settings_backup_import_summary">Replaces your favourites and settings with a saved backup</string>
+    <string name="backup_unlock_title">Unlock to include hidden apps</string>
+    <string name="backup_restore_title">Restore this backup?</string>
+    <string name="backup_restore_text">It replaces your favourites, hidden apps, names, live rows, quiet apps and settings. Widgets on home stay as they are.</string>
+    <string name="backup_restore_confirm">Restore</string>
+    <string name="backup_restore_cancel">Cancel</string>
+    <string name="backup_saved">Backup saved</string>
+    <string name="backup_restored">Backup restored</string>
+    <string name="backup_error_unreadable">Mono can\'t open this file</string>
+    <string name="backup_error_not_backup">This file is not a Mono backup</string>
+    <string name="backup_error_newer">This backup is from a newer Mono. Update Mono, then try again.</string>
+    <string name="backup_error_malformed">This backup is damaged. Nothing was changed.</string>
+    <string name="backup_error_write">Mono can\'t save the backup there</string>
+    <string name="backup_error_restore">Restoring stopped partway. Try again.</string>
+    <string name="backup_error_no_picker">No app on this phone can pick a file</string>
     <!-- Notification previews -->
     <string name="settings_previews">Notification previews</string>
     <string name="settings_previews_show">Show notification previews</string>
