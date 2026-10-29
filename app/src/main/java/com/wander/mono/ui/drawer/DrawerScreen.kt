@@ -50,6 +50,7 @@ fun DrawerScreen(
     onLaunchHit: (SearchHit) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     onClose: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val icons = remember(state.iconMode, loadIcon) { AppIcons(state.iconMode, loadIcon) }
@@ -58,7 +59,7 @@ fun DrawerScreen(
     val topAndSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.windowInsetsPadding(topAndSides)) {
-            SearchField(query, onQueryChange, onSubmit, Modifier.fillMaxWidth().padding(16.dp))
+            SearchField(query, onQueryChange, onSubmit, onOpenSettings, Modifier.fillMaxWidth().padding(16.dp))
             if (query.isBlank()) {
                 AppList(state, icons, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
             } else {
