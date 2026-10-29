@@ -38,6 +38,7 @@ import com.wander.mono.ui.sheet.AppSheet
 import com.wander.mono.ui.settings.SettingsScreen
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.sheet.HomeSheet
+import com.wander.mono.ui.theme.LocalReducedMotion
 
 /** Home, with the drawer and settings sliding over it, the long-press sheets and the error snackbar. */
 @Composable
@@ -72,7 +73,12 @@ fun LauncherApp(
     }
 
     LaunchedEffect(launcher) { launcher.messages.collect { snackbar.showSnackbar(resources.getString(it)) } }
-    LaunchedEffect(launcher) { launcher.scrollToTop.collect { homeList.animateScrollToItem(0) } }
+    val reducedMotion = LocalReducedMotion.current
+    LaunchedEffect(launcher, reducedMotion) {
+        launcher.scrollToTop.collect {
+            if (reducedMotion) homeList.scrollToItem(0) else homeList.animateScrollToItem(0)
+        }
+    }
     // Every way of closing the drawer (back, swipe, launch, home press) starts the next search afresh.
     LaunchedEffect(drawerOpen) { if (!drawerOpen) drawer.setQuery("") }
     // Back on home has nothing to go back to; it only ever closes what is open.
