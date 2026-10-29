@@ -55,6 +55,7 @@ fun DrawerScreen(
     onClose: () -> Unit,
     onOpenSettings: () -> Unit,
     onUnlockHidden: () -> Unit,
+    privateActions: PrivateSpaceActions,
     modifier: Modifier = Modifier,
     pickingApp: Boolean = false,
 ) {
@@ -74,10 +75,12 @@ fun DrawerScreen(
                 )
             }
             if (query.isBlank()) {
-                AppList(state, icons, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
+                // Picking for home leaves the private space out: its apps never go on home.
+                val actions = privateActions.takeUnless { pickingApp }
+                AppList(state, icons, actions, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
             } else {
                 SearchResultList(
-                    results = state.results,
+                    results = if (pickingApp) pickable(state.results) else state.results,
                     icons = icons,
                     onLaunchHit = onLaunchHit,
                     onLongPress = onLongPress,
@@ -94,6 +97,7 @@ fun DrawerScreen(
 private fun AppList(
     state: DrawerUiState,
     icons: AppIcons,
+    privateActions: PrivateSpaceActions?,
     onLaunchApp: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     bottom: PaddingValues,
@@ -117,6 +121,9 @@ private fun AppList(
                     onLaunch = { onLaunchApp(entry.app) },
                     onLongPress = { onLongPress(entry.app) },
                 )
+            }
+            if (privateActions != null) {
+                privateSection(state.privateSpace, state.privateApps, icons, privateActions, onLaunchApp, onLongPress)
             }
         }
         val current by remember(state.sections) {

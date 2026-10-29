@@ -12,6 +12,7 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.IconCache
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.apps.PrivateSpace
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.notifications.ConversationKey
@@ -55,6 +56,7 @@ class DrawerViewModel @Inject constructor(
     private val messages: UserMessages,
     private val sources: SearchSources,
     private val hiddenLock: HiddenAppsLock,
+    private val privateSpace: PrivateSpace,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
     val query: StateFlow<String> = savedState.getStateFlow(QUERY, "")
@@ -88,10 +90,10 @@ class DrawerViewModel @Inject constructor(
         query,
         settings[IconSettings.Mode],
     ) { all, hidden, extra, q, mode ->
-        val visible = all.filter { it.app.key !in hidden.keys }
+        val lists = drawerLists(all, hidden.keys)
         DrawerUiState(
-            apps = visible,
-            sections = sectionsOf(visible.map { it.app.label }),
+            apps = lists.apps,
+            sections = sectionsOf(lists.apps.map { it.app.label }),
             results = SearchResults.assemble(
                 q,
                 hidden.searchableApps(all),
@@ -103,8 +105,10 @@ class DrawerViewModel @Inject constructor(
             ),
             iconMode = mode,
             hiddenLocked = hidden.locked,
+            privateApps = lists.privateApps,
         )
     }
+        .combine(privateSpace.state) { state, space -> state.copy(privateSpace = space) }
         .combine(
             combine(previews.conversations, phalanx.unread, settings[BadgeSettings.ShowCounts], ::ShortcutUnread),
         ) { state, unread ->
@@ -150,6 +154,14 @@ class DrawerViewModel @Inject constructor(
     fun unlockHidden() = hiddenLock.unlock()
 
     fun relockHidden() = hiddenLock.relock()
+
+    fun setPrivateLocked(locked: Boolean) {
+        messages.report(privateSpace.setLocked(locked))
+    }
+
+    fun openPrivateSettings() {
+        messages.report(privateSpace.openSettings())
+    }
 
     fun reportNoScreenLock() {
         messages.report(ActionResult.Failed(R.string.error_no_screen_lock))

@@ -54,7 +54,7 @@ fun AppSheet(
                 if (state.canMoveUp) SheetAction(stringResource(R.string.sheet_move_up)) { onMove(key, -1) }
                 if (state.canMoveDown) SheetAction(stringResource(R.string.sheet_move_down)) { onMove(key, 1) }
                 SheetAction(stringResource(R.string.sheet_remove_from_home)) { onRemoveFromHome(key) }
-            } else {
+            } else if (state.canGoOnHome) {
                 SheetAction(stringResource(R.string.sheet_add_to_home)) { onAddToHome(key) }
             }
             SheetAction(stringResource(R.string.sheet_rename)) { onRename(key) }
