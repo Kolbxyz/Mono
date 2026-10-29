@@ -30,10 +30,10 @@ import com.wander.mono.ui.components.rememberPullUpConnection
 import com.wander.mono.ui.drawer.DrawerScreen
 import com.wander.mono.ui.drawer.DrawerViewModel
 import com.wander.mono.ui.drawer.HitOutcome
+import com.wander.mono.ui.drawer.PrivateSpaceActions
 import com.wander.mono.ui.drawer.SearchHit
 import com.wander.mono.ui.edit.EditEffects
 import com.wander.mono.ui.edit.EditHomeViewModel
-import com.wander.mono.ui.drawer.PrivateSpaceActions
 import com.wander.mono.ui.edit.EditToolbar
 import com.wander.mono.ui.edit.rememberHomeEditing
 import com.wander.mono.ui.home.HomeLookViewModel
@@ -90,6 +90,7 @@ fun LauncherApp(
     val homeList = rememberLazyListState()
     val homeIcons = remember(drawerState.iconMode) { AppIcons(drawerState.iconMode, drawer::icon) }
     val editing = rememberHomeEditing(editingOn, homeList, edit, { launcher.setEditing(true) }, rename::show)
+    val privateActions = remember(drawer) { PrivateSpaceActions(drawer::setPrivateLocked, drawer::openPrivateSettings) }
     val pick: (LaunchableApp) -> Unit = { app ->
         edit.add(app.key)
         launcher.closeDrawer()
@@ -186,9 +187,7 @@ fun LauncherApp(
                     onLongPress = { sheet.show(it.key) },
                     onOpenSettings = launcher::openSettings,
                     onUnlockHidden = unlockHidden,
-                    privateActions = remember(drawer) {
-                        PrivateSpaceActions(drawer::setPrivateLocked, drawer::openPrivateSettings)
-                    },
+                    privateActions = privateActions,
                     onSetWorkPaused = drawer::setWorkPaused,
                     pickingApp = pickingApp,
                     focusSearch = focusSearch,

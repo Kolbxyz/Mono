@@ -12,6 +12,9 @@ data class AppSheetState(
     val shortcuts: List<AppShortcut>,
 ) {
     val isFavorite: Boolean get() = favoriteIndex >= 0
+
+    /** Private space apps never go on home: they would show there while the space is locked. */
+    val canGoOnHome: Boolean get() = !app.isPrivate
     val canMoveUp: Boolean get() = favoriteIndex > 0
     val canMoveDown: Boolean get() = isFavorite && favoriteIndex < favoriteCount - 1
 }

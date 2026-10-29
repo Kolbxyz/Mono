@@ -85,7 +85,7 @@ private fun appActions(
             add(MenuAction(R.drawable.sym_remove_circle, R.string.sheet_remove_from_home, ActionEmphasis.Primary) {
                 onRemoveFromHome(key)
             })
-        } else {
+        } else if (state.canGoOnHome) {
             add(MenuAction(R.drawable.sym_keep, R.string.sheet_add_to_home, ActionEmphasis.Primary) {
                 onAddToHome(key)
             })
