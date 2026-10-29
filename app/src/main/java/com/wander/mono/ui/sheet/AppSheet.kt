@@ -15,6 +15,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppKey
@@ -39,7 +42,7 @@ fun AppSheet(
             Text(
                 state.app.label,
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).semantics { heading() },
             )
             state.shortcuts.forEach { shortcut -> SheetAction(shortcut.label) { onShortcut(shortcut) } }
             if (state.shortcuts.isNotEmpty()) HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -64,7 +67,7 @@ fun AppSheet(
 @Composable
 internal fun SheetAction(label: String, onClick: () -> Unit) {
     ListItem(
-        modifier = Modifier.clickable(onClick = onClick),
+        modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     ) {
         Text(label)
