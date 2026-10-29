@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -51,6 +50,8 @@ import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
+import com.wander.mono.ui.components.ReadableLayout
+import com.wander.mono.ui.components.readableColumn
 import com.wander.mono.ui.components.rememberOverscrollSwipe
 
 /**
@@ -124,18 +125,21 @@ fun HomeScreen(
                 .scrollable(stillDrag, Orientation.Vertical),
             contentAlignment = Alignment.TopCenter,
         ) {
-            val gutter = if (maxWidth >= MEDIUM_WIDTH) 32.dp else 24.dp
+            val gutter = ReadableLayout.gutter(maxWidth)
+            // A phone on its side: the header shrinks so the list keeps room to scroll.
+            val compactHeader = ReadableLayout.isCompactHeight(maxHeight)
             Column(
                 Modifier
-                    .widthIn(max = MAX_COLUMN_WIDTH)
                     .fillMaxSize()
                     .windowInsetsPadding(WindowInsets.safeDrawing)
+                    .readableColumn()
                     .padding(horizontal = gutter),
             ) {
                 val optionsLabel = stringResource(R.string.action_home_options)
                 GlanceHeader(
                     glance,
-                    Modifier
+                    compact = compactHeader,
+                    modifier = Modifier
                         .onGloballyPositioned { headerBottom.floatValue = it.boundsInRoot().bottom }
                         .semantics {
                             onLongClick(optionsLabel) {
@@ -227,9 +231,3 @@ private const val SHADOW_ALPHA = 0.4f
 
 /** How far the scrim fades out into the empty space between header and list. */
 private val SCRIM_FADE = 48.dp
-
-/** Width from which the side gutter grows from 24 to 32 dp (M3 medium window class). */
-private val MEDIUM_WIDTH = 600.dp
-
-/** The column never spans wider than this; on tablets and unfolded phones it is centred. */
-private val MAX_COLUMN_WIDTH = 560.dp

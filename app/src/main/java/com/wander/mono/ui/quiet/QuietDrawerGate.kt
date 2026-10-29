@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.ui.components.readableColumn
 
 /**
  * In quiet mode the drawer opens on a pause instead of the app list: all apps show only after an
@@ -41,6 +42,7 @@ fun QuietDrawerGate(quiet: Boolean, onClose: () -> Unit, drawer: @Composable () 
         Column(
             Modifier
                 .windowInsetsPadding(WindowInsets.safeDrawing)
+                .readableColumn()
                 .padding(32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
             horizontalAlignment = Alignment.Start,

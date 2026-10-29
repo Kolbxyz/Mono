@@ -54,6 +54,15 @@ class RailMathTest {
         assertEquals(-1, RailMath.sectionIndexFor(emptyList(), 3))
     }
 
+    @Test
+    fun `every letter is drawn on a tall rail, every other or third on a short one`() {
+        assertEquals(1, RailMath.labelStride(height = 600f, count = 26, minSlot = 16f))
+        assertEquals(2, RailMath.labelStride(height = 260f, count = 26, minSlot = 16f))
+        assertEquals(3, RailMath.labelStride(height = 150f, count = 26, minSlot = 16f))
+        assertEquals(1, RailMath.labelStride(height = 0f, count = 26, minSlot = 16f))
+        assertEquals(1, RailMath.labelStride(height = 300f, count = 0, minSlot = 16f))
+    }
+
     private companion object {
         const val DELTA = 1e-4f
     }

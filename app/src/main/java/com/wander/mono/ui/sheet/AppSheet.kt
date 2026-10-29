@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
+import com.wander.mono.ui.components.ReadableLayout
 
 /** Long-press options for one app: its shortcuts, then home list, visibility, app info and uninstall. */
 @Composable
@@ -36,7 +37,7 @@ fun AppSheet(
     onUninstall: (AppKey) -> Unit,
 ) {
     val key = state.app.key
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetMaxWidth = ReadableLayout.MaxColumnWidth) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
             Text(
                 state.app.label,

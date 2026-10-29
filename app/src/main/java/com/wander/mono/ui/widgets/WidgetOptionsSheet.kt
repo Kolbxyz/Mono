@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.widgets.WidgetSize
+import com.wander.mono.ui.components.ReadableLayout
 import com.wander.mono.ui.sheet.SheetAction
 
 /** Long-press options for a widget row: its height, its own settings when it has them, its place, removal. */
@@ -27,7 +28,7 @@ fun WidgetOptionsSheet(
     onMove: (Int) -> Unit,
     onRemove: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetMaxWidth = ReadableLayout.MaxColumnWidth) {
         Column(Modifier.padding(bottom = 16.dp)) {
             Text(
                 state.widget.label,
