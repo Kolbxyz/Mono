@@ -14,6 +14,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.ui.theme.CLOCK_MAX_FONT_SCALE
+import com.wander.mono.ui.theme.capFontScale
 import java.util.Date
 import java.util.Locale
 
@@ -32,7 +34,11 @@ fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
 
     Column(modifier.padding(top = 48.dp, bottom = 32.dp)) {
         val typography = MaterialTheme.typography
-        Text(time, style = typography.displayLargeEmphasized.onWallpaper(), color = MaterialTheme.colorScheme.onSurface)
+        Text(
+            time,
+            style = typography.displayLargeEmphasized.capFontScale(CLOCK_MAX_FONT_SCALE).onWallpaper(),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
         Text(date, style = typography.titleMedium.onWallpaper(), color = MaterialTheme.colorScheme.onSurfaceVariant)
         glance.nextEvent?.let { NextEventLine(it, glance.now, timeSkeleton) }
         if (alarm != null) {
