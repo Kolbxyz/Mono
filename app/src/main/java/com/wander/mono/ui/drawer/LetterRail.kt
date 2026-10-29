@@ -3,13 +3,16 @@ package com.wander.mono.ui.drawer
 import android.os.Build
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -126,7 +129,15 @@ fun LetterRail(
     ) {
         // A short rail (landscape) draws every other or third letter; all of them still scrub.
         val stride = RailMath.labelStride(height.toFloat(), sections.size, minSlot)
-        Column(Modifier.fillMaxHeight()) {
+        // The letters sit on a slim tonal pill, so the rail reads as one control.
+        Column(
+            Modifier
+                .fillMaxHeight()
+                .padding(horizontal = TRACK_INSET)
+                // A shaped background, not a clip: the wave bows letters out past the pill.
+                .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
+                .padding(vertical = 8.dp),
+        ) {
             sections.forEachIndexed { index, section ->
                 val lit = scrubbing && index == active
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -160,6 +171,9 @@ fun LetterRail(
 
 /** Width of the rail's touch area, which the list leaves free at its end. */
 internal val RAIL_WIDTH = 48.dp
+
+/** Space on each side of the rail's pill, inside its touch area. */
+private val TRACK_INSET = 8.dp
 
 /** How far the letter under the finger moves out; its neighbours move less, over [RailMath.WAVE_REACH] letters. */
 internal val WAVE_AMPLITUDE = 24.dp

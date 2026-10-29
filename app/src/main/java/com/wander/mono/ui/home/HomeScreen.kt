@@ -1,6 +1,7 @@
 package com.wander.mono.ui.home
 
 import android.content.Context
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -18,11 +19,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableFloatStateOf
@@ -39,20 +37,20 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
-import com.wander.mono.ui.edit.HomeEditing
-import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
+import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.ReadableLayout
 import com.wander.mono.ui.components.readableColumn
 import com.wander.mono.ui.components.rememberOverscrollSwipe
+import com.wander.mono.ui.edit.HomeEditing
+import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
@@ -67,6 +65,7 @@ fun HomeScreen(
     glance: Glance,
     look: HomeLook,
     listState: LazyListState,
+    icons: AppIcons,
     editing: HomeEditing,
     onLaunch: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
@@ -99,12 +98,14 @@ fun HomeScreen(
     // Edit mode dims the wallpaper (spec 4.6).
     val editDim = animateFloatAsState(if (editing.active) EDIT_DIM else 0f, motion.defaultEffectsSpec())
     val scrimAlpha = homeScrimAlpha(legibleAlpha, look.textShadow, look.highContrast)
-    val shadow = if (look.textShadow) {
-        with(density) {
+    // The user's text shadow replaces the scrim; otherwise a soft halo in the scrim's colour
+    // carries the text where the eased scrim has thinned out.
+    val shadow = with(density) {
+        if (look.textShadow) {
             Shadow(scheme.scrim.copy(alpha = SHADOW_ALPHA), Offset(0f, 1.dp.toPx()), blurRadius = 4.dp.toPx())
+        } else {
+            Shadow(scheme.surface.copy(alpha = HALO_ALPHA), Offset.Zero, blurRadius = 12.dp.toPx())
         }
-    } else {
-        null
     }
 
     // Without onSurface as the content colour, the clock and favourites would fall back to black.
@@ -120,7 +121,7 @@ fun HomeScreen(
                     color = scheme.surface.copy(alpha = scrimAlpha),
                     headerBottom = { headerBottom.floatValue },
                     listTop = { listViewportTop.floatValue + listState.contentTop() },
-                    fade = with(density) { SCRIM_FADE.toPx() },
+                    reach = with(density) { SCRIM_REACH.toPx() },
                 )
                 .drawBehind { drawRect(scheme.surface.copy(alpha = editDim.value)) }
                 .pointerInput(onHomeOptions) { detectTapGestures(onLongPress = { onHomeOptions() }) }
@@ -177,6 +178,7 @@ fun HomeScreen(
                         when (row) {
                             is HomeRow.App -> ReorderableFavorite(
                                 row = row,
+                                icons = icons,
                                 siblings = favorites,
                                 rows = rows.orEmpty(),
                                 editing = editing,
@@ -208,14 +210,7 @@ fun HomeScreen(
                     }
                 }
                 // In edit mode the floating toolbar takes this place.
-                if (!editing.active) {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(
-                            painterResource(R.drawable.sym_apps),
-                            contentDescription = stringResource(R.string.action_open_drawer),
-                        )
-                    }
-                }
+                if (!editing.active) SearchDock(onOpenDrawer, Modifier.padding(top = 8.dp, bottom = 8.dp))
             }
         }
     }
@@ -233,5 +228,8 @@ private const val EDIT_DIM = 0.6f
 /** Text shadow strength, per spec 5.4: the `scrim` role at 40 %. */
 private const val SHADOW_ALPHA = 0.4f
 
-/** How far the scrim fades out into the empty space between header and list. */
-private val SCRIM_FADE = 48.dp
+/** The halo under home text when the scrim is on: the surface colour, soft and wide. */
+private const val HALO_ALPHA = 0.55f
+
+/** How far the scrim eases out into the empty space past the header and before the list. */
+private val SCRIM_REACH = 120.dp

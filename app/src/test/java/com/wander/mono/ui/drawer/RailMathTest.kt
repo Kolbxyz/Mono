@@ -45,16 +45,6 @@ class RailMathTest {
     }
 
     @Test
-    fun `current section is the last one starting at or before the first visible item`() {
-        val sections = listOf(Section("A", 0), Section("C", 4), Section("F", 9))
-        assertEquals(0, RailMath.sectionIndexFor(sections, 0))
-        assertEquals(0, RailMath.sectionIndexFor(sections, 3))
-        assertEquals(1, RailMath.sectionIndexFor(sections, 4))
-        assertEquals(2, RailMath.sectionIndexFor(sections, 30))
-        assertEquals(-1, RailMath.sectionIndexFor(emptyList(), 3))
-    }
-
-    @Test
     fun `every letter is drawn on a tall rail, every other or third on a short one`() {
         assertEquals(1, RailMath.labelStride(height = 600f, count = 26, minSlot = 16f))
         assertEquals(2, RailMath.labelStride(height = 260f, count = 26, minSlot = 16f))

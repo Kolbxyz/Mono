@@ -35,10 +35,6 @@ internal object RailMath {
         return if (d >= WAVE_REACH) 0f else ((cos(d / WAVE_REACH * PI) + 1.0) / 2.0).toFloat()
     }
 
-    /** The section whose letter covers list item [itemIndex]: the last one starting at or before it. */
-    fun sectionIndexFor(sections: List<Section>, itemIndex: Int): Int =
-        sections.indexOfLast { it.index <= itemIndex }.coerceAtLeast(0).coerceAtMost(sections.lastIndex)
-
     /**
      * Every how many letters one is drawn so each drawn letter gets at least [minSlot]: 1 on a
      * phone in portrait, more on a short rail (landscape), where the skipped ones still scrub.

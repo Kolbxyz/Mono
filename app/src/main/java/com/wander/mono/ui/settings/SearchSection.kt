@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
 import com.wander.mono.R
 import com.wander.mono.data.settings.SearchSettings
+import com.wander.mono.ui.components.CheckSwitch
 
 /** What search looks in besides apps and shortcuts. */
 @Composable
@@ -48,8 +49,9 @@ private fun ContactsSwitch(settings: SettingsViewModel) {
     }
     val checked = enabled && granted
     ListItem(
+        colors = settingRowColors(),
         supportingContent = { Text(stringResource(R.string.settings_search_contacts_summary)) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = null) },
+        trailingContent = { CheckSwitch(checked) },
         modifier = Modifier.toggleable(checked, role = Role.Switch) { on ->
             when {
                 !on -> settings.set(SearchSettings.Contacts, false)

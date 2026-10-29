@@ -29,24 +29,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.R
+import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.rememberCredentialPrompt
 import com.wander.mono.ui.drawer.DrawerScreen
+import com.wander.mono.ui.drawer.DrawerViewModel
+import com.wander.mono.ui.drawer.HitOutcome
 import com.wander.mono.ui.drawer.SearchHit
 import com.wander.mono.ui.edit.EditEffects
 import com.wander.mono.ui.edit.EditHomeViewModel
 import com.wander.mono.ui.edit.EditToolbar
 import com.wander.mono.ui.edit.rememberHomeEditing
-import com.wander.mono.ui.drawer.DrawerViewModel
-import com.wander.mono.ui.drawer.HitOutcome
 import com.wander.mono.ui.home.HomeLookViewModel
 import com.wander.mono.ui.home.HomeScreen
 import com.wander.mono.ui.home.HomeViewModel
 import com.wander.mono.ui.quiet.QuietDrawerGate
 import com.wander.mono.ui.quiet.QuietViewModel
-import com.wander.mono.ui.sheet.AppSheet
 import com.wander.mono.ui.settings.SettingsScreen
+import com.wander.mono.ui.sheet.AppSheet
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.sheet.HomeSheet
 import com.wander.mono.ui.sheet.RenameDialog
@@ -88,6 +89,7 @@ fun LauncherApp(
         onNoScreenLock = drawer::reportNoScreenLock,
     )
     val homeList = rememberLazyListState()
+    val homeIcons = remember(drawerState.iconMode) { AppIcons(drawerState.iconMode, drawer::icon) }
     val editing = rememberHomeEditing(editingOn, homeList, edit, { launcher.setEditing(true) }, rename::show)
     val pick: (LaunchableApp) -> Unit = { app ->
         edit.add(app.key)
@@ -131,6 +133,7 @@ fun LauncherApp(
             glance = glance,
             look = homeLook,
             listState = homeList,
+            icons = homeIcons,
             editing = editing,
             onLaunch = home::launch,
             onLongPress = { sheet.show(it.key) },
@@ -228,6 +231,7 @@ fun LauncherApp(
     sheetState?.let { state ->
         AppSheet(
             state = state,
+            icons = homeIcons,
             usageToday = sheetUsage,
             onDismiss = sheet::dismiss,
             onShortcut = sheet::launchShortcut,

@@ -46,6 +46,7 @@ fun QuietSection(quiet: QuietSettingsViewModel = viewModel()) {
             }
             list.forEach { choice ->
                 ListItem(
+                    colors = settingRowColors(),
                     leadingContent = { Checkbox(checked = choice.quiet, onCheckedChange = null) },
                     modifier = Modifier.toggleable(choice.quiet, role = Role.Checkbox) {
                         quiet.setQuiet(choice.app.key, it)

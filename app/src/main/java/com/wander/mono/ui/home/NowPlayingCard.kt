@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -68,20 +69,21 @@ fun NowPlayingCard(
     val container by animateColorAsState(tint, motion.defaultEffectsSpec(), label = "art-tint")
     val content = mostContrasting(container, scheme.onSurface, scheme.inverseOnSurface)
     val artSize by animateDpAsState(if (expanded) ART_EXPANDED else ART_COLLAPSED, motion.defaultSpatialSpec())
+    val corner by animateDpAsState(if (expanded) EXPANDED_CORNER else COLLAPSED_CORNER, motion.defaultSpatialSpec())
     val mediaActions = mediaActions(media, onTogglePlay, onSkipNext, onSkipPrevious)
     val stacked = isLargeFontScale()
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = 6.dp)
             .skipSwipe(media.canSkipNext, media.canSkipPrevious) {
                 when (it) {
                     SkipDirection.Next -> onSkipNext()
                     SkipDirection.Previous -> onSkipPrevious()
                 }
             },
-        shape = if (expanded) MaterialTheme.shapes.extraLarge else MaterialTheme.shapes.large,
+        shape = RoundedCornerShape(corner),
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
         Column(
@@ -90,11 +92,11 @@ fun NowPlayingCard(
                     onClickLabel = stringResource(if (expanded) R.string.media_collapse else R.string.media_expand),
                 ) { expanded = !expanded }
                 .semantics { customActions = mediaActions }
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 media.art?.let { art ->
@@ -102,13 +104,13 @@ fun NowPlayingCard(
                         art,
                         contentDescription = stringResource(R.string.media_artwork),
                         contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(artSize).clip(MaterialTheme.shapes.medium),
+                        modifier = Modifier.size(artSize).clip(RoundedCornerShape(artSize * ART_CORNER)),
                     )
                 }
                 Column(Modifier.weight(1f)) {
                     Text(
                         media.title,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = with(MaterialTheme.typography) { if (expanded) titleLarge else titleMedium },
                         maxLines = if (expanded) 2 else 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -116,19 +118,23 @@ fun NowPlayingCard(
                         Text(
                             it,
                             style = MaterialTheme.typography.bodyMedium,
+                            color = content.copy(alpha = ARTIST_ALPHA),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
-                if (!expanded && !stacked) PlayPauseButton(media.isPlaying, onTogglePlay)
+                if (!expanded && !stacked) PlayPauseButton(media.isPlaying, container, onTogglePlay)
             }
             if (!expanded && stacked) {
-                PlayPauseButton(media.isPlaying, onTogglePlay, Modifier.align(Alignment.End))
+                PlayPauseButton(media.isPlaying, container, onTogglePlay, Modifier.align(Alignment.End))
             }
             ExpandedPart(expanded) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    MediaTransport(media, onTogglePlay, onSkipNext, onSkipPrevious)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    MediaTransport(media, container, onTogglePlay, onSkipNext, onSkipPrevious)
                     media.output?.let { OutputChip(it, onOpenOutput) }
                 }
             }
@@ -208,5 +214,15 @@ private fun mostContrasting(background: Color, first: Color, second: Color): Col
 /** How far the card moves from the surface colour towards the artwork's average colour. */
 private const val ART_TINT = 0.45f
 
-private val ART_COLLAPSED = 48.dp
-private val ART_EXPANDED = 96.dp
+private val ART_COLLAPSED = 56.dp
+private val ART_EXPANDED = 112.dp
+
+/** The card's corners grow with it, `shapes.large` to `extraLarge` (spec 5.3). */
+private val COLLAPSED_CORNER = 26.dp
+private val EXPANDED_CORNER = 36.dp
+
+/** Artwork corners as a share of its size, so it keeps its look as it grows. */
+private const val ART_CORNER = 0.28f
+
+/** The artist line, dimmer than the title in the same contrasting colour. */
+private const val ARTIST_ALPHA = 0.74f

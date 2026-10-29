@@ -4,7 +4,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.core.calendar.CalendarAccess
+import com.wander.mono.ui.components.CheckSwitch
 
 /**
  * Upcoming events on home. Switching it on asks for calendar access with the reason in the summary;
@@ -36,11 +36,12 @@ fun CalendarSection(calendar: CalendarSettingsViewModel = viewModel()) {
     }
     SettingsGroup(R.string.settings_calendar) {
         ListItem(
+            colors = settingRowColors(),
             supportingContent = {
                 val summary = if (denied) R.string.settings_calendar_denied else R.string.settings_calendar_summary
                 Text(stringResource(summary))
             },
-            trailingContent = { Switch(checked = shown, onCheckedChange = null) },
+            trailingContent = { CheckSwitch(shown) },
             modifier = Modifier.toggleable(shown, role = Role.Switch) { on ->
                 when {
                     !on -> calendar.setShown(false)

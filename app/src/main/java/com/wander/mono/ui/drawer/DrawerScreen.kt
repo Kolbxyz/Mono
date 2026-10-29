@@ -27,6 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppIconImage
@@ -34,6 +36,7 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
+import com.wander.mono.ui.components.SegmentedColumn
 import com.wander.mono.ui.components.readableColumn
 import com.wander.mono.ui.components.rememberOverscrollSwipe
 import kotlinx.coroutines.launch
@@ -101,34 +104,61 @@ private fun AppList(
 ) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
+    // One list item per letter, so the rail's sections and the list's items share their indexes.
+    val groups = remember(state.apps, state.sections) { letterGroups(state.apps, state.sections) }
     Box(Modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
             modifier = modifier.fillMaxSize(),
             contentPadding = PaddingValues(
+                start = 16.dp,
                 end = RAIL_WIDTH,
-                bottom = bottom.calculateBottomPadding(),
+                bottom = bottom.calculateBottomPadding() + 16.dp,
             ),
         ) {
-            items(state.apps, key = { it.app.key.encode() }) { entry ->
-                DrawerAppRow(
-                    entry = entry,
-                    icons = icons,
-                    onLaunch = { onLaunchApp(entry.app) },
-                    onLongPress = { onLongPress(entry.app) },
-                )
+            items(groups, key = { it.letter }) { group ->
+                Column(Modifier.animateItem()) {
+                    Text(
+                        group.letter,
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
+                            .semantics { heading() },
+                    )
+                    SegmentedColumn {
+                        group.entries.forEach { entry ->
+                            DrawerAppRow(
+                                entry = entry,
+                                icons = icons,
+                                onLaunch = { onLaunchApp(entry.app) },
+                                onLongPress = { onLongPress(entry.app) },
+                            )
+                        }
+                    }
+                }
             }
         }
-        val current by remember(state.sections) {
-            derivedStateOf { RailMath.sectionIndexFor(state.sections, listState.firstVisibleItemIndex) }
-        }
+        val current by remember { derivedStateOf { listState.firstVisibleItemIndex } }
         LetterRail(
             sections = state.sections,
             current = current,
-            onSelect = { section -> scope.launch { listState.scrollToItem(section.index) } },
+            onSelect = { section ->
+                scope.launch { listState.scrollToItem(state.sections.indexOf(section).coerceAtLeast(0)) }
+            },
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(bottom = bottom.calculateBottomPadding(), top = 8.dp),
+                .padding(bottom = bottom.calculateBottomPadding() + 8.dp, top = 8.dp),
         )
     }
 }
+
+/** The apps under one letter of the rail. */
+private data class LetterGroup(val letter: String, val entries: List<DrawerEntry>)
+
+/** Splits [apps] at each [Section]'s first index; every app falls under exactly one letter. */
+private fun letterGroups(apps: List<DrawerEntry>, sections: List<Section>): List<LetterGroup> =
+    sections.mapIndexed { i, section ->
+        val end = sections.getOrNull(i + 1)?.index ?: apps.size
+        LetterGroup(section.letter, apps.subList(section.index, end))
+    }

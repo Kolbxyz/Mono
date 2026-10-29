@@ -2,6 +2,7 @@ package com.wander.mono.ui.sheet
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -20,13 +21,19 @@ fun HomeSheet(
     onAddWidget: () -> Unit,
     onEditHome: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetMaxWidth = ReadableLayout.MaxColumnWidth) {
-        Column(Modifier.padding(bottom = 16.dp)) {
-            SheetAction(stringResource(R.string.home_sheet_edit), onEditHome)
-            val quietLabel = if (quiet) R.string.home_sheet_quiet_off else R.string.home_sheet_quiet_on
-            SheetAction(stringResource(quietLabel)) { onSetQuiet(!quiet) }
-            SheetAction(stringResource(R.string.home_sheet_add_widget), onAddWidget)
-            SheetAction(stringResource(R.string.home_sheet_settings), onOpenSettings)
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetMaxWidth = ReadableLayout.MaxColumnWidth,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(Modifier.padding(bottom = 24.dp)) {
+            SheetTileRow {
+                SheetTile(R.drawable.sym_edit, stringResource(R.string.home_sheet_edit), onEditHome, emphasis = true)
+                val quietLabel = if (quiet) R.string.home_sheet_quiet_off else R.string.home_sheet_quiet_on
+                SheetTile(R.drawable.sym_quiet, stringResource(quietLabel), { onSetQuiet(!quiet) }, emphasis = quiet)
+                SheetTile(R.drawable.sym_add, stringResource(R.string.home_sheet_add_widget), onAddWidget)
+                SheetTile(R.drawable.sym_settings, stringResource(R.string.home_sheet_settings), onOpenSettings)
+            }
         }
     }
 }

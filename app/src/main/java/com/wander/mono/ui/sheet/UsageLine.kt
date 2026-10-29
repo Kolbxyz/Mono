@@ -21,6 +21,6 @@ internal fun UsageLine(millis: Long, modifier: Modifier = Modifier) {
         text,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+        modifier = modifier,
     )
 }

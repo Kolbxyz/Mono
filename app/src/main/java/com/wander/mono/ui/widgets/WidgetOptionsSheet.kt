@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.widgets.WidgetSize
 import com.wander.mono.ui.components.ReadableLayout
+import com.wander.mono.ui.components.SegmentedColumn
 import com.wander.mono.ui.sheet.SheetAction
 
 /** Long-press options for a widget row: its height, its own settings when it has them, its place, removal. */
@@ -28,12 +29,16 @@ fun WidgetOptionsSheet(
     onMove: (Int) -> Unit,
     onRemove: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetMaxWidth = ReadableLayout.MaxColumnWidth) {
-        Column(Modifier.padding(bottom = 16.dp)) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetMaxWidth = ReadableLayout.MaxColumnWidth,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+    ) {
+        Column(Modifier.padding(bottom = 24.dp)) {
             Text(
                 state.widget.label,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
             )
             Text(
                 stringResource(R.string.widget_size),
@@ -51,11 +56,19 @@ fun WidgetOptionsSheet(
                     }
                 }
             }
-            Column(Modifier.padding(top = 8.dp)) {
-                if (state.widget.canReconfigure) SheetAction(stringResource(R.string.widget_reconfigure), onReconfigure)
-                if (state.canMoveUp) SheetAction(stringResource(R.string.sheet_move_up)) { onMove(-1) }
-                if (state.canMoveDown) SheetAction(stringResource(R.string.sheet_move_down)) { onMove(1) }
-                SheetAction(stringResource(R.string.widget_remove), onRemove)
+            SegmentedColumn(Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp)) {
+                if (state.widget.canReconfigure) {
+                    SheetAction(stringResource(R.string.widget_reconfigure), R.drawable.sym_settings, onReconfigure)
+                }
+                if (state.canMoveUp) {
+                    SheetAction(stringResource(R.string.sheet_move_up), R.drawable.sym_keyboard_arrow_up) { onMove(-1) }
+                }
+                if (state.canMoveDown) {
+                    SheetAction(stringResource(R.string.sheet_move_down), R.drawable.sym_keyboard_arrow_down) {
+                        onMove(1)
+                    }
+                }
+                SheetAction(stringResource(R.string.widget_remove), R.drawable.sym_delete, onRemove)
             }
         }
     }

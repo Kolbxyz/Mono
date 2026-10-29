@@ -63,12 +63,18 @@ class LegibilityTest {
     }
 
     @Test
-    fun `scrim is clear between header and list when there is room`() {
-        val stops = scrimStops(height = 1000f, headerBottom = 200f, listTop = 600f, fade = 50f)
-        assertEquals(
-            listOf(0f to 1f, 0.2f to 1f, 0.25f to 0f, 0.55f to 0f, 0.6f to 1f, 1f to 1f),
-            stops,
-        )
+    fun `scrim is full at both edges and clear between header and list`() {
+        val stops = scrimStops(height = 1000f, headerBottom = 200f, listTop = 700f, reach = 100f).toMap()
+        assertEquals(1f, stops.getValue(0f), 0.001f)
+        assertEquals(1f, stops.getValue(1f), 0.001f)
+        // 437.5 lies past the header's reach (300) and before the list's (600).
+        assertEquals(0f, stops.getValue(0.4375f), 0.001f)
+    }
+
+    @Test
+    fun `scrim eases without steps`() {
+        val strengths = scrimStops(height = 1000f, headerBottom = 200f, listTop = 700f, reach = 100f).map { it.second }
+        strengths.zipWithNext().forEach { (a, b) -> assertTrue(kotlin.math.abs(a - b) < 0.5f) }
     }
 
     @Test

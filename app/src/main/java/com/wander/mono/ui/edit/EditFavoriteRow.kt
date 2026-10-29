@@ -30,6 +30,7 @@ import com.wander.mono.R
 import com.wander.mono.data.LiveRowRef
 import com.wander.mono.ui.components.AppBadge
 import com.wander.mono.ui.components.AppLabel
+import com.wander.mono.ui.components.CheckSwitch
 import com.wander.mono.ui.home.HomeRow
 
 /**
@@ -110,7 +111,7 @@ private fun LiveRowSwitch(toggle: LiveRowToggle, onSetLiveRow: (LiveRowRef, Bool
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f),
         )
-        Switch(checked = toggle.shown, onCheckedChange = null)
+        CheckSwitch(toggle.shown)
     }
 }
 

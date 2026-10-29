@@ -1,5 +1,6 @@
 package com.wander.mono.ui.drawer
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,12 +12,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.components.AppIcons
+import com.wander.mono.ui.components.SegmentGap
+import com.wander.mono.ui.components.segmentedShape
 
 /**
  * The ranked results for a query. The first sits on a tonal container: it is what the keyboard's
@@ -32,7 +34,11 @@ fun SearchResultList(
     modifier: Modifier = Modifier,
     onUnlockHidden: (() -> Unit)? = null,
 ) {
-    LazyColumn(modifier.fillMaxSize(), contentPadding = contentPadding) {
+    LazyColumn(
+        modifier.fillMaxSize(),
+        contentPadding = contentPadding,
+        verticalArrangement = Arrangement.spacedBy(SegmentGap),
+    ) {
         if (results.isEmpty()) {
             item(key = "none") {
                 Text(
@@ -44,11 +50,11 @@ fun SearchResultList(
             }
         }
         itemsIndexed(results, key = { _, hit -> hit.key }, contentType = { _, hit -> hit::class }) { index, hit ->
-            val top = index == 0
+            val scheme = MaterialTheme.colorScheme
             Surface(
-                color = if (top) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                color = if (index == 0) scheme.secondaryContainer else scheme.surfaceContainer,
+                shape = segmentedShape(index, results.size),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).animateItem(),
             ) {
                 ResultRow(hit, icons, onLaunch = { onLaunchHit(hit) }, onLongPress = onLongPress)
             }

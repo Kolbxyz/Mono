@@ -79,13 +79,13 @@ Home (list)  ── swipe up / tap search ──▶  Drawer + Search (one surfac
 │  ◐  Firefox                          │
 │  ◐  Signal                      ● 1  │
 │                                      │
-│  ⌕                                ⋮ │  search affordance (thumb zone)
+│ ( ⌕  Search apps, settings…     ⠿ ) │  search dock (thumb zone)
 └──────────────────────────────────────┘   letter rail hidden on home
 ```
 
 - **Bottom-anchored list.** Favourites stack upward from the search affordance, so the most-used rows are in the thumb zone (Niagara and Olauncher both centre/bottom their lists: `ref:niagara/09`, `ref:olauncher/01`). Header stays top-left.
 - **Row order is user order.** Live rows never reorder favourites; they only expand under their owner.
-- **Search affordance** is a quiet 48 dp icon button bottom-left (not a Google-style pill, see rejection of `ref:lawnchair/01`), plus the swipe-up gesture.
+- **Search dock** is a 56 dp `surfaceContainerHigh` pill with the search hint, opening the drawer; plus the swipe-up gesture. Opaque and tonal, no logo or brand (what `ref:lawnchair/01` got wrong was the Google bar, not the pill).
 
 ### 4.2 Glance header
 
@@ -169,11 +169,11 @@ Entry: long-press empty space, or row sheet → "Edit home".
 
 ### 5.1 Type scale
 
-Font: **Roboto Flex** bundled as a variable font asset (OFL, no GMS downloadable fonts). Emphasized styles from M3 Expressive typography.
+Font: **Google Sans Flex** bundled as a variable font (`res/font/google_sans_flex.ttf`, OFL, the same file Wanda and Phalanx ship; no GMS downloadable fonts). Display, headline and title styles set the `ROND` axis to 65 and run heavier (SemiBold to ExtraBold, tight tracking); body and label styles stay at `ROND` 0. Scale in `ui/theme/Type.kt`.
 
 | Role | M3 token | Size / line | Use |
 | --- | --- | --- | --- |
-| Clock | `displayLargeEmphasized` | 57/64 sp, weight 500 | Header time |
+| Clock | `clockStyle` | 88/92 sp, ExtraBold, -2 sp, tabular figures; AM/PM at 0.4 em | Header time |
 | Header meta | `titleMedium` | 16/24 sp | Date, alarm, event |
 | Row label (default) | `headlineSmall` | 24/32 sp | Favourites |
 | Row label (compact) | `titleLarge` | 22/28 sp | Dense lists |
@@ -196,17 +196,19 @@ Clock styles (setting): Default (above), Stacked (hours over minutes, like `ref:
 
 | Element | Shape |
 | --- | --- |
-| Live row card | `shapes.large` (16 dp) → `extraLarge` (28 dp) when expanded (morph) |
+| Scale | 8 / 12 / 18 / 26 / 36 dp (`ui/theme/Shape.kt`), rounder than baseline, shared with Wanda and Phalanx |
+| Grouped lists (drawer letters, search results, settings, sheets) | Segmented: 24 dp outer corners, 6 dp at the seams, 2 dp gaps (`SegmentedColumn`) |
+| Live row card | `shapes.large` (26 dp) → `extraLarge` (36 dp) when expanded (morph) |
 | Play/pause | Round → squircle on press (`ToggleButton`/`IconButton` shape morph) |
 | Rail bubble | `MaterialShapes.Cookie9Sided` morphing from `Circle` on scrub start |
-| Sheets | `extraLarge` top corners |
+| Sheets | `extraLarge` top corners on `surfaceContainerLow`; main actions as tall tonal tiles whose corners tighten on press |
 | Edit toolbar | `FloatingToolbar` (fully rounded) |
 | Icon mask (when no themed icon) | Circle default; user choice from a short list of `MaterialShapes` |
 
 ### 5.4 Colour over arbitrary wallpapers
 
 - Theme: `MaterialExpressiveTheme` with `dynamicDarkColorScheme`/`dynamicLightColorScheme` from wallpaper.
-- **Legibility scrim:** home draws a vertical gradient scrim behind header and list only (not the whole screen): `surface` at alpha α at the list edge → 0 at the top third. α is computed once per wallpaper change from `WallpaperManager.getWallpaperColors()` + `HINT_SUPPORTS_DARK_TEXT`:
+- **Legibility scrim:** home draws a vertical gradient scrim behind header and list only (not the whole screen): `surface` at alpha α at the top and bottom edges, held over the upper header, then eased (smoothstep, no visible band) to 0 over 120 dp past the header and before the list. A soft `surface` halo under home text carries legibility where the scrim thins. α is computed once per wallpaper change from `WallpaperManager.getWallpaperColors()` + `HINT_SUPPORTS_DARK_TEXT`:
   - dark-text-friendly wallpaper in light theme → α 0.35, `onSurface` text;
   - otherwise dark scheme text, α 0.45 (0.65 if wallpaper is busy, see below).
   - Listen to `WallpaperManager.OnColorsChangedListener` (no polling).

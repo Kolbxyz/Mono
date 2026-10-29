@@ -22,6 +22,8 @@ import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.zIndex
 import com.wander.mono.R
+import com.wander.mono.ui.components.AppIcons
+import com.wander.mono.ui.components.pressShrink
 import com.wander.mono.ui.home.FavoriteRow
 import com.wander.mono.ui.home.HomeRow
 
@@ -34,6 +36,7 @@ import com.wander.mono.ui.home.HomeRow
 @Composable
 fun ReorderableFavorite(
     row: HomeRow.App,
+    icons: AppIcons,
     siblings: List<String>,
     rows: List<HomeRow>,
     editing: HomeEditing,
@@ -76,7 +79,7 @@ fun ReorderableFavorite(
         placed
             .favoriteSemantics(row, siblings, editing, onLaunch, onLongPress, onAppInfo)
             // The edit form draws its own container and lift shadow, which a clip would cut off.
-            .then(if (editing.active) Modifier else Modifier.clip(MaterialTheme.shapes.medium))
+            .then(if (editing.active) Modifier else Modifier.pressShrink(interactions).clip(MaterialTheme.shapes.large))
             .indication(interactions, if (editing.active) null else ripple())
             .pointerInput(row.key) { detectFavoriteGestures(interactions, callbacks) },
     ) {
@@ -91,7 +94,7 @@ fun ReorderableFavorite(
                 handle = Modifier.pointerInput(row.key) { detectHandleDrag(callbacks) },
             )
         } else {
-            FavoriteRow(row)
+            FavoriteRow(row, icons)
         }
     }
 }

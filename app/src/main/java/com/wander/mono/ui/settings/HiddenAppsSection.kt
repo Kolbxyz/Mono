@@ -61,6 +61,7 @@ fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
             list.isEmpty() -> ListItem { Text(stringResource(R.string.settings_hidden_empty)) }
             else -> list.forEach { app ->
                 ListItem(
+                    colors = settingRowColors(),
                     trailingContent = {
                         TextButton(onClick = { hidden.unhide(app.key) }) {
                             Text(stringResource(R.string.sheet_unhide))
