@@ -1,6 +1,7 @@
 package com.wander.mono.ui.home
 
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
@@ -31,12 +32,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
@@ -45,7 +49,8 @@ import com.wander.mono.ui.components.rememberOverscrollSwipe
 /**
  * The home screen over the wallpaper: the glance header at the top, the rows anchored to the
  * bottom so favourites sit in the thumb zone, and the drawer button under them. Swiping up
- * anywhere (past the end of the list when it scrolls) opens the drawer.
+ * anywhere (past the end of the list when it scrolls) opens the drawer. Long-pressing the clock or
+ * an empty spot opens the home options; rows consume their own presses, so they never reach it.
  */
 @Composable
 fun HomeScreen(
@@ -59,6 +64,7 @@ fun HomeScreen(
     onSkipNext: () -> Unit,
     onGrantAccess: () -> Unit,
     onOpenDrawer: () -> Unit,
+    onHomeOptions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val swipeUp = rememberOverscrollSwipe(upward = true, onSwipe = onOpenDrawer)
@@ -95,6 +101,7 @@ fun HomeScreen(
                     listTop = { listViewportTop.floatValue + listState.contentTop() },
                     fade = with(density) { SCRIM_FADE.toPx() },
                 )
+                .pointerInput(onHomeOptions) { detectTapGestures(onLongPress = { onHomeOptions() }) }
                 .nestedScroll(swipeUp)
                 .scrollable(stillDrag, Orientation.Vertical),
             contentAlignment = Alignment.TopCenter,
@@ -107,7 +114,18 @@ fun HomeScreen(
                     .windowInsetsPadding(WindowInsets.safeDrawing)
                     .padding(horizontal = gutter),
             ) {
-                GlanceHeader(glance, Modifier.onGloballyPositioned { headerBottom.floatValue = it.boundsInRoot().bottom })
+                val optionsLabel = stringResource(R.string.action_home_options)
+                GlanceHeader(
+                    glance,
+                    Modifier
+                        .onGloballyPositioned { headerBottom.floatValue = it.boundsInRoot().bottom }
+                        .semantics {
+                            onLongClick(optionsLabel) {
+                                onHomeOptions()
+                                true
+                            }
+                        },
+                )
                 LazyColumn(
                     state = listState,
                     modifier = Modifier

@@ -3,7 +3,10 @@
     <string name="app_name">Mono</string>
 
     <!-- Home -->
-    <string name="home_empty">No favourites yet. Open all apps, long-press an app and choose Add to home.</string>
+    <string name="home_empty_title">Your calm place.</string>
+    <string name="home_empty_body">Pick the few apps you use every day.</string>
+    <string name="home_empty_choose">Choose favourites</string>
+    <string name="home_empty_hint">Swipe up for all apps</string>
     <string name="home_next_alarm">Alarm %1$s</string>
     <string name="home_listener_prompt">Allow notification access for music and notification dots</string>
 
@@ -11,6 +14,8 @@
     <string name="action_open">Open</string>
     <string name="action_app_options">App options</string>
     <string name="action_open_drawer">All apps</string>
+    <string name="action_home_options">Home options</string>
+    <string name="action_back">Back</string>
 
     <!-- States announced by TalkBack -->
     <string name="state_has_notifications">Has notifications</string>
@@ -35,6 +40,22 @@
     <string name="sheet_unhide">Show in drawer</string>
     <string name="sheet_app_info">App info</string>
     <string name="sheet_uninstall">Uninstall</string>
+
+    <!-- Long-press options for home itself -->
+    <string name="home_sheet_settings">Mono settings</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_mode">Appearance</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_amoled_black">AMOLED black</string>
+    <string name="settings_amoled_black_summary">Pure black background in dark theme</string>
+    <string name="settings_home_look">Home</string>
+    <string name="settings_text_shadow">Text shadow</string>
+    <string name="settings_text_shadow_summary">Shadow under home text instead of dimming the wallpaper</string>
 
     <!-- Errors -->
     <string name="error_app_missing">This app is no longer installed</string>

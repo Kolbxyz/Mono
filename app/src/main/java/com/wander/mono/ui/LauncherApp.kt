@@ -5,7 +5,9 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -28,23 +30,30 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.ui.drawer.DrawerScreen
 import com.wander.mono.ui.drawer.DrawerViewModel
+import com.wander.mono.ui.home.HomeLookViewModel
 import com.wander.mono.ui.home.HomeScreen
 import com.wander.mono.ui.home.HomeViewModel
 import com.wander.mono.ui.sheet.AppSheet
+import com.wander.mono.ui.settings.SettingsScreen
 import com.wander.mono.ui.sheet.AppSheetViewModel
+import com.wander.mono.ui.sheet.HomeSheet
 
-/** Home, with the drawer sliding over it, the long-press sheet and the error snackbar. */
+/** Home, with the drawer and settings sliding over it, the long-press sheets and the error snackbar. */
 @Composable
 fun LauncherApp(
     launcher: LauncherViewModel = viewModel(),
     home: HomeViewModel = viewModel(),
+    homeLookModel: HomeLookViewModel = viewModel(),
     drawer: DrawerViewModel = viewModel(),
     sheet: AppSheetViewModel = viewModel(),
 ) {
     val drawerOpen by launcher.drawerOpen.collectAsStateWithLifecycle()
-    val drawerAnimates by launcher.drawerAnimates.collectAsStateWithLifecycle()
+    val settingsOpen by launcher.settingsOpen.collectAsStateWithLifecycle()
+    val homeOptionsOpen by launcher.homeOptionsOpen.collectAsStateWithLifecycle()
+    val overlaysAnimate by launcher.overlaysAnimate.collectAsStateWithLifecycle()
     val rows by home.rows.collectAsStateWithLifecycle()
     val glance by home.glance.collectAsStateWithLifecycle()
+    val homeLook by homeLookModel.look.collectAsStateWithLifecycle()
     val query by drawer.query.collectAsStateWithLifecycle()
     val drawerState by drawer.state.collectAsStateWithLifecycle()
     val sheetState by sheet.state.collectAsStateWithLifecycle()
@@ -60,6 +69,7 @@ fun LauncherApp(
     // Back on home has nothing to go back to; it only ever closes what is open.
     BackHandler {
         when {
+            settingsOpen -> launcher.closeSettings()
             drawerOpen && query.isNotEmpty() -> drawer.setQuery("")
             drawerOpen -> launcher.closeDrawer()
         }
@@ -69,6 +79,7 @@ fun LauncherApp(
         HomeScreen(
             rows = rows,
             glance = glance,
+            look = homeLook,
             listState = homeList,
             onLaunch = home::launch,
             onLongPress = { sheet.show(it.key) },
@@ -76,12 +87,13 @@ fun LauncherApp(
             onSkipNext = home::skipNext,
             onGrantAccess = home::openListenerSettings,
             onOpenDrawer = launcher::openDrawer,
+            onHomeOptions = { launcher.showHomeOptions(true) },
         )
         AnimatedVisibility(
             visible = drawerOpen,
             enter = slideInVertically(motion.defaultSpatialSpec()) { it / SLIDE_FRACTION } +
                 fadeIn(motion.defaultEffectsSpec()),
-            exit = if (drawerAnimates) {
+            exit = if (overlaysAnimate) {
                 slideOutVertically(motion.fastSpatialSpec()) { it / SLIDE_FRACTION } + fadeOut(motion.fastEffectsSpec())
             } else {
                 ExitTransition.None
@@ -97,7 +109,22 @@ fun LauncherApp(
                 onLaunchHit = { if (drawer.launch(it)) launcher.closeDrawer() },
                 onLongPress = { sheet.show(it.key) },
                 onClose = launcher::closeDrawer,
+                onOpenSettings = launcher::openSettings,
             )
+        }
+        // Over the drawer when opened from it, so back from settings returns to the drawer.
+        AnimatedVisibility(
+            visible = settingsOpen,
+            enter = slideInHorizontally(motion.defaultSpatialSpec()) { it / SLIDE_FRACTION } +
+                fadeIn(motion.defaultEffectsSpec()),
+            exit = if (overlaysAnimate) {
+                slideOutHorizontally(motion.fastSpatialSpec()) { it / SLIDE_FRACTION } +
+                    fadeOut(motion.fastEffectsSpec())
+            } else {
+                ExitTransition.None
+            },
+        ) {
+            SettingsScreen(onBack = launcher::closeSettings)
         }
         SnackbarHost(
             snackbar,
@@ -107,6 +134,9 @@ fun LauncherApp(
         )
     }
 
+    if (homeOptionsOpen) {
+        HomeSheet(onDismiss = { launcher.showHomeOptions(false) }, onOpenSettings = launcher::openSettings)
+    }
     sheetState?.let { state ->
         AppSheet(
             state = state,
@@ -122,5 +152,5 @@ fun LauncherApp(
     }
 }
 
-/** The drawer slides in from a quarter of the screen below, not from the very bottom. */
+/** Overlays slide in from a quarter of the screen away (below, or to the side), not from the edge. */
 private const val SLIDE_FRACTION = 4

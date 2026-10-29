@@ -29,12 +29,14 @@ Single module `:app`, package root `com.wander.mono`.
 | `core/apps` | `LauncherApps` catalog, profile callbacks, shortcuts, icon cache, launch / app info / uninstall. |
 | `core/notifications` | `MonoNotificationListener`, per-app notification counts, notification-access state. |
 | `core/media` | Active media sessions (through the listener's grant) and the playing item. |
-| `core/system` | Clock tick and next alarm, from system broadcasts. |
+| `core/system` | Clock tick and next alarm, from system broadcasts; wallpaper colours and hints. |
 | `data` | DataStore: ordered favourites and hidden apps. |
+| `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
 | `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / prompt rows. |
 | `ui/drawer` | Alphabetical list, letter rail, ranked search (apps + shortcuts). |
-| `ui/sheet` | Long-press options. |
+| `ui/sheet` | Long-press options: per app (`AppSheet`) and for home itself (`HomeSheet`). |
+| `ui/settings` | Settings screen, reusable setting rows, one `*Section.kt` per feature. |
 | `ui/theme` | `MonoTheme`, reduced motion. |
 
 ## 3. Window Insets & Motion
@@ -43,7 +45,22 @@ Single module `:app`, package root `com.wander.mono`.
 - Containers pad `WindowInsets.safeDrawing` on the edges they touch (`.only(...)` when only some matter). `safeDrawing` includes the IME.
 - Animations take specs from `MaterialTheme.motionScheme`; reduced motion swaps in `NoMotionScheme` (1 ms tweens, not `snap()`).
 
-## 4. Quick Commands
+## 4. Adding a Setting
+
+Settings opens from long-pressing the clock or an empty spot on home (`HomeSheet`) and from the gear in the drawer's search field. It is an overlay driven by `LauncherViewModel.settingsOpen`, like the drawer, and closes on `leaveToHome`.
+
+1. Declare the key in your own `data/settings/<Feature>Settings.kt`: `BooleanSetting(name, default)` or `EnumSetting(name, default, entries)` with an enum implementing `StoredEnum` (its `stored` string is what is saved; never change it).
+2. Add rows in your own `ui/settings/<Feature>Section.kt` with `SettingsGroup`, `SwitchSetting`, `ChoiceSetting`.
+3. Register the section with one line in `ui/settings/SettingsSections.kt`. Read the value elsewhere with `SettingsStore[setting]` (a `Flow`).
+
+```kotlin
+object GestureSettings { val SwipeDownNotifications = BooleanSetting("swipe_down_notifications", default = true) }
+@Composable fun GestureSection(settings: SettingsViewModel) = SettingsGroup(R.string.settings_gestures) {
+    SwitchSetting(settings, GestureSettings.SwipeDownNotifications, title = R.string.settings_swipe_down)
+}
+```
+
+## 5. Quick Commands
 
 ```bash
 ./gradlew :app:assembleDebug          # Build debug APK (installs as com.wander.mono.debug)
