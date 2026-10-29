@@ -52,6 +52,7 @@ class MonoNotificationListener : NotificationListenerService() {
                         isOngoing = sbn.isOngoing,
                         isGroupSummary = sbn.notification.flags and Notification.FLAG_GROUP_SUMMARY != 0,
                         canShowBadge = rankings.getRanking(sbn.key, ranking) && ranking.canShowBadge(),
+                        number = sbn.notification.number,
                     )
                 }
             )

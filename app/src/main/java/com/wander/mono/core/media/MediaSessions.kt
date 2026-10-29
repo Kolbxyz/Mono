@@ -55,6 +55,10 @@ class MediaSessions @Inject constructor(
         current?.transportControls?.skipToNext()
     }
 
+    fun skipPrevious() {
+        current?.transportControls?.skipToPrevious()
+    }
+
     private fun sessions(): Flow<MediaState> = callbackFlow {
         val handler = Handler(Looper.getMainLooper())
         val watched = mutableMapOf<MediaController, MediaController.Callback>()
@@ -121,6 +125,8 @@ class MediaSessions @Inject constructor(
             ?: metadata.getBitmap(MediaMetadata.METADATA_KEY_ART)
             ?: metadata.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
         val playback = controller.playbackState
+        val isPlaying = playback?.state == PlaybackState.STATE_PLAYING
+        val actions = playback?.actions ?: 0L
         return PlayingMedia(
             packageName = controller.packageName,
             title = title,
@@ -129,8 +135,18 @@ class MediaSessions @Inject constructor(
                 ?: metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)),
             art = bitmap?.asImageBitmap(),
             artColor = bitmap?.let(art::colorOf),
-            isPlaying = playback?.state == PlaybackState.STATE_PLAYING,
-            canSkipNext = playback != null && playback.actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L,
+            isPlaying = isPlaying,
+            canSkipNext = actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L,
+            canSkipPrevious = actions and PlaybackState.ACTION_SKIP_TO_PREVIOUS != 0L,
+            progress = playback?.let {
+                playbackProgress(
+                    positionMs = it.position,
+                    durationMs = metadata.getLong(MediaMetadata.METADATA_KEY_DURATION),
+                    speed = it.playbackSpeed,
+                    updatedAtMs = it.lastPositionUpdateTime,
+                    isPlaying = isPlaying,
+                )
+            },
         )
     }
 

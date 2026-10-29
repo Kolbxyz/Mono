@@ -47,6 +47,7 @@ fun HomeScreen(
     onLongPress: (LaunchableApp) -> Unit,
     onTogglePlay: () -> Unit,
     onSkipNext: () -> Unit,
+    onSkipPrevious: () -> Unit,
     onGrantAccess: () -> Unit,
     onOpenDrawer: () -> Unit,
     onHomeOptions: () -> Unit,
@@ -109,7 +110,13 @@ fun HomeScreen(
                             onLongPress = { onLongPress(row.app) },
                             modifier = animated,
                         )
-                        is HomeRow.NowPlaying -> NowPlayingCard(row.media, onTogglePlay, onSkipNext, animated)
+                        is HomeRow.NowPlaying -> NowPlayingCard(
+                            media = row.media,
+                            onTogglePlay = onTogglePlay,
+                            onSkipNext = onSkipNext,
+                            onSkipPrevious = onSkipPrevious,
+                            modifier = animated,
+                        )
                         HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
                     }
                 }

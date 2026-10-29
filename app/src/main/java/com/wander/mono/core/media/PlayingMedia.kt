@@ -12,6 +12,9 @@ data class PlayingMedia(
     val artColor: Int?,
     val isPlaying: Boolean,
     val canSkipNext: Boolean,
+    val canSkipPrevious: Boolean,
+    /** Null when the session reports no usable position or duration. */
+    val progress: PlaybackProgress?,
 )
 
 sealed interface MediaState {

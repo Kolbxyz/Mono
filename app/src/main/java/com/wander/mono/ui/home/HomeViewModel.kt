@@ -10,6 +10,8 @@ import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.settings.BadgeSettings
+import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -24,6 +26,7 @@ class HomeViewModel @Inject constructor(
     catalog: AppCatalog,
     prefs: LauncherPrefs,
     counts: NotificationCounts,
+    settings: SettingsStore,
     time: SystemTime,
     private val media: MediaSessions,
     private val listenerAccess: ListenerAccess,
@@ -36,6 +39,7 @@ class HomeViewModel @Inject constructor(
         catalog.apps.filterNotNull(),
         counts.counts,
         media.state,
+        settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
@@ -53,6 +57,8 @@ class HomeViewModel @Inject constructor(
     fun togglePlayPause() = media.togglePlayPause()
 
     fun skipNext() = media.skipNext()
+
+    fun skipPrevious() = media.skipPrevious()
 
     fun openListenerSettings() {
         messages.report(listenerAccess.openSettings())
