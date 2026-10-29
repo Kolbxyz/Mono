@@ -1,5 +1,6 @@
 package com.wander.mono.ui.home
 
+import android.content.Context
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -22,12 +23,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.toArgb
@@ -44,7 +47,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.ui.edit.HomeEditing
+import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.core.calendar.CalendarEvent
+import com.wander.mono.core.widgets.MonoWidgetHostView
 import com.wander.mono.ui.components.rememberOverscrollSwipe
 import com.wander.mono.ui.theme.LocalHighContrast
 
@@ -60,10 +66,10 @@ fun HomeScreen(
     glance: Glance,
     look: HomeLook,
     listState: LazyListState,
+    editing: HomeEditing,
     onLaunch: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     onAppInfo: (LaunchableApp) -> Unit,
-    onMove: (LaunchableApp, by: Int) -> Unit,
     onTogglePlay: () -> Unit,
     onSkipNext: () -> Unit,
     onSkipPrevious: () -> Unit,
@@ -74,6 +80,8 @@ fun HomeScreen(
     onOpenEvent: (CalendarEvent) -> Unit,
     onOpenDrawer: () -> Unit,
     onHomeOptions: () -> Unit,
+    createWidgetView: (Context, Int) -> MonoWidgetHostView,
+    onWidgetLongPress: (WidgetHomeRow) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val swipeUp = rememberOverscrollSwipe(upward = true, onSwipe = onOpenDrawer)
@@ -87,6 +95,8 @@ fun HomeScreen(
     val legibleAlpha = remember(look.tone, scheme.surface, scheme.onSurface) {
         scrimAlpha(look.tone, scheme.surface.toArgb(), scheme.onSurface.toArgb())
     }
+    // Edit mode dims the wallpaper (spec 4.6).
+    val editDim = animateFloatAsState(if (editing.active) EDIT_DIM else 0f, motion.defaultEffectsSpec())
     val scrimAlpha = homeScrimAlpha(legibleAlpha, look.textShadow, look.highContrast)
     val shadow = if (look.textShadow) {
         with(density) {
@@ -111,6 +121,7 @@ fun HomeScreen(
                     listTop = { listViewportTop.floatValue + listState.contentTop() },
                     fade = with(density) { SCRIM_FADE.toPx() },
                 )
+                .drawBehind { drawRect(scheme.surface.copy(alpha = editDim.value)) }
                 .pointerInput(onHomeOptions) { detectTapGestures(onLongPress = { onHomeOptions() }) }
                 .nestedScroll(swipeUp)
                 .scrollable(stillDrag, Orientation.Vertical),
@@ -146,27 +157,28 @@ fun HomeScreen(
                     contentPadding = PaddingValues(bottom = 16.dp),
                 ) {
                     // The now-playing and prompt rows are not favourites: the empty state shows until there is one.
-                    if (rows != null && rows.none { it is HomeRow.App }) {
+                    if (rows != null && !editing.active && rows.none { it is HomeRow.App }) {
                         item(key = "empty", contentType = "empty") {
                             EmptyHome(onChooseFavorites = onOpenDrawer, modifier = Modifier.animateItem())
                         }
                     }
-                    val favorites = rows.orEmpty().filterIsInstance<HomeRow.App>()
-                    items(rows.orEmpty(), key = { it.key }, contentType = { it::class }) { row ->
+                    val shown = editing.shownRows(rows)
+                    val favorites = shown.filterIsInstance<HomeRow.App>().map { it.key }
+                    items(shown, key = { it.key }, contentType = { it::class }) { row ->
                         val animated = Modifier.animateItem(
                             fadeInSpec = motion.defaultEffectsSpec(),
                             placementSpec = motion.defaultSpatialSpec(),
                             fadeOutSpec = motion.fastEffectsSpec(),
                         )
                         when (row) {
-                            is HomeRow.App -> FavoriteRow(
+                            is HomeRow.App -> ReorderableFavorite(
                                 row = row,
+                                siblings = favorites,
+                                rows = rows.orEmpty(),
+                                editing = editing,
                                 onLaunch = { onLaunch(row.app) },
                                 onLongPress = { onLongPress(row.app) },
                                 onAppInfo = { onAppInfo(row.app) },
-                                onMove = { by -> onMove(row.app, by) },
-                                canMoveUp = favorites.firstOrNull() != row,
-                                canMoveDown = favorites.lastOrNull() != row,
                                 modifier = animated,
                             )
                             is HomeRow.NowPlaying -> NowPlayingCard(
@@ -182,14 +194,23 @@ fun HomeScreen(
                             HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
                             is NotificationRow -> NotificationPreviewRow(row, animated)
                             is CalendarRow -> CalendarCard(row, onOpenEvent, animated)
+                            is WidgetHomeRow -> WidgetRow(
+                                row = row,
+                                createView = createWidgetView,
+                                onLongPress = { onWidgetLongPress(row) },
+                                modifier = animated,
+                            )
                         }
                     }
                 }
-                IconButton(onClick = onOpenDrawer) {
-                    Icon(
-                        painterResource(R.drawable.sym_apps),
-                        contentDescription = stringResource(R.string.action_open_drawer),
-                    )
+                // In edit mode the floating toolbar takes this place.
+                if (!editing.active) {
+                    IconButton(onClick = onOpenDrawer) {
+                        Icon(
+                            painterResource(R.drawable.sym_apps),
+                            contentDescription = stringResource(R.string.action_open_drawer),
+                        )
+                    }
                 }
             }
         }
@@ -201,6 +222,9 @@ private fun LazyListState.contentTop(): Float {
     val first = layoutInfo.visibleItemsInfo.firstOrNull() ?: return 0f
     return if (first.index == 0) (first.offset - layoutInfo.viewportStartOffset).toFloat().coerceAtLeast(0f) else 0f
 }
+
+/** How much edit mode dims the wallpaper, with the surface colour (spec 4.6). */
+private const val EDIT_DIM = 0.6f
 
 /** Text shadow strength, per spec 5.4: the `scrim` role at 40 %. */
 private const val SHADOW_ALPHA = 0.4f

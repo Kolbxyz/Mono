@@ -15,4 +15,7 @@ internal val settingsSections: List<@Composable (SettingsViewModel) -> Unit> = l
     { PreviewSection(it) },
     { CalendarSection() },
     { SearchSection(it) },
+    { QuietSection() },
+    { HiddenAppsSection() },
+    { UsageSection(it) },
 )
