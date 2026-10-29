@@ -20,6 +20,10 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- SystemUI's media output switcher, so the now-playing chip shows only where it can open. -->
+        <intent>
+            <action android:name="com.android.systemui.action.LAUNCH_MEDIA_OUTPUT_DIALOG" />
+        </intent>
         <!-- Search: the settings pages it offers (core/system/SettingsPages) and the browser's web search. -->
         <intent>
             <action android:name="android.settings.WIFI_SETTINGS" />
