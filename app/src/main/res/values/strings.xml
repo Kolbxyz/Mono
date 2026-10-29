@@ -290,6 +290,10 @@
 
     <!-- Rename -->
     <string name="sheet_rename">Rename</string>
+    <string name="sheet_headphones_top">First on home with headphones</string>
+    <string name="settings_headphones">Headphones</string>
+    <string name="settings_headphones_lift">Media apps first</string>
+    <string name="settings_headphones_lift_summary">While headphones are connected, the favourites you choose from their options move to the top of home.</string>
     <string name="rename_title">Rename app</string>
     <string name="rename_field">Name</string>
     <string name="rename_original">Original name: %1$s</string>

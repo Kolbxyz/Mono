@@ -73,6 +73,7 @@ fun LauncherApp(
     val homeOptionsOpen by launcher.homeOptionsOpen.collectAsStateWithLifecycle()
     val overlaysAnimate by launcher.overlaysAnimate.collectAsStateWithLifecycle()
     val rows by home.rows.collectAsStateWithLifecycle()
+    val lifted by home.lifted.collectAsStateWithLifecycle()
     val glance by home.glance.collectAsStateWithLifecycle()
     val homeLook by homeLookModel.look.collectAsStateWithLifecycle()
     val query by drawer.query.collectAsStateWithLifecycle()
@@ -138,6 +139,7 @@ fun LauncherApp(
     Box(Modifier.fillMaxSize().onSizeChanged { drawerMotion.travel = it.height * TRAVEL_FRACTION }) {
         HomeScreen(
             rows = rows,
+            lifted = lifted,
             glance = glance,
             look = homeLook,
             listState = homeList,
@@ -241,6 +243,7 @@ fun LauncherApp(
             onRemoveFromHome = sheet::removeFromHome,
             onMove = sheet::move,
             onSetHidden = sheet::setHidden,
+            onSetLiftsWithHeadphones = sheet::setLiftsWithHeadphones,
             onRename = {
                 sheet.dismiss()
                 rename.show(it)

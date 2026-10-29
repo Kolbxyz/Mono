@@ -44,6 +44,7 @@ import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
@@ -62,10 +63,12 @@ import com.wander.mono.ui.theme.LocalHighContrast
  * (past the end of the list when it scrolls) go to [gestureScroll]: up pulls the drawer, down
  * opens the notification shade. Long-pressing the clock or an empty spot opens the home options and
  * double-tapping one runs [onDoubleTap]; rows consume their own presses, so they never reach them.
+ * The [lifted] favourites go first while headphones are connected, outside edit mode only.
  */
 @Composable
 fun HomeScreen(
     rows: List<HomeRow>?,
+    lifted: Set<AppKey>,
     glance: Glance,
     look: HomeLook,
     listState: LazyListState,
@@ -180,8 +183,10 @@ fun HomeScreen(
                             EmptyHome(onChooseFavorites = onOpenDrawer, modifier = Modifier.animateItem())
                         }
                     }
-                    val shown = editing.shownRows(rows)
-                    val movable = shown.filter { it is HomeRow.App || it is WidgetHomeRow }.map { it.key }
+                    val ordered = editing.shownRows(rows)
+                    val movable = ordered.filter { it is HomeRow.App || it is WidgetHomeRow }.map { it.key }
+                    // Saved order while editing; outside it, favourites chosen for headphones go first.
+                    val shown = if (editing.showsSavedOrder) ordered else liftedFirst(ordered, lifted)
                     items(shown, key = { it.key }, contentType = { it::class }) { row ->
                         val animated = Modifier.animateItem(
                             fadeInSpec = motion.defaultEffectsSpec(),

@@ -26,6 +26,9 @@ class HomeEditing(
     val onResizeWidget: (appWidgetId: Int, WidgetSize) -> Unit,
     val onRemoveWidget: (appWidgetId: Int) -> Unit,
 ) {
+    /** In edit mode or while a drag settles, home shows the saved order, never one arranged for the moment. */
+    val showsSavedOrder: Boolean get() = active || reorder.order != null
+
     /**
      * The rows home shows: all of them normally; in edit mode, or while a drag settles, only the
      * favourites and widgets (live rows give way to their placeholders under each favourite), in
@@ -34,7 +37,7 @@ class HomeEditing(
     fun shownRows(rows: List<HomeRow>?): List<HomeRow> {
         val all = rows.orEmpty()
         val order = reorder.order
-        if (!active && order == null) return all
+        if (!showsSavedOrder) return all
         val movable = all.filter(::isMovable)
         val byKey = movable.associateBy { it.key }
         return order?.let { dragged -> dragged.mapNotNull(byKey::get) + movable.filter { it.key !in dragged } }

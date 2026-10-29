@@ -20,7 +20,7 @@ import com.wander.mono.ui.components.MonoSheet
 /**
  * Long-press options for one app: its icon, name and today's use, then its actions as one button
  * group (Wanda's context menu): home in or out first, the app's shortcuts and the rest in pairs,
- * the moves as icons, uninstall at the foot.
+ * a headphones toggle, the moves as icons, uninstall at the foot.
  */
 @Composable
 fun AppSheet(
@@ -33,6 +33,7 @@ fun AppSheet(
     onRemoveFromHome: (AppKey) -> Unit,
     onMove: (AppKey, Int) -> Unit,
     onSetHidden: (AppKey, Boolean) -> Unit,
+    onSetLiftsWithHeadphones: (AppKey, Boolean) -> Unit,
     onRename: (AppKey) -> Unit,
     onAppInfo: (AppKey) -> Unit,
     onUninstall: (AppKey) -> Unit,
@@ -57,6 +58,7 @@ fun AppSheet(
                     onRemoveFromHome,
                     onMove,
                     onSetHidden,
+                    onSetLiftsWithHeadphones,
                     onRename,
                     onAppInfo,
                     onUninstall,
@@ -75,6 +77,7 @@ private fun appActions(
     onRemoveFromHome: (AppKey) -> Unit,
     onMove: (AppKey, Int) -> Unit,
     onSetHidden: (AppKey, Boolean) -> Unit,
+    onSetLiftsWithHeadphones: (AppKey, Boolean) -> Unit,
     onRename: (AppKey) -> Unit,
     onAppInfo: (AppKey) -> Unit,
     onUninstall: (AppKey) -> Unit,
@@ -99,6 +102,11 @@ private fun appActions(
         add(MenuAction(R.drawable.sym_edit, R.string.sheet_rename) { onRename(key) })
         val hideLabel = if (state.isHidden) R.string.sheet_unhide else R.string.sheet_hide
         add(MenuAction(R.drawable.sym_visibility, hideLabel) { onSetHidden(key, !state.isHidden) })
+        state.liftsWithHeadphones?.let { lifts ->
+            add(MenuAction(R.drawable.sym_headphones, R.string.sheet_headphones_top, selected = lifts) {
+                onSetLiftsWithHeadphones(key, !lifts)
+            })
+        }
         if (state.canMoveUp) {
             add(MenuAction(R.drawable.sym_keyboard_arrow_up, R.string.sheet_move_up, ActionEmphasis.Icon) {
                 onMove(key, -1)
