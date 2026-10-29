@@ -46,6 +46,7 @@ import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.ui.components.rememberOverscrollSwipe
+import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
  * The home screen over the wallpaper: the glance header at the top, the rows anchored to the
@@ -83,13 +84,10 @@ fun HomeScreen(
     val density = LocalDensity.current
     val headerBottom = remember { mutableFloatStateOf(0f) }
     val listViewportTop = remember { mutableFloatStateOf(0f) }
-    val scrimAlpha = if (look.textShadow) {
-        0f
-    } else {
-        remember(look.tone, scheme.surface, scheme.onSurface) {
-            scrimAlpha(look.tone, scheme.surface.toArgb(), scheme.onSurface.toArgb())
-        }
+    val legibleAlpha = remember(look.tone, scheme.surface, scheme.onSurface) {
+        scrimAlpha(look.tone, scheme.surface.toArgb(), scheme.onSurface.toArgb())
     }
+    val scrimAlpha = homeScrimAlpha(legibleAlpha, look.textShadow, look.highContrast)
     val shadow = if (look.textShadow) {
         with(density) {
             Shadow(scheme.scrim.copy(alpha = SHADOW_ALPHA), Offset(0f, 1.dp.toPx()), blurRadius = 4.dp.toPx())
@@ -99,7 +97,11 @@ fun HomeScreen(
     }
 
     // Without onSurface as the content colour, the clock and favourites would fall back to black.
-    CompositionLocalProvider(LocalContentColor provides scheme.onSurface, LocalWallpaperTextShadow provides shadow) {
+    CompositionLocalProvider(
+        LocalContentColor provides scheme.onSurface,
+        LocalWallpaperTextShadow provides shadow,
+        LocalHighContrast provides look.highContrast,
+    ) {
         BoxWithConstraints(
             modifier
                 .fillMaxSize()

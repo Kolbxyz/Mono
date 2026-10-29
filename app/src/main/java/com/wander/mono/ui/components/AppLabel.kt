@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.ui.theme.secondaryTextColor
 
 /**
  * An app's name, its work-profile badge and its notification badge, shared by home and drawer rows.
@@ -43,7 +44,7 @@ fun AppLabel(
             Text(
                 it,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = secondaryTextColor(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )

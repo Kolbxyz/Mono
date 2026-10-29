@@ -21,13 +21,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.media.QueueEntry
+import com.wander.mono.ui.theme.textAlpha
 
 /** The next few items of the session's queue; tapping one jumps playback to it. */
 @Composable
 internal fun UpNextList(entries: List<QueueEntry>, onPlay: (id: Long) -> Unit, modifier: Modifier = Modifier) {
     val haptics = LocalHapticFeedback.current
     val playLabel = stringResource(R.string.media_play_this)
-    val secondary = LocalContentColor.current.copy(alpha = SECONDARY_ALPHA)
+    val secondary = LocalContentColor.current.copy(alpha = textAlpha(SECONDARY_ALPHA))
     Column(modifier.fillMaxWidth()) {
         Text(
             stringResource(R.string.media_up_next),

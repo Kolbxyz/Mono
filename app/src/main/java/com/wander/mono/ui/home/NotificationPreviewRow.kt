@@ -41,6 +41,7 @@ import com.wander.mono.R
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.Redaction
 import com.wander.mono.ui.theme.isLargeFontScale
+import com.wander.mono.ui.theme.secondaryTextColor
 import kotlinx.coroutines.launch
 
 /**
@@ -107,7 +108,7 @@ private fun PreviewContent(
             Text(
                 previewText(preview),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = secondaryTextColor(),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier

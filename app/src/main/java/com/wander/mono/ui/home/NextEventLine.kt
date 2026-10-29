@@ -10,6 +10,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.wander.mono.R
 import com.wander.mono.core.calendar.CalendarEvent
+import com.wander.mono.ui.theme.secondaryTextColor
 import java.util.concurrent.TimeUnit
 
 /** "Standup · 14:00", or "Standup · in 20 min" within the hour; recomposed on each minute tick. */
@@ -26,7 +27,7 @@ fun NextEventLine(event: CalendarEvent, now: Long, timeSkeleton: String) {
     Text(
         stringResource(R.string.home_next_event, title, time),
         style = MaterialTheme.typography.titleMedium.onWallpaper(),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        color = secondaryTextColor(),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )
