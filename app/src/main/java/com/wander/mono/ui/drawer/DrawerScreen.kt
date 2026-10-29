@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -25,7 +26,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.wander.mono.R
 import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
@@ -50,7 +53,9 @@ fun DrawerScreen(
     onLongPress: (LaunchableApp) -> Unit,
     onClose: () -> Unit,
     onOpenSettings: () -> Unit,
+    onUnlockHidden: () -> Unit,
     modifier: Modifier = Modifier,
+    pickingApp: Boolean = false,
 ) {
     val icons = remember(state.iconMode, loadIcon) { AppIcons(state.iconMode, loadIcon) }
     val swipeDown = rememberOverscrollSwipe(upward = false, onSwipe = onClose)
@@ -59,6 +64,14 @@ fun DrawerScreen(
     Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(Modifier.windowInsetsPadding(topAndSides)) {
             SearchField(query, onQueryChange, onSubmit, onOpenSettings, Modifier.fillMaxWidth().padding(16.dp))
+            if (pickingApp) {
+                Text(
+                    stringResource(R.string.edit_pick_hint),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                )
+            }
             if (query.isBlank()) {
                 AppList(state, icons, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
             } else {
@@ -69,6 +82,7 @@ fun DrawerScreen(
                     onLongPress = onLongPress,
                     contentPadding = bottom,
                     modifier = Modifier.nestedScroll(swipeDown),
+                    onUnlockHidden = onUnlockHidden.takeIf { state.hiddenLocked },
                 )
             }
         }

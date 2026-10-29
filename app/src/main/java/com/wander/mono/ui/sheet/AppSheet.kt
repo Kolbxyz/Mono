@@ -24,12 +24,14 @@ import com.wander.mono.core.apps.AppShortcut
 @Composable
 fun AppSheet(
     state: AppSheetState,
+    usageToday: Long?,
     onDismiss: () -> Unit,
     onShortcut: (AppShortcut) -> Unit,
     onAddToHome: (AppKey) -> Unit,
     onRemoveFromHome: (AppKey) -> Unit,
     onMove: (AppKey, Int) -> Unit,
     onSetHidden: (AppKey, Boolean) -> Unit,
+    onRename: (AppKey) -> Unit,
     onAppInfo: (AppKey) -> Unit,
     onUninstall: (AppKey) -> Unit,
 ) {
@@ -41,6 +43,7 @@ fun AppSheet(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             )
+            usageToday?.let { UsageLine(it) }
             state.shortcuts.forEach { shortcut -> SheetAction(shortcut.label) { onShortcut(shortcut) } }
             if (state.shortcuts.isNotEmpty()) HorizontalDivider(Modifier.padding(vertical = 8.dp))
             if (state.isFavorite) {
@@ -50,6 +53,7 @@ fun AppSheet(
             } else {
                 SheetAction(stringResource(R.string.sheet_add_to_home)) { onAddToHome(key) }
             }
+            SheetAction(stringResource(R.string.sheet_rename)) { onRename(key) }
             if (state.isHidden) {
                 SheetAction(stringResource(R.string.sheet_unhide)) { onSetHidden(key, false) }
             } else {

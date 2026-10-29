@@ -23,6 +23,12 @@ class LauncherViewModel @Inject constructor(
     val drawerOpen: StateFlow<Boolean> = savedState.getStateFlow(DRAWER_OPEN, false)
     val settingsOpen: StateFlow<Boolean> = savedState.getStateFlow(SETTINGS_OPEN, false)
     val homeOptionsOpen: StateFlow<Boolean> = savedState.getStateFlow(HOME_OPTIONS_OPEN, false)
+
+    /** Edit mode: favourites can be dragged, renamed, removed and their live rows switched. */
+    val editing: StateFlow<Boolean> = savedState.getStateFlow(EDITING, false)
+
+    /** The drawer was opened from edit mode to pick an app to add to home. */
+    val pickingApp: StateFlow<Boolean> = savedState.getStateFlow(PICKING_APP, false)
     val messages: SharedFlow<Int> = messages.messages
 
     private val mutableOverlaysAnimate = MutableStateFlow(true)
@@ -35,7 +41,21 @@ class LauncherViewModel @Inject constructor(
 
     fun openDrawer() = setAnimated(DRAWER_OPEN, true)
 
-    fun closeDrawer() = setAnimated(DRAWER_OPEN, false)
+    fun closeDrawer() {
+        savedState[PICKING_APP] = false
+        setAnimated(DRAWER_OPEN, false)
+    }
+
+    fun setEditing(editing: Boolean) {
+        savedState[HOME_OPTIONS_OPEN] = false
+        savedState[EDITING] = editing
+    }
+
+    /** Opens the drawer so the next app tapped is added to home instead of launched. */
+    fun pickApp() {
+        savedState[PICKING_APP] = true
+        openDrawer()
+    }
 
     fun openSettings() {
         savedState[HOME_OPTIONS_OPEN] = false
@@ -59,6 +79,8 @@ class LauncherViewModel @Inject constructor(
         mutableOverlaysAnimate.value = false
         savedState[DRAWER_OPEN] = false
         savedState[SETTINGS_OPEN] = false
+        savedState[PICKING_APP] = false
+        savedState[EDITING] = false
     }
 
     /**
@@ -66,10 +88,11 @@ class LauncherViewModel @Inject constructor(
      * scrolls the home list back to the top. Coming back from another app only closes.
      */
     fun onHomePressed(alreadyOnHome: Boolean) {
-        val wasOpen = drawerOpen.value || settingsOpen.value
+        val wasOpen = drawerOpen.value || settingsOpen.value || editing.value
         closeDrawer()
         closeSettings()
         showHomeOptions(false)
+        setEditing(false)
         if (alreadyOnHome && !wasOpen) mutableScrollToTop.tryEmit(Unit)
     }
 
@@ -82,5 +105,7 @@ class LauncherViewModel @Inject constructor(
         const val DRAWER_OPEN = "drawer_open"
         const val SETTINGS_OPEN = "settings_open"
         const val HOME_OPTIONS_OPEN = "home_options_open"
+        const val EDITING = "editing"
+        const val PICKING_APP = "picking_app"
     }
 }

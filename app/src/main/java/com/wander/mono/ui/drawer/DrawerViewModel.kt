@@ -3,6 +3,8 @@ package com.wander.mono.ui.drawer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wander.mono.R
+import com.wander.mono.core.apps.ActionResult
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.AppIconImage
@@ -16,6 +18,7 @@ import com.wander.mono.core.notifications.ConversationKey
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.core.security.HiddenAppsLock
 import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.siblings.PhalanxUnread
 import com.wander.mono.core.siblings.WandaTrack
@@ -51,6 +54,7 @@ class DrawerViewModel @Inject constructor(
     private val icons: IconCache,
     private val messages: UserMessages,
     private val sources: SearchSources,
+    private val hiddenLock: HiddenAppsLock,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
     val query: StateFlow<String> = savedState.getStateFlow(QUERY, "")
@@ -75,21 +79,30 @@ class DrawerViewModel @Inject constructor(
         ::Searchable,
     )
 
+    private val hidden = combine(prefs.hidden, hiddenLock.revealed, ::HiddenApps)
+
     val state: StateFlow<DrawerUiState> = combine(
         entries,
-        prefs.hidden,
+        hidden,
         searchable,
         query,
         settings[IconSettings.Mode],
     ) { all, hidden, extra, q, mode ->
-        val visible = all.filter { it.app.key !in hidden }
+        val visible = all.filter { it.app.key !in hidden.keys }
         DrawerUiState(
             apps = visible,
             sections = sectionsOf(visible.map { it.app.label }),
             results = SearchResults.assemble(
-                q, all, extra.shortcuts, extra.contacts, extra.tracks, extra.pages, sources::webTarget,
+                q,
+                hidden.searchableApps(all),
+                hidden.searchableShortcuts(extra.shortcuts),
+                extra.contacts,
+                extra.tracks,
+                extra.pages,
+                sources::webTarget,
             ),
             iconMode = mode,
+            hiddenLocked = hidden.locked,
         )
     }
         .combine(
@@ -133,6 +146,14 @@ class DrawerViewModel @Inject constructor(
         val tracks: List<WandaTrack>,
         val pages: List<SettingsPage>,
     )
+
+    fun unlockHidden() = hiddenLock.unlock()
+
+    fun relockHidden() = hiddenLock.relock()
+
+    fun reportNoScreenLock() {
+        messages.report(ActionResult.Failed(R.string.error_no_screen_lock))
+    }
 
     /** Unread per conversation from notifications, and from Phalanx itself when it publishes it. */
     private data class ShortcutUnread(

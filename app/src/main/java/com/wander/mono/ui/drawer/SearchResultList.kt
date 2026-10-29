@@ -30,6 +30,7 @@ fun SearchResultList(
     onLongPress: (LaunchableApp) -> Unit,
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
+    onUnlockHidden: (() -> Unit)? = null,
 ) {
     LazyColumn(modifier.fillMaxSize(), contentPadding = contentPadding) {
         if (results.isEmpty()) {
@@ -52,6 +53,7 @@ fun SearchResultList(
                 ResultRow(hit, icons, onLaunch = { onLaunchHit(hit) }, onLongPress = onLongPress)
             }
         }
+        if (onUnlockHidden != null) item(key = "unlock-hidden") { UnlockHiddenRow(onUnlockHidden) }
     }
 }
 
