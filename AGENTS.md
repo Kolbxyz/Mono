@@ -1,0 +1,55 @@
+# Mono
+
+Minimalist Android launcher in the Niagara style: one vertical list of favourites with live rows (now playing) inline, and an alphabetical drawer with search. Built for GrapheneOS. Strict Material 3 Expressive. Battery- and privacy-first: no network permission, zero telemetry, no Google services.
+
+## 1. Non-Negotiable Hard Rules
+
+| Rule | Why |
+| --- | --- |
+| **300 lines max per file** | Split when a file reaches 250 lines; 1 concept per file. |
+| **No network, ever** | No `INTERNET` permission. A launcher has nothing to fetch; nothing leaves the device. |
+| **`LauncherApps` is the app source** | Apps, profiles, shortcuts, launch, app info: always through `LauncherApps`, so work profiles behave. |
+| **No polling** | React to `LauncherApps.Callback`, broadcasts and listener callbacks; re-check only on `onStart` what has no event. |
+| **Rows, not screens** | The home list is a sealed `HomeRow`; live content (media, widgets later) is a row next to its app. |
+| **Strict Material 3 Expressive** | `MaterialExpressiveTheme`, wallpaper dynamic color, motion from `MaterialTheme.motionScheme`, never hand-rolled `spring()`. |
+| **Explicit window insets** | Edge-to-edge needs manual container-edge padding. |
+| **No Google services** | No Play Services, Firebase or GMS fonts. |
+| **Strings in `strings.xml`** | Pass `@StringRes Int`; never hardcode user text in UI. |
+| **No dead code & no fake fallbacks** | Surface explicit errors (`ActionResult.Failed`); no blanket `catch (e: Exception)`; never show placeholder data. |
+| **Platform APIs before dependencies** | Justify any new dependency and ask approval first. |
+| **Never push to `main`** | Feature branch and PR. |
+| **No AI attribution** | No `Co-Authored-By` trailer for any AI and no "Generated with ..." line in commits or PR descriptions. |
+
+## 2. Package Map
+
+Single module `:app`, package root `com.wander.mono`.
+
+| Package | Owns |
+| --- | --- |
+| `core/apps` | `LauncherApps` catalog, profile callbacks, shortcuts, icon cache, launch / app info / uninstall. |
+| `core/notifications` | `MonoNotificationListener`, per-app notification counts, notification-access state. |
+| `core/media` | Active media sessions (through the listener's grant) and the playing item. |
+| `core/system` | Clock tick and next alarm, from system broadcasts. |
+| `data` | DataStore: ordered favourites and hidden apps. |
+| `di` | Hilt modules and the app coroutine scope. |
+| `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / prompt rows. |
+| `ui/drawer` | Alphabetical list, letter rail, ranked search (apps + shortcuts). |
+| `ui/sheet` | Long-press options. |
+| `ui/theme` | `MonoTheme`, reduced motion. |
+
+## 3. Window Insets & Motion
+
+- The window shows the wallpaper; home draws a surface scrim so M3 text colors stay readable.
+- Containers pad `WindowInsets.safeDrawing` on the edges they touch (`.only(...)` when only some matter). `safeDrawing` includes the IME.
+- Animations take specs from `MaterialTheme.motionScheme`; reduced motion swaps in `NoMotionScheme` (1 ms tweens, not `snap()`).
+
+## 4. Quick Commands
+
+```bash
+./gradlew :app:assembleDebug          # Build debug APK (installs as com.wander.mono.debug)
+./gradlew :app:testDebugUnitTest      # Run local unit tests
+./gradlew :app:lintDebug              # Run lint checks
+./gradlew :app:detekt                 # Static analysis
+```
+
+The Android SDK lives on the Windows side: build from Android Studio or a Windows shell (`gradlew.bat`).

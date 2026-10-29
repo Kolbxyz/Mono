@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mono</string>
+
+    <!-- Home -->
+    <string name="home_empty">No favourites yet. Open all apps, long-press an app and choose Add to home.</string>
+    <string name="home_next_alarm">Alarm %1$s</string>
+    <string name="home_listener_prompt">Allow notification access for music and notification dots</string>
+
+    <!-- Actions announced by TalkBack -->
+    <string name="action_open">Open</string>
+    <string name="action_app_options">App options</string>
+    <string name="action_open_drawer">All apps</string>
+
+    <!-- States announced by TalkBack -->
+    <string name="state_has_notifications">Has notifications</string>
+    <string name="state_work_profile">Work profile</string>
+
+    <!-- Now playing -->
+    <string name="media_artwork">Artwork</string>
+    <string name="media_play">Play</string>
+    <string name="media_pause">Pause</string>
+    <string name="media_next">Next</string>
+
+    <!-- Drawer -->
+    <string name="drawer_search_hint">Search apps and shortcuts</string>
+    <string name="drawer_no_results">Nothing matches</string>
+
+    <!-- Long-press sheet -->
+    <string name="sheet_add_to_home">Add to home</string>
+    <string name="sheet_remove_from_home">Remove from home</string>
+    <string name="sheet_move_up">Move up</string>
+    <string name="sheet_move_down">Move down</string>
+    <string name="sheet_hide">Hide from drawer</string>
+    <string name="sheet_unhide">Show in drawer</string>
+    <string name="sheet_app_info">App info</string>
+    <string name="sheet_uninstall">Uninstall</string>
+
+    <!-- Errors -->
+    <string name="error_app_missing">This app is no longer installed</string>
+    <string name="error_not_allowed">Android did not allow opening this</string>
+    <string name="error_profile_locked">The work profile is paused or locked</string>
+    <string name="error_profile_gone">This profile no longer exists</string>
+    <string name="error_settings_missing">This settings page is not available on this phone</string>
+</resources>

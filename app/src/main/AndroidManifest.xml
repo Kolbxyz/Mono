@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!--
+      No INTERNET permission, ever: a launcher has nothing to fetch. Uninstall is the only
+      permission asked for, and it is a normal one: the system still shows its own confirmation.
+    -->
+    <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!-- Package visibility: every app with a launcher entry, which is exactly what the drawer lists. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
+
+    <!--
+      allowBackup=false: favourites and hidden apps are per-device choices. dataExtractionRules
+      governs device-to-device transfer on Android 12+, which allowBackup does not cover.
+    -->
+    <application
+        android:name=".MonoApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Mono"
+        tools:targetApi="37">
+
+        <!--
+          The home screen. singleTask keeps one instance, so pressing home while it is in front
+          arrives as onNewIntent (closes the drawer or scrolls to the top). stateNotNeeded is not
+          set: the drawer and search survive process death through the saved state.
+        -->
+        <activity
+            android:name=".MainActivity"
+            android:clearTaskOnLaunch="true"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:resumeWhilePausing="true"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!--
+          Notification counts (dots) and the media sessions behind the now-playing row. Only reads
+          what the system hands it; nothing leaves the process.
+        -->
+        <service
+            android:name=".core.notifications.MonoNotificationListener"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
