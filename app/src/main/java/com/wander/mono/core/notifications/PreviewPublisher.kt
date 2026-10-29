@@ -3,6 +3,7 @@ package com.wander.mono.core.notifications
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
+import android.os.Build
 import android.os.UserHandle
 import android.os.UserManager
 import android.service.notification.NotificationListenerService.Ranking
@@ -41,7 +42,8 @@ class PreviewPublisher @Inject constructor(
         }
         val latest = latestPerApp(facts).mapNotNull { (owner, key) ->
             val sbn = byKey[key] ?: return@mapNotNull null
-            val override = if (rankings.getRanking(key, ranking)) {
+            // The user's per-app lock screen override is only readable from Android 12.
+            val override = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && rankings.getRanking(key, ranking)) {
                 ranking.lockscreenVisibilityOverride
             } else {
                 Ranking.VISIBILITY_NO_OVERRIDE

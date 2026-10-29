@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Mono's gesture service: no event types, no window content, no gestures of its own. It exists
+  only to run two global actions from home: lock the screen and open the notification shade.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault"
+    android:canRetrieveWindowContent="false"
+    android:description="@string/gesture_service_description"
+    android:notificationTimeout="0"
+    android:summary="@string/gesture_service_summary" />

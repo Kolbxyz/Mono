@@ -27,6 +27,8 @@ class QuietMode @Inject constructor(
 
     suspend fun set(on: Boolean) {
         settings.set(QuietSettings.Enabled, on)
+        // A timed end belongs to the session it was set for, never to the next one.
+        if (!on) settings.set(QuietSettings.Until, QuietSettings.Until.default)
         if (linksDoNotDisturb.first()) zenRule.setActive(on)
     }
 

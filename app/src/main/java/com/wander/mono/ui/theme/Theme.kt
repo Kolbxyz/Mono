@@ -39,6 +39,8 @@ fun MonoTheme(
     MaterialExpressiveTheme(
         colorScheme = if (darkTheme && amoledBlack) scheme.withBlackSurfaces() else scheme,
         motionScheme = if (reduceMotion) NoMotionScheme else MotionScheme.expressive(),
+        shapes = MonoShapes,
+        typography = MonoTypography,
     ) {
         CompositionLocalProvider(LocalReducedMotion provides reduceMotion, content = content)
     }

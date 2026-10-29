@@ -4,17 +4,10 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.currentStateAsState
@@ -46,18 +39,17 @@ private fun ContactsSwitch(settings: SettingsViewModel) {
     val request = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { allowed ->
         settings.set(SearchSettings.Contacts, allowed)
     }
-    val checked = enabled && granted
-    ListItem(
-        supportingContent = { Text(stringResource(R.string.settings_search_contacts_summary)) },
-        trailingContent = { Switch(checked = checked, onCheckedChange = null) },
-        modifier = Modifier.toggleable(checked, role = Role.Switch) { on ->
+    SwitchRow(
+        checked = enabled && granted,
+        onCheckedChange = { on ->
             when {
                 !on -> settings.set(SearchSettings.Contacts, false)
                 granted -> settings.set(SearchSettings.Contacts, true)
                 else -> request.launch(Manifest.permission.READ_CONTACTS)
             }
         },
-    ) {
-        Text(stringResource(R.string.settings_search_contacts))
-    }
+        title = R.string.settings_search_contacts,
+        summary = R.string.settings_search_contacts_short,
+        icon = R.drawable.sym_person,
+    )
 }

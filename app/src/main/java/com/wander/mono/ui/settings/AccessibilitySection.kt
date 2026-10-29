@@ -12,7 +12,8 @@ fun AccessibilitySection(settings: SettingsViewModel) {
             settings,
             AccessibilitySettings.HighContrastText,
             title = R.string.settings_high_contrast_text,
-            summary = R.string.settings_high_contrast_text_summary,
+            summary = R.string.settings_high_contrast_short,
+            icon = R.drawable.sym_contrast,
         )
     }
 }

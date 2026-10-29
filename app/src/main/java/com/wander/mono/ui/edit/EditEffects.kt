@@ -19,7 +19,7 @@ fun EditEffects(editing: HomeEditing, rows: List<HomeRow>?, list: LazyListState)
     val reorder = editing.reorder
     val haptics = LocalHapticFeedback.current
     val dragging = reorder.dragging != null
-    LaunchedEffect(rows, dragging) { reorder.settle(rows.orEmpty().filterIsInstance<HomeRow.App>().map { it.key }) }
+    LaunchedEffect(rows, dragging) { reorder.settle(rows.orEmpty().filter(::isMovable).map { it.key }) }
     LaunchedEffect(editing.active) { if (!editing.active) reorder.reset() }
     LaunchedEffect(dragging) {
         while (dragging) {

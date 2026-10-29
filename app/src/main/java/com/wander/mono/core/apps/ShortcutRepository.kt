@@ -50,7 +50,7 @@ class ShortcutRepository @Inject constructor(
         hostAllowed.value = launcherApps.hasShortcutHostPermission()
     }
 
-    private fun query(): List<AppShortcut> = launcherApps.profiles.flatMap { user -> queryProfile(user) }
+    private fun query(): List<AppShortcut> = profiles.listed().flatMap { user -> queryProfile(user) }
 
     private fun queryProfile(user: UserHandle): List<AppShortcut> {
         val serial = profiles.serialOf(user)
@@ -61,7 +61,7 @@ class ShortcutRepository @Inject constructor(
     }
 
     private fun readShortcuts(user: UserHandle): List<ShortcutInfo> = try {
-        launcherApps.getShortcuts(ShortcutQuery().setQueryFlags(QUERY_FLAGS), user).orEmpty()
+        launcherApps.getShortcuts(ShortcutQuery().setQueryFlags(SHORTCUT_QUERY_FLAGS), user).orEmpty()
     } catch (_: IllegalStateException) {
         // A paused or locked profile has no readable shortcuts until it is unlocked; the
         // unlock broadcast reloads this.
@@ -71,11 +71,9 @@ class ShortcutRepository @Inject constructor(
         hostAllowed.value = false
         emptyList()
     }
-
-    private companion object {
-        // Cached shortcuts (Android 11+) are conversations kept after the app removed them as dynamic.
-        val QUERY_FLAGS = ShortcutQuery.FLAG_MATCH_DYNAMIC or ShortcutQuery.FLAG_MATCH_MANIFEST or
-            ShortcutQuery.FLAG_MATCH_PINNED or
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ShortcutQuery.FLAG_MATCH_CACHED else 0
-    }
 }
+
+/** Cached shortcuts (Android 11+) are conversations kept after the app removed them as dynamic. */
+internal val SHORTCUT_QUERY_FLAGS = ShortcutQuery.FLAG_MATCH_DYNAMIC or ShortcutQuery.FLAG_MATCH_MANIFEST or
+    ShortcutQuery.FLAG_MATCH_PINNED or
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) ShortcutQuery.FLAG_MATCH_CACHED else 0

@@ -1,0 +1,23 @@
+changelog:
+  exclude:
+    labels:
+      - ignore
+      - internal
+    authors:
+      - dependabot
+      - dependabot[bot]
+  categories:
+    - title: "✨ Features & Enhancements"
+      labels: [feature, enhancement]
+    - title: "🏠 Home & Drawer"
+      labels: [home, drawer, ui]
+    - title: "🐛 Bug Fixes"
+      labels: [fix, bug]
+    - title: "🔒 Security & Privacy"
+      labels: [security, privacy]
+    - title: "📖 Documentation"
+      labels: [documentation, docs]
+    - title: "🧹 Maintenance & Build"
+      labels: [maintenance, chore, dependencies, ci]
+    - title: "💡 Other Changes"
+      labels: ["*"]

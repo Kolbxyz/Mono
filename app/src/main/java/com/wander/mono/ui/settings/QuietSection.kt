@@ -33,7 +33,13 @@ fun QuietSection(quiet: QuietSettingsViewModel = viewModel()) {
     }
     SettingsGroup(R.string.settings_quiet) {
         enabled?.let { on ->
-            SwitchRow(on, quiet::setEnabled, R.string.settings_quiet_mode, R.string.settings_quiet_mode_summary)
+            SwitchRow(
+                checked = on,
+                onCheckedChange = quiet::setEnabled,
+                title = R.string.settings_quiet_mode,
+                summary = R.string.settings_quiet_mode_short,
+                icon = R.drawable.sym_quiet,
+            )
         }
         Text(
             stringResource(R.string.settings_quiet_apps),
@@ -46,6 +52,7 @@ fun QuietSection(quiet: QuietSettingsViewModel = viewModel()) {
             }
             list.forEach { choice ->
                 ListItem(
+                    colors = settingRowColors(),
                     leadingContent = { Checkbox(checked = choice.quiet, onCheckedChange = null) },
                     modifier = Modifier.toggleable(choice.quiet, role = Role.Checkbox) {
                         quiet.setQuiet(choice.app.key, it)
@@ -59,15 +66,16 @@ fun QuietSection(quiet: QuietSettingsViewModel = viewModel()) {
             val link = links
             when {
                 !granted -> ActionRow(
-                    R.string.settings_quiet_dnd_grant,
-                    R.string.settings_quiet_dnd_grant_summary,
-                    quiet::openDoNotDisturbAccess,
+                    title = R.string.settings_quiet_dnd_grant,
+                    summary = R.string.settings_quiet_dnd_grant_short,
+                    icon = R.drawable.sym_do_not_disturb_on,
+                    onClick = quiet::openDoNotDisturbAccess,
                 )
                 link != null -> SwitchRow(
-                    link,
-                    quiet::setLinksDoNotDisturb,
-                    R.string.settings_quiet_dnd,
-                    R.string.settings_quiet_dnd_summary,
+                    checked = link,
+                    onCheckedChange = quiet::setLinksDoNotDisturb,
+                    title = R.string.settings_quiet_dnd,
+                    icon = R.drawable.sym_do_not_disturb_on,
                 )
             }
         }

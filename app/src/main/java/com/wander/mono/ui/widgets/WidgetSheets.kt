@@ -1,5 +1,7 @@
 package com.wander.mono.ui.widgets
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -14,7 +16,10 @@ fun WidgetSheets(widgets: WidgetsViewModel) {
     if (pickerOpen) {
         WidgetPickerSheet(
             apps = pickerApps,
-            createPreview = widgets::createPreview,
+            // WidgetPreview only calls it on Android 12+, where a provider can have a preview layout.
+            createPreview = @RequiresApi(Build.VERSION_CODES.S) { context, info ->
+                widgets.createPreview(context, info)
+            },
             onPick = widgets::pick,
             onDismiss = widgets::closePicker,
         )

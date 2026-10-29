@@ -5,6 +5,7 @@ import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.contacts.ContactSearch
 import com.wander.mono.core.siblings.WandaSearch
 import com.wander.mono.core.siblings.WandaTrack
+import com.wander.mono.core.system.ClockActions
 import com.wander.mono.core.system.Clipboard
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.SettingsPages
@@ -23,13 +24,17 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
-/** Search results beyond apps and shortcuts (contacts, settings pages, the web, sums) and what tapping them does. */
+/**
+ * Search results beyond apps and shortcuts (sums, conversions, timers and alarms, contacts, settings
+ * pages, the web) and what tapping most of them does; timers and alarms go to [ClockActions].
+ */
 class SearchSources @Inject constructor(
     private val settings: SettingsStore,
     private val contactSearch: ContactSearch,
     private val wandaSearch: WandaSearch,
     private val settingsPages: SettingsPages,
     private val webSearch: WebSearch,
+    private val clock: ClockActions,
     private val clipboard: Clipboard,
     private val messages: UserMessages,
 ) {
@@ -46,6 +51,18 @@ class SearchSources @Inject constructor(
     fun tracks(query: Flow<String>): Flow<List<WandaTrack>> = query.map { it.trim() }
         .distinctUntilChanged()
         .mapLatest { text -> wandaSearch.find(text, PROVIDER_LIMIT) }
+
+    /**
+     * What [query] asks for ([SearchActions]); a timer or an alarm only when a clock app takes it.
+     * Resolves intents for those, so not on the main thread.
+     */
+    fun actions(query: String): List<SearchHit> = SearchActions.of(query).filter { hit ->
+        when (hit) {
+            is SearchHit.Timer -> clock.canSetTimer()
+            is SearchHit.Alarm -> clock.canSetAlarm()
+            else -> true
+        }
+    }
 
     /** The settings pages this phone can open, resolved afresh each time search starts being watched. */
     fun pages(): Flow<List<SettingsPage>> = flow { emit(settingsPages.available()) }.flowOn(Dispatchers.Default)

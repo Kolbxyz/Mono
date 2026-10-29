@@ -21,6 +21,9 @@ class LauncherViewModel @Inject constructor(
     messages: UserMessages,
 ) : ViewModel() {
     val drawerOpen: StateFlow<Boolean> = savedState.getStateFlow(DRAWER_OPEN, false)
+
+    /** The drawer was opened from the search dock, so its search field takes focus and the keyboard. */
+    val focusSearch: StateFlow<Boolean> = savedState.getStateFlow(FOCUS_SEARCH, false)
     val settingsOpen: StateFlow<Boolean> = savedState.getStateFlow(SETTINGS_OPEN, false)
     val homeOptionsOpen: StateFlow<Boolean> = savedState.getStateFlow(HOME_OPTIONS_OPEN, false)
 
@@ -39,10 +42,14 @@ class LauncherViewModel @Inject constructor(
     private val mutableScrollToTop = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val scrollToTop: SharedFlow<Unit> = mutableScrollToTop.asSharedFlow()
 
-    fun openDrawer() = setAnimated(DRAWER_OPEN, true)
+    fun openDrawer(focusSearch: Boolean = false) {
+        savedState[FOCUS_SEARCH] = focusSearch
+        setAnimated(DRAWER_OPEN, true)
+    }
 
     fun closeDrawer() {
         savedState[PICKING_APP] = false
+        savedState[FOCUS_SEARCH] = false
         setAnimated(DRAWER_OPEN, false)
     }
 
@@ -78,6 +85,7 @@ class LauncherViewModel @Inject constructor(
     fun leaveToHome() {
         mutableOverlaysAnimate.value = false
         savedState[DRAWER_OPEN] = false
+        savedState[FOCUS_SEARCH] = false
         savedState[SETTINGS_OPEN] = false
         savedState[PICKING_APP] = false
         savedState[EDITING] = false
@@ -103,6 +111,7 @@ class LauncherViewModel @Inject constructor(
 
     private companion object {
         const val DRAWER_OPEN = "drawer_open"
+        const val FOCUS_SEARCH = "focus_search"
         const val SETTINGS_OPEN = "settings_open"
         const val HOME_OPTIONS_OPEN = "home_options_open"
         const val EDITING = "editing"
