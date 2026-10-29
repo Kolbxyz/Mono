@@ -20,13 +20,17 @@ class QuietRowsTest {
         isPlaying = true,
         canSkipNext = true,
         canSkipPrevious = true,
+        canSeek = true,
         progress = null,
+        upNext = emptyList(),
+        output = null,
     )
     private val rows = listOf(
         HomeRow.App(phalanx, AppBadge.Count(3)),
         HomeRow.NowPlaying(media),
         HomeRow.App(clock, AppBadge.Dot),
         HomeRow.ListenerPrompt,
+        CalendarRow(emptyList(), at = 0),
     )
 
     @Test
