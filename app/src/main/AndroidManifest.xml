@@ -116,10 +116,14 @@
           The home screen. singleTask keeps one instance, so pressing home while it is in front
           arrives as onNewIntent (closes the drawer or scrolls to the top). stateNotNeeded is not
           set: the drawer and search survive process death through the saved state.
+          configChanges: rotating, folding and resizing only change the window size, which Compose
+          re-lays out in place; recreating would drop the open sheet and scroll, and flash the
+          wallpaper while the theme is read again.
         -->
         <activity
             android:name=".MainActivity"
             android:clearTaskOnLaunch="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize"
             android:excludeFromRecents="true"
             android:exported="true"
             android:launchMode="singleTask"

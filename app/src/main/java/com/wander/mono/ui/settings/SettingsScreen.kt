@@ -21,6 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
+import com.wander.mono.ui.components.readableColumn
 
 /** Mono's own settings: a collapsing title over the [settingsSections]. */
 @Composable
@@ -42,12 +43,15 @@ fun SettingsScreen(
                     }
                 },
                 scrollBehavior = scroll,
+                // safeDrawing, not the default system bars: a landscape cutout must not cover the back arrow.
+                windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
             )
         },
         // The top bar pads the status bar itself; the list pads the rest.
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
     ) { padding ->
-        LazyColumn(contentPadding = padding) {
+        // The bar spans the window; the rows sit in the centred readable column.
+        LazyColumn(Modifier.fillMaxSize().readableColumn(), contentPadding = padding) {
             items(settingsSections) { section -> section(settings) }
         }
     }

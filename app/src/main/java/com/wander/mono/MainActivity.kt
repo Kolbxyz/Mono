@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        // A rotation recreates the activity and keeps the drawer; really leaving resets to home.
+        // A recreation (locale, font scale) keeps the drawer; really leaving resets to home.
         if (!isChangingConfigurations) launcher.leaveToHome()
     }
 

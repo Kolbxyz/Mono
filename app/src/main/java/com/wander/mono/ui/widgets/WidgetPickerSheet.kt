@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.widgets.WidgetApp
 import com.wander.mono.core.widgets.WidgetChoice
+import com.wander.mono.ui.components.ReadableLayout
 
 /**
  * Every widget installed apps offer, grouped under their app (work-profile apps marked), each with
@@ -43,6 +44,7 @@ fun WidgetPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        sheetMaxWidth = ReadableLayout.MaxColumnWidth,
     ) {
         Text(
             stringResource(R.string.widget_picker_title),
