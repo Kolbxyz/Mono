@@ -2,7 +2,10 @@ package com.wander.mono.ui.edit
 
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.media.MediaState
+import com.wander.mono.core.notifications.NotificationPreview
+import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.data.LiveRowKind
 import com.wander.mono.data.LiveRowRef
 
@@ -37,3 +40,23 @@ internal fun nowPlayingAvailability(media: MediaState, favorites: List<Launchabl
         .filter { it.isMainProfile && it.key.packageName == media.media.packageName }
         .associate { it.key to setOf(LiveRowKind.NowPlaying) }
 }
+
+/** Which favourites have a notification preview row to switch: those with a notification now. */
+internal fun previewAvailability(
+    previews: Map<PackageUser, NotificationPreview>,
+    favorites: List<LaunchableApp>,
+): Map<AppKey, Set<LiveRowKind>> = favorites
+    .filter { PackageUser(it.key.packageName, it.key.userSerial) in previews }
+    .associate { it.key to setOf(LiveRowKind.NotificationPreview) }
+
+/** Which favourites have a calendar row to switch: the main-profile calendar app, when it has events. */
+internal fun calendarAvailability(agenda: CalendarAgenda?, favorites: List<LaunchableApp>): Map<AppKey, Set<LiveRowKind>> {
+    if (agenda == null || agenda.events.isEmpty()) return emptyMap()
+    return favorites
+        .filter { it.isMainProfile && it.key.packageName == agenda.appPackage }
+        .associate { it.key to setOf(LiveRowKind.Calendar) }
+}
+
+/** The kinds each app has, from several availability maps. */
+internal fun mergeAvailability(vararg maps: Map<AppKey, Set<LiveRowKind>>): Map<AppKey, Set<LiveRowKind>> =
+    maps.flatMap { it.entries }.groupBy({ it.key }, { it.value }).mapValues { (_, kinds) -> kinds.flatten().toSet() }

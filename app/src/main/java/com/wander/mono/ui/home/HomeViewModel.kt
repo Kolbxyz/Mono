@@ -6,6 +6,7 @@ import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarActions
+import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.calendar.CalendarEvents
 import com.wander.mono.core.calendar.headerEvent
@@ -53,9 +54,11 @@ class HomeViewModel @Inject constructor(
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
     ).combine(
-        combine(previews.previews, settings[PreviewSettings.ShowPreviews]) { all, on -> if (on) all else emptyMap() },
+        combine(previews.previews, settings[PreviewSettings.ShowPreviews], liveRows.hidden) { all, on, hidden ->
+            if (on) all.unlessHidden(hidden) else emptyMap()
+        },
         ::withPreviews,
-    ).combine(calendar.agenda, ::withCalendarRow)
+    ).combine(combine(calendar.agenda, liveRows.hidden, CalendarAgenda?::unlessHidden), ::withCalendarRow)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, calendar.agenda) { now, alarm, agenda ->
