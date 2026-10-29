@@ -29,8 +29,8 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
-import com.wander.mono.core.apps.IconMode
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.rememberOverscrollSwipe
 import kotlinx.coroutines.launch

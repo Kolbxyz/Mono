@@ -50,6 +50,11 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_amoled_black">AMOLED black</string>
     <string name="settings_amoled_black_summary">Pure black background in dark theme</string>
+    <string name="settings_icons">Icons</string>
+    <string name="settings_icon_mode">App icons</string>
+    <string name="settings_icon_colour">Full colour</string>
+    <string name="settings_icon_themed">Themed</string>
+    <string name="settings_icon_text_only">Text only</string>
 
     <!-- Errors -->
     <string name="error_app_missing">This app is no longer installed</string>

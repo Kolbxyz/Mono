@@ -8,13 +8,14 @@ import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.IconCache
-import com.wander.mono.core.apps.IconMode
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.PackageUser
-import com.wander.mono.data.IconPrefs
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.settings.IconMode
+import com.wander.mono.data.settings.IconSettings
+import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -31,7 +32,7 @@ class DrawerViewModel @Inject constructor(
     private val savedState: SavedStateHandle,
     catalog: AppCatalog,
     prefs: LauncherPrefs,
-    iconPrefs: IconPrefs,
+    settings: SettingsStore,
     shortcuts: ShortcutRepository,
     counts: NotificationCounts,
     private val actions: AppActions,
@@ -52,7 +53,7 @@ class DrawerViewModel @Inject constructor(
         prefs.hidden,
         shortcuts.all,
         query,
-        iconPrefs.mode,
+        settings[IconSettings.Mode],
     ) { all, hidden, sc, q, mode ->
         val visible = all.filter { it.app.key !in hidden }
         DrawerUiState(

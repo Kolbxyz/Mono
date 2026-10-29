@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
-import com.wander.mono.core.apps.IconMode
+import com.wander.mono.data.settings.IconMode
 
 /** What rows need to draw app icons: the user's [mode], and a cache-backed loader for it. */
 @Immutable
