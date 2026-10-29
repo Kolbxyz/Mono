@@ -53,11 +53,9 @@ class ShortcutIcons @Inject constructor(
         return withContext(Dispatchers.IO) { load(entry, sizePx) }?.also { cache.put(entry, it) }
     }
 
-    private fun load(entry: Entry, sizePx: Int): AppIconImage? {
-        val info = find(entry) ?: return null
-        val drawable = launcherApps.getShortcutIconDrawable(info, densityDpi) ?: return null
-        return AppIconImage(drawable.toBitmap(sizePx, sizePx).asImageBitmap(), isMonochrome = false)
-    }
+    private fun load(entry: Entry, sizePx: Int): AppIconImage? = find(entry)
+        ?.let { launcherApps.getShortcutIconDrawable(it, densityDpi) }
+        ?.let { AppIconImage(it.toBitmap(sizePx, sizePx).asImageBitmap(), isMonochrome = false) }
 
     private fun find(entry: Entry): ShortcutInfo? {
         val user = profiles.userOf(entry.userSerial) ?: return null

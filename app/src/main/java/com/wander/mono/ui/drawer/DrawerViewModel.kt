@@ -110,8 +110,8 @@ class DrawerViewModel @Inject constructor(
         hidden,
         searchable,
         query,
-        combine(settings[IconSettings.Mode], look, ::Pair),
-    ) { (all, work), hidden, extra, q, (mode, drawerLook) ->
+        combine(settings[IconSettings.Mode], settings[IconSettings.Pack], look, ::Triple),
+    ) { (all, work), hidden, extra, q, (mode, pack, drawerLook) ->
         val lists = drawerLists(all, hidden.keys, work)
         DrawerUiState(
             apps = lists.apps,
@@ -127,6 +127,7 @@ class DrawerViewModel @Inject constructor(
                 sources::webTarget,
             ),
             iconMode = mode,
+            iconPack = pack,
             hiddenLocked = hidden.locked,
             privateApps = lists.privateApps,
             work = lists.work,

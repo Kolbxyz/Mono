@@ -58,7 +58,9 @@ fun DrawerScreen(
     pickingApp: Boolean = false,
     focusSearch: Boolean = false,
 ) {
-    val icons = remember(state.iconMode, loadIcon) { AppIcons(state.iconMode, loadIcon) }
+    val icons = remember(state.iconMode, state.iconPack, loadIcon) {
+        AppIcons(state.iconMode, loadIcon, state.iconPack)
+    }
     val bottom = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom).asPaddingValues()
     val topAndSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     val searchFocus = remember { FocusRequester() }

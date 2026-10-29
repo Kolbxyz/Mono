@@ -54,10 +54,13 @@ class IconCache @Inject constructor(
 
     fun evictAll() = cache.evictAll()
 
-    private fun load(entry: Entry, sizePx: Int): AppIconImage? {
-        val info = resolve(entry.key) ?: return null
+    private fun load(entry: Entry, sizePx: Int): AppIconImage? = resolve(entry.key)?.let { info ->
         val monochrome = if (entry.themed) monochromeBitmap(info.getIcon(0), sizePx) else null
-        if (monochrome != null) return AppIconImage(monochrome.asImageBitmap(), isMonochrome = true)
+        monochrome?.let { AppIconImage(it.asImageBitmap(), isMonochrome = true) } ?: colourIcon(entry, info, sizePx)
+    }
+
+    /** The pack's icon for the activity when it has one, else the app's own; badged for its profile. */
+    private fun colourIcon(entry: Entry, info: LauncherActivityInfo, sizePx: Int): AppIconImage {
         val fromPack = packs.icon(entry.pack, entry.key.packageName, entry.key.className)
             ?.let { packageManager.getUserBadgedIcon(it, info.user) }
         val icon = fromPack ?: info.getBadgedIcon(0)

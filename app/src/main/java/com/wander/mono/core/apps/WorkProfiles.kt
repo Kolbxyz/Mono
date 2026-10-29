@@ -51,15 +51,18 @@ class WorkProfiles @Inject constructor(
 
     /** Resuming may first show the profile's own lock, from the system; the broadcast after updates [all]. */
     fun setPaused(profile: WorkProfile, paused: Boolean): ActionResult {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return ActionResult.Failed(R.string.error_not_allowed)
-        val user = profiles.userOf(profile.serial) ?: return ActionResult.Failed(R.string.error_profile_gone)
-        return try {
-            // False only means Android is asking for the profile's credential first.
-            userManager.requestQuietModeEnabled(paused, user)
-            ActionResult.Done
-        } catch (_: SecurityException) {
-            // Only the default home app in front may ask.
-            ActionResult.Failed(R.string.error_not_allowed)
+        val user = profiles.userOf(profile.serial)
+        return when {
+            Build.VERSION.SDK_INT < Build.VERSION_CODES.P -> ActionResult.Failed(R.string.error_not_allowed)
+            user == null -> ActionResult.Failed(R.string.error_profile_gone)
+            else -> try {
+                // False only means Android is asking for the profile's credential first.
+                userManager.requestQuietModeEnabled(paused, user)
+                ActionResult.Done
+            } catch (_: SecurityException) {
+                // Only the default home app in front may ask.
+                ActionResult.Failed(R.string.error_not_allowed)
+            }
         }
     }
 

@@ -25,7 +25,10 @@ import kotlinx.coroutines.launch
 import kotlin.coroutines.cancellation.CancellationException
 
 /** How small a sheet gets at the far end of a back swipe, before it commits and slides away. */
-private const val BackMinScale = 0.9f
+private const val BACK_MIN_SCALE = 0.9f
+
+/** The middle of the sheet's bottom edge, which a back swipe shrinks it toward. */
+private val SheetFoot = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 1f)
 
 /**
  * Every bottom sheet in Mono: a [ModalBottomSheet] that shrinks toward its foot on a back swipe
@@ -52,10 +55,10 @@ fun MonoSheet(
         containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         properties = ModalBottomSheetProperties(shouldDismissOnBackPress = false),
         modifier = modifier.graphicsLayer {
-            val scale = lerp(1f, BackMinScale, backResistance(backProgress))
+            val scale = lerp(1f, BACK_MIN_SCALE, backResistance(backProgress))
             scaleX = scale
             scaleY = scale
-            transformOrigin = TransformOrigin(0.5f, 1f)
+            transformOrigin = SheetFoot
         },
     ) {
         PredictiveBackHandler(enabled = true) { progress ->

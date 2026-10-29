@@ -17,11 +17,15 @@ import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.data.settings.IconMode
 
-/** What rows need to draw app icons: the user's [mode], and a cache-backed loader for it. */
+/**
+ * What rows need to draw app icons: the user's [mode], and a cache-backed loader for it. [pack]
+ * only takes part in equality, so a newly chosen icon pack makes every icon load again.
+ */
 @Immutable
 data class AppIcons(
     val mode: IconMode,
     val load: suspend (key: AppKey, mode: IconMode, sizePx: Int) -> AppIconImage?,
+    val pack: String = "",
 )
 
 /**

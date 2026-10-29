@@ -89,7 +89,9 @@ fun LauncherApp(
         onNoScreenLock = drawer::reportNoScreenLock,
     )
     val homeList = rememberLazyListState()
-    val homeIcons = remember(drawerState.iconMode) { AppIcons(drawerState.iconMode, drawer::icon) }
+    val homeIcons = remember(drawerState.iconMode, drawerState.iconPack) {
+        AppIcons(drawerState.iconMode, drawer::icon, drawerState.iconPack)
+    }
     val editing = rememberHomeEditing(editingOn, homeList, edit, { launcher.setEditing(true) }, rename::show)
     val privateActions = remember(drawer) { PrivateSpaceActions(drawer::setPrivateLocked, drawer::openPrivateSettings) }
     val pick: (LaunchableApp) -> Unit = { app ->

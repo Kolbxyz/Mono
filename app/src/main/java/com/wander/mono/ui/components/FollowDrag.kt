@@ -44,21 +44,22 @@ fun rememberPullUpConnection(drag: FollowDrag, onPullDown: (() -> Unit)?): Neste
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 if (source != NestedScrollSource.UserInput) return Offset.Zero
-                if (available.y < 0f) {
-                    drag.dragBy(available.y)
-                    return Offset(0f, available.y)
-                }
+                if (available.y < 0f) drag.dragBy(available.y) else pullDownBy(available.y, consumed.y)
+                return Offset(0f, available.y.coerceAtMost(0f))
+            }
+
+            /** Counts a downward pull past the list's top, firing the pull-down action once per gesture. */
+            private fun pullDownBy(leftover: Float, consumed: Float) {
                 val pullDown = currentOnPullDown.value
-                if (available.y > 0f && pullDown != null && !fired) {
-                    pulled += available.y
+                if (leftover > 0f && pullDown != null && !fired) {
+                    pulled += leftover
                     if (pulled >= threshold) {
                         fired = true
                         pullDown()
                     }
-                } else if (consumed.y != 0f) {
+                } else if (consumed != 0f) {
                     pulled = 0f
                 }
-                return Offset.Zero
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity = releaseFling(available)

@@ -20,14 +20,11 @@ fun Modifier.instantPress(source: MutableInteractionSource): Modifier = pointerI
         val press = PressInteraction.Press(down.position)
         source.tryEmit(press)
         var cancelled = false
-        while (true) {
-            val change = awaitPointerEvent(PointerEventPass.Initial).changes
-                .firstOrNull { it.id == down.id } ?: break
-            if (!change.pressed) break
-            if ((change.position - down.position).getDistance() > slop) {
-                cancelled = true
-                break
-            }
+        var held = true
+        while (held && !cancelled) {
+            val change = awaitPointerEvent(PointerEventPass.Initial).changes.firstOrNull { it.id == down.id }
+            held = change?.pressed == true
+            cancelled = change != null && held && (change.position - down.position).getDistance() > slop
         }
         source.tryEmit(if (cancelled) PressInteraction.Cancel(press) else PressInteraction.Release(press))
     }

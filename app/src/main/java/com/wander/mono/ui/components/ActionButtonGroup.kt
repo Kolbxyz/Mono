@@ -53,8 +53,8 @@ fun ActionButtonGroup(actions: List<MenuAction>, modifier: Modifier = Modifier) 
         modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp),
     ) {
         hero.chunked(2).forEach { ActionRow(it, HeroHeight, wideFirst = null) }
-        icons.chunked(4).forEach { ActionRow(it, RowHeight, wideFirst = null) }
-        tonal.chunked(2).forEachIndexed { i, row -> ActionRow(row, RowHeight, wideFirst = i % 2 == 0) }
+        icons.chunked(ICONS_PER_ROW).forEach { ActionRow(it, RowHeight, wideFirst = null) }
+        tonal.chunked(2).forEachIndexed { i, row -> ActionRow(row, RowHeight, wideFirst = i.isEven()) }
         danger.forEach { ActionRow(listOf(it), RowHeight, wideFirst = null) }
     }
 }
@@ -66,7 +66,7 @@ private fun ActionRow(row: List<MenuAction>, height: Dp, wideFirst: Boolean?) {
         row.forEachIndexed { index, action ->
             val weight = when {
                 wideFirst == null || row.size == 1 -> 1f
-                (index == 0) == wideFirst -> WideWeight
+                (index == 0) == wideFirst -> WIDE_WEIGHT
                 else -> 1f
             }
             ActionButton(action, weight, isHero = height == HeroHeight)
@@ -79,7 +79,10 @@ private fun RowScope.ActionButton(action: MenuAction, baseWeight: Float, isHero:
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val motion = MaterialTheme.motionScheme
-    val weight by animateFloatAsState(if (pressed) baseWeight * PressedGrowth else baseWeight, motion.fastSpatialSpec())
+    val weight by animateFloatAsState(
+        if (pressed) baseWeight * PRESSED_GROWTH else baseWeight,
+        motion.fastSpatialSpec(),
+    )
     val corner by animateDpAsState(
         when {
             pressed -> PressedCorner
@@ -130,11 +133,16 @@ private fun RowScope.ActionButton(action: MenuAction, baseWeight: Float, isHero:
 private fun colorsFor(emphasis: ActionEmphasis, selected: Boolean?): Pair<Color, Color> {
     val scheme = MaterialTheme.colorScheme
     if (selected != null) {
-        return if (selected) scheme.primaryContainer to scheme.onPrimaryContainer else Color.Transparent to scheme.onSurfaceVariant
+        return if (selected) {
+            scheme.primaryContainer to scheme.onPrimaryContainer
+        } else {
+            Color.Transparent to scheme.onSurfaceVariant
+        }
     }
     return when (emphasis) {
         ActionEmphasis.Primary -> scheme.primary to scheme.onPrimary
-        ActionEmphasis.Secondary, ActionEmphasis.Tonal, ActionEmphasis.Icon -> scheme.surfaceContainerHighest to scheme.onSurface
+        ActionEmphasis.Secondary, ActionEmphasis.Tonal, ActionEmphasis.Icon ->
+            scheme.surfaceContainerHighest to scheme.onSurface
         ActionEmphasis.Danger -> scheme.errorContainer to scheme.onErrorContainer
     }
 }
@@ -145,5 +153,9 @@ private val Gap = 8.dp
 private val PressedCorner = 14.dp
 private val ToggleCorner = 16.dp
 private val MinLabelSize = 10.sp
-private const val WideWeight = 1.5f
-private const val PressedGrowth = 1.35f
+private const val WIDE_WEIGHT = 1.5f
+private const val PRESSED_GROWTH = 1.35f
+private const val ICONS_PER_ROW = 4
+
+/** Alternating rows start wide, so the pairs zigzag instead of lining up as columns. */
+private fun Int.isEven(): Boolean = this % 2 == 0

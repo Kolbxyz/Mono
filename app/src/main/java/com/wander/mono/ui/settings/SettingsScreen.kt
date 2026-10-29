@@ -86,7 +86,7 @@ fun SettingsScreen(
                     val scale = lerp(1f, BACK_MIN_SCALE, backResistance(backProgress))
                     scaleX = scale
                     scaleY = scale
-                    transformOrigin = TransformOrigin(1f, 0.5f)
+                    transformOrigin = TransformOrigin(pivotFractionX = 1f, pivotFractionY = 0.5f)
                 },
             ) {
                 items(sectionsOf(shown)) { section -> section(settings) }

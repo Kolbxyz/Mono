@@ -30,6 +30,9 @@ import org.xmlpull.v1.XmlPullParserException
 /** An installed icon pack. */
 data class IconPack(val packageName: String, val label: String)
 
+/** An activity an icon pack draws an icon for, as its `appfilter.xml` names it. */
+data class PackComponent(val packageName: String, val className: String)
+
 /**
  * Third-party icon packs, the ADW / Nova format most packs ship: found by the theme intents they
  * answer, with an `appfilter.xml` (an XML resource or an asset) mapping activities to drawables
@@ -73,14 +76,16 @@ class IconPacks @Inject constructor(
     @SuppressLint("DiscouragedApi") // A pack's drawables are only known by the names its appfilter gives.
     fun icon(pack: String, packageName: String, className: String): Drawable? {
         val entry = load(pack) ?: return null
-        val name = entry.filter[PackComponent(packageName, className)] ?: return null
-        val id = entry.resources.getIdentifier(name, "drawable", pack)
-        if (id == 0) return null
-        return try {
-            ResourcesCompat.getDrawable(entry.resources, id, null)
-        } catch (_: Resources.NotFoundException) {
-            null
-        }
+        val id = entry.filter[PackComponent(packageName, className)]
+            ?.let { entry.resources.getIdentifier(it, "drawable", pack) } ?: 0
+        return if (id == 0) null else drawable(entry.resources, id)
+    }
+
+    /** Null when the pack names a drawable it does not ship. */
+    private fun drawable(resources: Resources, id: Int): Drawable? = try {
+        ResourcesCompat.getDrawable(resources, id, null)
+    } catch (_: Resources.NotFoundException) {
+        null
     }
 
     /** Forgets the maps of packs among [packageNames]: updated or removed, they are read again. */
@@ -88,15 +93,18 @@ class IconPacks @Inject constructor(
         packageNames.forEach(loaded::remove)
     }
 
-    private fun load(pack: String): LoadedPack? {
-        if (pack == SYSTEM_ICON_PACK) return null
-        loaded[pack]?.let { return it }
-        val resources = try {
-            packageManager.getResourcesForApplication(pack)
-        } catch (_: PackageManager.NameNotFoundException) {
-            return null
+    private fun load(pack: String): LoadedPack? = when {
+        pack == SYSTEM_ICON_PACK -> null
+        else -> loaded[pack] ?: packResources(pack)?.let { resources ->
+            LoadedPack(resources, readFilter(pack, resources)).also { loaded[pack] = it }
         }
-        return LoadedPack(resources, readFilter(pack, resources)).also { loaded[pack] = it }
+    }
+
+    /** Null once the pack is uninstalled. */
+    private fun packResources(pack: String): Resources? = try {
+        packageManager.getResourcesForApplication(pack)
+    } catch (_: PackageManager.NameNotFoundException) {
+        null
     }
 
     /** The appfilter, from `res/xml` or else `assets`; empty when the pack ships a broken one. */

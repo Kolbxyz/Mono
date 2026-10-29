@@ -16,6 +16,8 @@ data class DrawerUiState(
     val sections: List<Section> = emptyList(),
     val results: List<SearchHit> = emptyList(),
     val iconMode: IconMode = IconMode.Colour,
+    /** The chosen icon pack; part of [com.wander.mono.ui.components.AppIcons] so icons reload on a change. */
+    val iconPack: String = "",
     val hiddenLocked: Boolean = false,
     val privateSpace: PrivateSpaceState = PrivateSpaceState.Absent,
     val privateApps: List<DrawerEntry> = emptyList(),

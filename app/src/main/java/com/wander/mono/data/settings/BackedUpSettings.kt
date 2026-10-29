@@ -22,6 +22,7 @@ val backedUpSettings: List<Setting<*>> = listOf(
     HiddenAppSettings.Lock,
     UsageSettings.ShowInSheet,
     DrawerSettings.Background,
+    HeadphoneSettings.LiftApps,
     GestureSettings.DoubleTapLock,
     GestureSettings.SwipeDownNotifications,
     ClockSettings.Font,
