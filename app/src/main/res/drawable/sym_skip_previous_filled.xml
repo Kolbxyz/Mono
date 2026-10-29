@@ -1,0 +1,14 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+  <!-- sym_skip_next_filled mirrored. Not autoMirrored: "previous" points left in RTL too. -->
+  <group
+      android:pivotX="480"
+      android:scaleX="-1">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M660,680L660,280Q660,263 671.5,251.5Q683,240 700,240Q717,240 728.5,251.5Q740,263 740,280L740,680Q740,697 728.5,708.5Q717,720 700,720Q683,720 671.5,708.5Q660,697 660,680ZM220,646L220,314Q220,296 232,285Q244,274 260,274Q265,274 270.5,275Q276,276 281,280L530,446Q539,452 543.5,461Q548,470 548,480Q548,490 543.5,499Q539,508 530,514L281,680Q276,684 270.5,685Q265,686 260,686Q244,686 232,675Q220,664 220,646Z"/>
+  </group>
+</vector>

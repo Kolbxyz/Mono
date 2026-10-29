@@ -19,16 +19,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.data.settings.IconMode
+import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.rememberOverscrollSwipe
 import kotlinx.coroutines.launch
 
@@ -40,7 +45,7 @@ import kotlinx.coroutines.launch
 fun DrawerScreen(
     query: String,
     state: DrawerUiState,
-    loadIcon: suspend (AppKey, Int) -> ImageBitmap?,
+    loadIcon: suspend (AppKey, IconMode, Int) -> AppIconImage?,
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onLaunchApp: (LaunchableApp) -> Unit,
@@ -50,6 +55,7 @@ fun DrawerScreen(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val icons = remember(state.iconMode, loadIcon) { AppIcons(state.iconMode, loadIcon) }
     val swipeDown = rememberOverscrollSwipe(upward = false, onSwipe = onClose)
     val bottom = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom).asPaddingValues()
     val topAndSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
@@ -57,7 +63,7 @@ fun DrawerScreen(
         Column(Modifier.windowInsetsPadding(topAndSides)) {
             SearchField(query, onQueryChange, onSubmit, onOpenSettings, Modifier.fillMaxWidth().padding(16.dp))
             if (query.isBlank()) {
-                AppList(state, loadIcon, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
+                AppList(state, icons, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
             } else {
                 LazyColumn(Modifier.fillMaxSize().nestedScroll(swipeDown), contentPadding = bottom) {
                     if (state.results.isEmpty()) {
@@ -74,11 +80,11 @@ fun DrawerScreen(
                         when (hit) {
                             is SearchHit.App -> DrawerAppRow(
                                 entry = hit.entry,
-                                loadIcon = loadIcon,
+                                icons = icons,
                                 onLaunch = { onLaunchHit(hit) },
                                 onLongPress = { onLongPress(hit.entry.app) },
                             )
-                            is SearchHit.Shortcut -> ShortcutRow(hit, loadIcon, onLaunch = { onLaunchHit(hit) })
+                            is SearchHit.Shortcut -> ShortcutRow(hit, icons, onLaunch = { onLaunchHit(hit) })
                         }
                     }
                 }
@@ -90,7 +96,7 @@ fun DrawerScreen(
 @Composable
 private fun AppList(
     state: DrawerUiState,
-    loadIcon: suspend (AppKey, Int) -> ImageBitmap?,
+    icons: AppIcons,
     onLaunchApp: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     bottom: PaddingValues,
@@ -110,14 +116,18 @@ private fun AppList(
             items(state.apps, key = { it.app.key.encode() }) { entry ->
                 DrawerAppRow(
                     entry = entry,
-                    loadIcon = loadIcon,
+                    icons = icons,
                     onLaunch = { onLaunchApp(entry.app) },
                     onLongPress = { onLongPress(entry.app) },
                 )
             }
         }
+        val current by remember(state.sections) {
+            derivedStateOf { RailMath.sectionIndexFor(state.sections, listState.firstVisibleItemIndex) }
+        }
         LetterRail(
             sections = state.sections,
+            current = current,
             onSelect = { section -> scope.launch { listState.scrollToItem(section.index) } },
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -125,5 +135,3 @@ private fun AppList(
         )
     }
 }
-
-private val RAIL_WIDTH = 32.dp

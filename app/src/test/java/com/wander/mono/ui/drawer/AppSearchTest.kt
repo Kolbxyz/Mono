@@ -3,6 +3,7 @@ package com.wander.mono.ui.drawer
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.ui.components.AppBadge
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -10,7 +11,7 @@ import org.junit.Test
 
 class AppSearchTest {
     private fun entry(label: String, pkg: String = label.lowercase().replace(" ", ".")) =
-        DrawerEntry(LaunchableApp(AppKey(pkg, "$pkg.Main", 0), label, isMainProfile = true), hasNotifications = false)
+        DrawerEntry(LaunchableApp(AppKey(pkg, "$pkg.Main", 0), label, isMainProfile = true), AppBadge.None)
 
     private fun labels(hits: List<SearchHit>) = hits.map { it.label }
 

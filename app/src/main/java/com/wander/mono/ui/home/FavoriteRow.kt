@@ -28,7 +28,7 @@ fun FavoriteRow(
 ) {
     AppLabel(
         app = row.app,
-        hasNotifications = row.hasNotifications,
+        badge = row.badge,
         style = MaterialTheme.typography.headlineSmall.onWallpaper(),
         modifier = modifier
             .fillMaxWidth()

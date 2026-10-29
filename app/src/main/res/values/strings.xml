@@ -26,10 +26,23 @@
     <string name="media_play">Play</string>
     <string name="media_pause">Pause</string>
     <string name="media_next">Next</string>
+    <string name="media_previous">Previous</string>
+    <string name="media_expand">Show controls</string>
+    <string name="media_collapse">Hide controls</string>
+    <string name="media_progress">Playback position</string>
+
+    <!-- Badges: the number, then the same number capped (shown as 99+) -->
+    <string name="badge_count">%1$d</string>
+    <string name="badge_count_capped">%1$d+</string>
+    <plurals name="state_notification_count">
+        <item quantity="one">%1$d notification</item>
+        <item quantity="other">%1$d notifications</item>
+    </plurals>
 
     <!-- Drawer -->
     <string name="drawer_search_hint">Search apps and shortcuts</string>
     <string name="drawer_no_results">Nothing matches</string>
+    <string name="drawer_rail">Jump to letter</string>
 
     <!-- Long-press sheet -->
     <string name="sheet_add_to_home">Add to home</string>
@@ -56,6 +69,38 @@
     <string name="settings_home_look">Home</string>
     <string name="settings_text_shadow">Text shadow</string>
     <string name="settings_text_shadow_summary">Shadow under home text instead of dimming the wallpaper</string>
+    <string name="settings_icons">Icons</string>
+    <string name="settings_icon_mode">App icons</string>
+    <string name="settings_icon_colour">Full colour</string>
+    <string name="settings_icon_themed">Themed</string>
+    <string name="settings_icon_text_only">Text only</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_welcome_title">A calm home for your phone</string>
+    <string name="onboarding_welcome_body">One short list of the apps you use, everything else a swipe up away. Nothing you do here leaves your phone.</string>
+    <string name="onboarding_home_title">Make Mono your home screen</string>
+    <string name="onboarding_home_body">Android will ask you to confirm. If you say no, you can change it later in Settings, Apps, Default apps.</string>
+    <string name="onboarding_home_action">Set as home app</string>
+    <string name="onboarding_access_title">Music and notification counts</string>
+    <string name="onboarding_access_body">With notification access, Mono shows what is playing and how many notifications each app has, next to the app. Mono only reads them; nothing is sent anywhere.</string>
+    <string name="onboarding_access_action">Allow notification access</string>
+    <string name="onboarding_access_retry">Try again</string>
+    <string name="onboarding_restricted_title">Is the switch greyed out?</string>
+    <string name="onboarding_restricted_body">Android blocks this for apps installed outside an app store. It is an Android safety step, not something Mono asks for.</string>
+    <string name="onboarding_restricted_step1">1. Open Mono\'s App info</string>
+    <string name="onboarding_restricted_step2">2. Tap ⋮ in the top corner, then Allow restricted settings, and confirm</string>
+    <string name="onboarding_restricted_step3">3. Come back here and tap Try again</string>
+    <string name="onboarding_restricted_action">Open App info</string>
+    <string name="onboarding_done_title">You are set</string>
+    <string name="onboarding_done_body">Swipe up for all apps. Long-press an app to add it to home.</string>
+    <string name="onboarding_done_action">Start</string>
+
+    <!-- Badges -->
+    <string name="settings_badges">Notification badges</string>
+    <string name="settings_badge_counts">Show unread count</string>
+    <string name="settings_badge_counts_summary">Off shows a dot instead</string>
 
     <!-- Errors -->
     <string name="error_app_missing">This app is no longer installed</string>

@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.LauncherApps
 import android.net.Uri
 import android.os.UserHandle
+import com.wander.mono.MainActivity
 import com.wander.mono.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -26,6 +27,11 @@ class AppActions @Inject constructor(
 
     fun openAppInfo(key: AppKey): ActionResult = inProfile(key.userSerial) { user ->
         launcherApps.startAppDetailsActivity(key.component(), user, null, null)
+    }
+
+    /** Mono's own App info page, where Android 13+ keeps "Allow restricted settings". */
+    fun openOwnAppInfo(): ActionResult = inProfile(profiles.serialOf(profiles.main)) { user ->
+        launcherApps.startAppDetailsActivity(ComponentName(context, MainActivity::class.java), user, null, null)
     }
 
     /** The system shows its own confirmation; nothing is removed from here. */
