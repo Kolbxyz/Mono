@@ -92,6 +92,8 @@ fun LauncherApp(
             listState = homeList,
             onLaunch = home::launch,
             onLongPress = { sheet.show(it.key) },
+            onAppInfo = { sheet.openAppInfo(it.key) },
+            onMove = { app, by -> sheet.move(app.key, by) },
             onTogglePlay = home::togglePlayPause,
             onSkipNext = home::skipNext,
             onSkipPrevious = home::skipPrevious,

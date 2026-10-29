@@ -61,6 +61,8 @@ fun HomeScreen(
     listState: LazyListState,
     onLaunch: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
+    onAppInfo: (LaunchableApp) -> Unit,
+    onMove: (LaunchableApp, by: Int) -> Unit,
     onTogglePlay: () -> Unit,
     onSkipNext: () -> Unit,
     onSkipPrevious: () -> Unit,
@@ -147,6 +149,7 @@ fun HomeScreen(
                             EmptyHome(onChooseFavorites = onOpenDrawer, modifier = Modifier.animateItem())
                         }
                     }
+                    val favorites = rows.orEmpty().filterIsInstance<HomeRow.App>()
                     items(rows.orEmpty(), key = { it.key }, contentType = { it::class }) { row ->
                         val animated = Modifier.animateItem(
                             fadeInSpec = motion.defaultEffectsSpec(),
@@ -158,6 +161,10 @@ fun HomeScreen(
                                 row = row,
                                 onLaunch = { onLaunch(row.app) },
                                 onLongPress = { onLongPress(row.app) },
+                                onAppInfo = { onAppInfo(row.app) },
+                                onMove = { by -> onMove(row.app, by) },
+                                canMoveUp = favorites.firstOrNull() != row,
+                                canMoveDown = favorites.lastOrNull() != row,
                                 modifier = animated,
                             )
                             is HomeRow.NowPlaying -> NowPlayingCard(
