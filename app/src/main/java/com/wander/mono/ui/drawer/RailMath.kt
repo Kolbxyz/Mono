@@ -12,7 +12,10 @@ internal object RailMath {
     /** How many letters on each side of the finger the wave reaches before it is flat again. */
     const val WAVE_REACH = 4f
 
-    /** The letter under a finger at [y] on a rail [height] tall; clamped, so sliding past an end keeps the end letter. */
+    /**
+     * The letter under a finger at [y] on a rail [height] tall; clamped, so sliding past an end
+     * keeps the end letter.
+     */
     fun letterAt(y: Float, height: Float, count: Int): Int {
         if (count <= 0 || height <= 0f) return -1
         return (y / height * count).toInt().coerceIn(0, count - 1)

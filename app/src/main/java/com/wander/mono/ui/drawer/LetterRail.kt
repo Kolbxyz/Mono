@@ -130,7 +130,11 @@ fun LetterRail(
                         section.letter,
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = if (lit) FontWeight.Bold else null,
-                        color = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (lit) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
                         modifier = Modifier.graphicsLayer {
                             val slot = RailMath.fingerSlot(fingerY, height.toFloat(), sections.size)
                             translationX = -mirror * amplitude * wave * RailMath.waveFraction(index - slot)
