@@ -19,4 +19,5 @@ internal val settingsSections: List<@Composable (SettingsViewModel) -> Unit> = l
     { HeadphoneSection(it) },
     { HiddenAppsSection() },
     { UsageSection(it) },
+    { BackupSection() },
 )

@@ -34,6 +34,11 @@ class QuietApps @Inject constructor(@ApplicationContext context: Context) {
         }
     }
 
+    /** Replaces the quiet apps, for a restored backup. */
+    suspend fun replace(keys: Set<AppKey>) {
+        store.edit { prefs -> prefs[QUIET] = keys.map { it.encode() }.toSet() }
+    }
+
     private companion object {
         val QUIET = stringSetPreferencesKey("quiet_apps")
     }

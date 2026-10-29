@@ -34,6 +34,11 @@ class HeadphoneApps @Inject constructor(@ApplicationContext context: Context) {
         }
     }
 
+    /** Restores a backup's choice in one edit. */
+    suspend fun replace(keys: Set<AppKey>) {
+        store.edit { prefs -> prefs[APPS] = keys.map { it.encode() }.toSet() }
+    }
+
     private companion object {
         val APPS = stringSetPreferencesKey("headphone_apps")
     }

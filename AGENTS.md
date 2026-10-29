@@ -34,6 +34,7 @@ Single module `:app`, package root `com.wander.mono`.
 | `core/contacts` | Opt-in contact lookup by name for search (`READ_CONTACTS`), never cached. |
 | `core/siblings` | Wanda and Phalanx providers (signature permission, `docs/design/sibling-contract.md`): up next, library search, per-room unread; absent means hidden. |
 | `data` | DataStore: ordered favourites and hidden apps. |
+| `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, settings (no widgets). |
 | `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
 | `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / prompt rows. |
@@ -54,7 +55,7 @@ Settings opens from long-pressing the clock or an empty spot on home (`HomeSheet
 
 1. Declare the key in your own `data/settings/<Feature>Settings.kt`: `BooleanSetting(name, default)` or `EnumSetting(name, default, entries)` with an enum implementing `StoredEnum` (its `stored` string is what is saved; never change it).
 2. Add rows in your own `ui/settings/<Feature>Section.kt` with `SettingsGroup`, `SwitchSetting`, `ChoiceSetting`.
-3. Register the section with one line in `ui/settings/SettingsSections.kt`. Read the value elsewhere with `SettingsStore[setting]` (a `Flow`).
+3. Register the section with one line in `ui/settings/SettingsSections.kt`, and the setting in `backedUpSettings` (`data/settings/BackedUpSettings.kt`) so backups carry it. Read the value elsewhere with `SettingsStore[setting]` (a `Flow`).
 
 ```kotlin
 object GestureSettings { val SwipeDownNotifications = BooleanSetting("swipe_down_notifications", default = true) }
