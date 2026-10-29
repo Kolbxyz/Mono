@@ -9,7 +9,6 @@ import com.wander.mono.core.calendar.CalendarActions
 import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.calendar.CalendarEvents
-import com.wander.mono.core.calendar.headerEvent
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
@@ -61,9 +60,12 @@ class HomeViewModel @Inject constructor(
     ).combine(combine(calendar.agenda, liveRows.hidden, CalendarAgenda?::unlessHidden), ::withCalendarRow)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, calendar.agenda) { now, alarm, agenda ->
-        Glance(now, alarm, agenda?.let { headerEvent(it.events, now) })
-    }
+    val glance: StateFlow<Glance> = combine(
+        time.now,
+        time.nextAlarm,
+        calendar.agenda,
+        rows,
+    ) { now, alarm, agenda, home -> Glance(now, alarm, glanceEvent(agenda, now, home)) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
