@@ -27,6 +27,7 @@
     <!-- Drawer -->
     <string name="drawer_search_hint">Search apps and shortcuts</string>
     <string name="drawer_no_results">Nothing matches</string>
+    <string name="drawer_rail">Jump to letter</string>
 
     <!-- Long-press sheet -->
     <string name="sheet_add_to_home">Add to home</string>
@@ -55,6 +56,28 @@
     <string name="settings_icon_colour">Full colour</string>
     <string name="settings_icon_themed">Themed</string>
     <string name="settings_icon_text_only">Text only</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_welcome_title">A calm home for your phone</string>
+    <string name="onboarding_welcome_body">One short list of the apps you use, everything else a swipe up away. Nothing you do here leaves your phone.</string>
+    <string name="onboarding_home_title">Make Mono your home screen</string>
+    <string name="onboarding_home_body">Android will ask you to confirm. If you say no, you can change it later in Settings, Apps, Default apps.</string>
+    <string name="onboarding_home_action">Set as home app</string>
+    <string name="onboarding_access_title">Music and notification counts</string>
+    <string name="onboarding_access_body">With notification access, Mono shows what is playing and how many notifications each app has, next to the app. Mono only reads them; nothing is sent anywhere.</string>
+    <string name="onboarding_access_action">Allow notification access</string>
+    <string name="onboarding_access_retry">Try again</string>
+    <string name="onboarding_restricted_title">Is the switch greyed out?</string>
+    <string name="onboarding_restricted_body">Android blocks this for apps installed outside an app store. It is an Android safety step, not something Mono asks for.</string>
+    <string name="onboarding_restricted_step1">1. Open Mono\'s App info</string>
+    <string name="onboarding_restricted_step2">2. Tap ⋮ in the top corner, then Allow restricted settings, and confirm</string>
+    <string name="onboarding_restricted_step3">3. Come back here and tap Try again</string>
+    <string name="onboarding_restricted_action">Open App info</string>
+    <string name="onboarding_done_title">You are set</string>
+    <string name="onboarding_done_body">Swipe up for all apps. Long-press an app to add it to home.</string>
+    <string name="onboarding_done_action">Start</string>
 
     <!-- Errors -->
     <string name="error_app_missing">This app is no longer installed</string>

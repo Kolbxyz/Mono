@@ -8,6 +8,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -17,6 +18,7 @@ import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.themeChoice
 import com.wander.mono.ui.LauncherApp
 import com.wander.mono.ui.LauncherViewModel
+import com.wander.mono.ui.onboarding.Onboarding
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.theme.MonoTheme
 import com.wander.mono.ui.theme.isDark
@@ -53,7 +55,12 @@ class MainActivity : ComponentActivity() {
                     navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { dark },
                 )
             }
-            MonoTheme(darkTheme = dark, amoledBlack = theme.amoledBlack) { LauncherApp() }
+            MonoTheme(darkTheme = dark, amoledBlack = theme.amoledBlack) {
+                Box {
+                    LauncherApp()
+                    Onboarding()
+                }
+            }
         }
     }
 
