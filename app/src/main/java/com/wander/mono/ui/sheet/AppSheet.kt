@@ -4,12 +4,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -24,7 +26,10 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.ui.components.ReadableLayout
 
-/** Long-press options for one app: its shortcuts, then home list, visibility, app info and uninstall. */
+/**
+ * Long-press options for one app: its shortcuts, then home list (with the headphones switch),
+ * visibility, app info and uninstall.
+ */
 @Composable
 fun AppSheet(
     state: AppSheetState,
@@ -35,6 +40,7 @@ fun AppSheet(
     onRemoveFromHome: (AppKey) -> Unit,
     onMove: (AppKey, Int) -> Unit,
     onSetHidden: (AppKey, Boolean) -> Unit,
+    onSetLiftsWithHeadphones: (AppKey, Boolean) -> Unit,
     onRename: (AppKey) -> Unit,
     onAppInfo: (AppKey) -> Unit,
     onUninstall: (AppKey) -> Unit,
@@ -54,6 +60,11 @@ fun AppSheet(
                 if (state.canMoveUp) SheetAction(stringResource(R.string.sheet_move_up)) { onMove(key, -1) }
                 if (state.canMoveDown) SheetAction(stringResource(R.string.sheet_move_down)) { onMove(key, 1) }
                 SheetAction(stringResource(R.string.sheet_remove_from_home)) { onRemoveFromHome(key) }
+                state.liftsWithHeadphones?.let { lifts ->
+                    SheetSwitch(stringResource(R.string.sheet_headphones_top), lifts) {
+                        onSetLiftsWithHeadphones(key, it)
+                    }
+                }
             } else {
                 SheetAction(stringResource(R.string.sheet_add_to_home)) { onAddToHome(key) }
             }
@@ -74,6 +85,18 @@ internal fun SheetAction(label: String, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+    ) {
+        Text(label)
+    }
+}
+
+/** A switch row; the whole row toggles, so TalkBack reads it as one switch with its state. */
+@Composable
+private fun SheetSwitch(label: String, checked: Boolean, onChange: (Boolean) -> Unit) {
+    ListItem(
+        modifier = Modifier.toggleable(checked, role = Role.Switch, onValueChange = onChange),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        trailingContent = { Switch(checked = checked, onCheckedChange = null) },
     ) {
         Text(label)
     }

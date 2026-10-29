@@ -4,11 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
+import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarActions
 import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.calendar.CalendarEvents
+import com.wander.mono.core.media.ListeningDevices
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
@@ -17,9 +19,11 @@ import com.wander.mono.core.quiet.QuietMode
 import com.wander.mono.core.siblings.WandaUpNext
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.widgets.Widgets
+import com.wander.mono.data.HeadphoneApps
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.settings.BadgeSettings
+import com.wander.mono.data.settings.HeadphoneSettings
 import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.ui.UserMessages
@@ -44,6 +48,8 @@ class HomeViewModel @Inject constructor(
     calendar: CalendarEvents,
     private val calendarActions: CalendarActions,
     widgets: Widgets,
+    listening: ListeningDevices,
+    headphoneApps: HeadphoneApps,
     private val media: MediaSessions,
     wandaUpNext: WandaUpNext,
     private val listenerAccess: ListenerAccess,
@@ -67,6 +73,14 @@ class HomeViewModel @Inject constructor(
         .combine(widgets.placed, ::withWidgetRows)
         .combine(quiet.state, ::quietHomeRows)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+
+    /** The favourites to show first: the ones chosen for headphones, while some are connected and the setting is on. */
+    val lifted: StateFlow<Set<AppKey>> = combine(
+        settings[HeadphoneSettings.LiftApps],
+        listening.connected,
+        headphoneApps.apps,
+    ) { on, connected, apps -> if (on && connected) apps else emptySet() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptySet())
 
     val glance: StateFlow<Glance> = combine(
         time.now,
