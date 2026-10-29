@@ -3,7 +3,10 @@
     <string name="app_name">Mono</string>
 
     <!-- Home -->
-    <string name="home_empty">No favourites yet. Open all apps, long-press an app and choose Add to home.</string>
+    <string name="home_empty_title">Your calm place.</string>
+    <string name="home_empty_body">Pick the few apps you use every day.</string>
+    <string name="home_empty_choose">Choose favourites</string>
+    <string name="home_empty_hint">Swipe up for all apps</string>
     <string name="home_next_alarm">Alarm %1$s</string>
     <string name="home_listener_prompt">Allow notification access for music and notification dots</string>
 
@@ -13,6 +16,8 @@
     <string name="action_open_drawer">All apps</string>
     <string name="action_home_options">Home options</string>
     <string name="action_back">Back</string>
+    <string name="action_copy">Copy</string>
+    <string name="action_search">Search</string>
 
     <!-- States announced by TalkBack -->
     <string name="state_has_notifications">Has notifications</string>
@@ -37,7 +42,7 @@
     </plurals>
 
     <!-- Drawer -->
-    <string name="drawer_search_hint">Search apps and shortcuts</string>
+    <string name="drawer_search_hint">Search apps, settings and more</string>
     <string name="drawer_no_results">Nothing matches</string>
     <string name="drawer_rail">Jump to letter</string>
 
@@ -63,6 +68,9 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_amoled_black">AMOLED black</string>
     <string name="settings_amoled_black_summary">Pure black background in dark theme</string>
+    <string name="settings_home_look">Home</string>
+    <string name="settings_text_shadow">Text shadow</string>
+    <string name="settings_text_shadow_summary">Shadow under home text instead of dimming the wallpaper</string>
     <string name="settings_icons">Icons</string>
     <string name="settings_icon_mode">App icons</string>
     <string name="settings_icon_colour">Full colour</string>
@@ -112,6 +120,55 @@
     <string name="settings_calendar_summary">Your next events under the clock and in the list. Needs calendar access; Mono only reads them and nothing leaves your phone.</string>
     <string name="settings_calendar_denied">Calendar access was refused. Tap to open App info and allow Calendar there.</string>
 
+    <!-- Search results beyond apps -->
+    <string name="search_calculator_result">= %1$s</string>
+    <string name="search_calculator_copy">Tap to copy</string>
+    <string name="search_calculator_clip">Calculator result</string>
+    <string name="search_copied">Result copied</string>
+    <string name="search_contact">Contact</string>
+    <string name="search_web_in">Search in %1$s</string>
+    <string name="search_web">Search the web</string>
+    <string name="settings_search">Search</string>
+    <string name="settings_search_contacts">Search contacts</string>
+    <string name="settings_search_contacts_summary">Find people by name. Needs access to your contacts; they are read only while you type and never stored.</string>
+
+    <!-- Settings pages search can open, with extra comma-separated words each is found by -->
+    <string name="page_wifi">Wi‑Fi</string>
+    <string name="page_wifi_keywords">wifi, wlan, internet, network</string>
+    <string name="page_bluetooth">Bluetooth</string>
+    <string name="page_bluetooth_keywords">pair, headphones, devices</string>
+    <string name="page_network">Network &amp; internet</string>
+    <string name="page_network_keywords">mobile data, sim, airplane mode, hotspot</string>
+    <string name="page_display">Display</string>
+    <string name="page_display_keywords">brightness, screen, dark theme, font size</string>
+    <string name="page_battery">Battery</string>
+    <string name="page_battery_keywords">power, battery saver, charging</string>
+    <string name="page_sound">Sound &amp; vibration</string>
+    <string name="page_sound_keywords">volume, ringtone, vibrate, do not disturb</string>
+    <string name="page_notifications">Notifications</string>
+    <string name="page_notifications_keywords">alerts, app notifications</string>
+    <string name="page_apps">Apps</string>
+    <string name="page_apps_keywords">applications, app info, permissions</string>
+    <string name="page_default_apps">Default apps</string>
+    <string name="page_default_apps_keywords">home app, launcher, browser, sms</string>
+    <string name="page_storage">Storage</string>
+    <string name="page_storage_keywords">space, free up, files</string>
+    <string name="page_location">Location</string>
+    <string name="page_location_keywords">gps</string>
+    <string name="page_security">Security</string>
+    <string name="page_security_keywords">screen lock, pin, password, fingerprint</string>
+    <string name="page_privacy">Privacy</string>
+    <string name="page_privacy_keywords">permission manager, camera access, microphone access</string>
+    <string name="page_accessibility">Accessibility</string>
+    <string name="page_accessibility_keywords">talkback, magnification, captions</string>
+    <string name="page_date">Date &amp; time</string>
+    <string name="page_date_keywords">clock, time zone</string>
+    <string name="page_languages">Languages</string>
+    <string name="page_languages_keywords">language, locale, keyboard</string>
+    <string name="page_about">About phone</string>
+    <string name="page_about_keywords">android version, build number, device name</string>
+    <string name="page_mono_keywords">launcher settings, mono</string>
+
     <!-- Errors -->
     <string name="error_app_missing">This app is no longer installed</string>
     <string name="error_not_allowed">Android did not allow opening this</string>
@@ -119,4 +176,6 @@
     <string name="error_profile_gone">This profile no longer exists</string>
     <string name="error_calendar_missing">No app can open this event</string>
     <string name="error_settings_missing">This settings page is not available on this phone</string>
+    <string name="error_no_browser">No browser can search the web</string>
+    <string name="error_no_contacts_app">No app can show this contact</string>
 </resources>

@@ -8,7 +8,9 @@ import androidx.compose.runtime.Composable
  */
 internal val settingsSections: List<@Composable (SettingsViewModel) -> Unit> = listOf(
     { ThemeSection(it) },
+    { HomeLookSection(it) },
     { IconSection(it) },
     { BadgeSection(it) },
     { CalendarSection() },
+    { SearchSection(it) },
 )

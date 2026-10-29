@@ -25,7 +25,7 @@ fun NextEventLine(event: CalendarEvent, now: Long, timeSkeleton: String) {
     }
     Text(
         stringResource(R.string.home_next_event, title, time),
-        style = MaterialTheme.typography.bodyMedium,
+        style = MaterialTheme.typography.titleMedium.onWallpaper(),
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,

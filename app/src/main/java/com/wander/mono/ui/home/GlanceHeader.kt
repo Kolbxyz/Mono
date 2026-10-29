@@ -31,13 +31,14 @@ fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
     }
 
     Column(modifier.padding(top = 48.dp, bottom = 32.dp)) {
-        Text(time, style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onSurface)
-        Text(date, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val typography = MaterialTheme.typography
+        Text(time, style = typography.displayLargeEmphasized.onWallpaper(), color = MaterialTheme.colorScheme.onSurface)
+        Text(date, style = typography.titleMedium.onWallpaper(), color = MaterialTheme.colorScheme.onSurfaceVariant)
         glance.nextEvent?.let { NextEventLine(it, glance.now, timeSkeleton) }
         if (alarm != null) {
             Text(
                 stringResource(R.string.home_next_alarm, alarm),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.titleMedium.onWallpaper(),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

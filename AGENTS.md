@@ -30,12 +30,13 @@ Single module `:app`, package root `com.wander.mono`.
 | `core/notifications` | `MonoNotificationListener`, per-app notification counts, notification-access state. |
 | `core/media` | Active media sessions (through the listener's grant) and the playing item. |
 | `core/calendar` | Opt-in upcoming events (`READ_CALENDAR`) from `CalendarContract.Instances`, observed, re-read only at event boundaries. |
-| `core/system` | Clock tick and next alarm, from system broadcasts. |
+| `core/system` | Clock tick and next alarm, from system broadcasts; wallpaper colours and hints; settings pages, web search hand-off, clipboard. |
+| `core/contacts` | Opt-in contact lookup by name for search (`READ_CONTACTS`), never cached. |
 | `data` | DataStore: ordered favourites and hidden apps. |
 | `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
 | `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / prompt rows. |
-| `ui/drawer` | Alphabetical list, letter rail, ranked search (apps + shortcuts). |
+| `ui/drawer` | Alphabetical list, letter rail, ranked search (calculator, apps, shortcuts, contacts, settings, web hand-off). |
 | `ui/sheet` | Long-press options: per app (`AppSheet`) and for home itself (`HomeSheet`). |
 | `ui/settings` | Settings screen, reusable setting rows, one `*Section.kt` per feature. |
 | `ui/theme` | `MonoTheme`, reduced motion. |
