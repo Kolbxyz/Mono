@@ -13,6 +13,7 @@ import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.NotificationPreviews
+import com.wander.mono.core.siblings.WandaUpNext
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.BadgeSettings
@@ -38,6 +39,7 @@ class HomeViewModel @Inject constructor(
     calendar: CalendarEvents,
     private val calendarActions: CalendarActions,
     private val media: MediaSessions,
+    wandaUpNext: WandaUpNext,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
     private val messages: UserMessages,
@@ -47,7 +49,7 @@ class HomeViewModel @Inject constructor(
         prefs.favorites,
         catalog.apps.filterNotNull(),
         counts.counts,
-        media.state,
+        wandaUpNext.fill(media.state),
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
     ).combine(
