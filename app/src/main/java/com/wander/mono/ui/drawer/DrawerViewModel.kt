@@ -12,9 +12,13 @@ import com.wander.mono.core.apps.IconCache
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.contacts.Contact
+import com.wander.mono.core.notifications.ConversationKey
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.core.siblings.PhalanxRooms
+import com.wander.mono.core.siblings.PhalanxUnread
+import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.BadgeSettings
@@ -42,6 +46,7 @@ class DrawerViewModel @Inject constructor(
     shortcuts: ShortcutRepository,
     counts: NotificationCounts,
     previews: NotificationPreviews,
+    phalanx: PhalanxRooms,
     private val actions: AppActions,
     private val icons: IconCache,
     private val messages: UserMessages,
@@ -62,9 +67,13 @@ class DrawerViewModel @Inject constructor(
     }
 
     /** What search looks in besides the apps themselves. */
-    private val searchable = combine(shortcuts.all, sources.contacts(query), sources.pages()) { sc, people, pages ->
-        Searchable(sc, people, pages)
-    }
+    private val searchable = combine(
+        shortcuts.all,
+        sources.contacts(query),
+        sources.tracks(query),
+        sources.pages(),
+        ::Searchable,
+    )
 
     val state: StateFlow<DrawerUiState> = combine(
         entries,
@@ -77,12 +86,18 @@ class DrawerViewModel @Inject constructor(
         DrawerUiState(
             apps = visible,
             sections = sectionsOf(visible.map { it.app.label }),
-            results = SearchResults.assemble(q, all, extra.shortcuts, extra.contacts, extra.pages, sources::webTarget),
+            results = SearchResults.assemble(
+                q, all, extra.shortcuts, extra.contacts, extra.tracks, extra.pages, sources::webTarget,
+            ),
             iconMode = mode,
         )
     }
-        .combine(combine(previews.conversations, settings[BadgeSettings.ShowCounts], ::Pair)) { state, unread ->
-            state.copy(results = state.results.withUnread(unread.first, unread.second))
+        .combine(
+            combine(previews.conversations, phalanx.unread, settings[BadgeSettings.ShowCounts], ::ShortcutUnread),
+        ) { state, unread ->
+            val results = state.results.withUnread(unread.notified, unread.showCounts)
+                .withRoomUnread(unread.phalanx, unread.showCounts)
+            state.copy(results = results)
         }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), DrawerUiState())
@@ -102,6 +117,7 @@ class DrawerViewModel @Inject constructor(
         is SearchHit.Shortcut -> opened(messages.report(actions.launchShortcut(hit.shortcut)))
         is SearchHit.Calculation -> sources.copy(hit)
         is SearchHit.Person -> sources.open(hit)
+        is SearchHit.Track -> sources.open(hit)
         is SearchHit.Setting -> sources.open(hit)
         is SearchHit.Web -> sources.open(hit)
     }
@@ -114,7 +130,15 @@ class DrawerViewModel @Inject constructor(
     private data class Searchable(
         val shortcuts: List<AppShortcut>,
         val contacts: List<Contact>,
+        val tracks: List<WandaTrack>,
         val pages: List<SettingsPage>,
+    )
+
+    /** Unread per conversation from notifications, and from Phalanx itself when it publishes it. */
+    private data class ShortcutUnread(
+        val notified: Map<ConversationKey, Int>,
+        val phalanx: PhalanxUnread?,
+        val showCounts: Boolean,
     )
 
     private companion object {
