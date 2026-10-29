@@ -2,6 +2,7 @@ package com.wander.mono.core.apps
 
 import android.content.Context
 import android.content.pm.LauncherApps
+import com.wander.mono.data.CustomLabels
 import com.wander.mono.di.AppScope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.Collator
@@ -11,6 +12,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
@@ -19,13 +21,17 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 
-/** Every launchable activity in every profile, sorted by label, reloaded on each [CatalogChange]. */
+/**
+ * Every launchable activity in every profile, under the user's names where they renamed one,
+ * sorted by label, reloaded on each [CatalogChange].
+ */
 @Singleton
 class AppCatalog @Inject constructor(
     @ApplicationContext context: Context,
     private val profiles: Profiles,
     private val icons: IconCache,
     events: CatalogEvents,
+    customLabels: CustomLabels,
     @AppScope scope: CoroutineScope,
 ) {
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
@@ -35,8 +41,7 @@ class AppCatalog @Inject constructor(
     /** Alphabetical; apps sharing a label follow the name that tells them apart. */
     private val byLabel = compareBy<LaunchableApp, String>(collator) { it.label }.thenBy { it.detail }
 
-    /** Null until the first load finishes, so callers can tell "loading" from "no apps". */
-    val apps: StateFlow<List<LaunchableApp>?> = events.changes
+    private val installed: StateFlow<List<LaunchableApp>?> = events.changes
         .filter { it !is CatalogChange.Shortcuts }
         .onEach { change ->
             if (change is CatalogChange.Packages) icons.evict(change.packageNames) else icons.evictAll()
@@ -47,6 +52,11 @@ class AppCatalog @Inject constructor(
         .flowOn(Dispatchers.IO)
         .stateIn(scope, SharingStarted.Eagerly, null)
 
+    /** Null until the first load finishes, so callers can tell "loading" from "no apps". */
+    val apps: StateFlow<List<LaunchableApp>?> = combine(installed, customLabels.labels) { loaded, labels ->
+        loaded?.let { withCustomLabels(it, labels).sortedWith(byLabel) }
+    }.flowOn(Dispatchers.Default).stateIn(scope, SharingStarted.Eagerly, null)
+
     private fun load(): List<LaunchableApp> = launcherApps.profiles.flatMap { user ->
         val serial = profiles.serialOf(user)
         val isMain = user == profiles.main
@@ -56,5 +66,5 @@ class AppCatalog @Inject constructor(
             val app = LaunchableApp(key, info.label.toString(), isMain)
             LabeledActivity(app, info.applicationInfo.loadLabel(packageManager).toString())
         }
-    }.let(::resolveLabelClashes).sortedWith(byLabel)
+    }.let(::resolveLabelClashes)
 }
