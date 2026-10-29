@@ -1,17 +1,19 @@
 package com.wander.mono.ui.drawer
 
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
+import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.IconCache
+import com.wander.mono.core.apps.IconMode
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.data.IconPrefs
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,6 +31,7 @@ class DrawerViewModel @Inject constructor(
     private val savedState: SavedStateHandle,
     catalog: AppCatalog,
     prefs: LauncherPrefs,
+    iconPrefs: IconPrefs,
     shortcuts: ShortcutRepository,
     counts: NotificationCounts,
     private val actions: AppActions,
@@ -44,12 +47,19 @@ class DrawerViewModel @Inject constructor(
         }
     }
 
-    val state: StateFlow<DrawerUiState> = combine(entries, prefs.hidden, shortcuts.all, query) { all, hidden, sc, q ->
+    val state: StateFlow<DrawerUiState> = combine(
+        entries,
+        prefs.hidden,
+        shortcuts.all,
+        query,
+        iconPrefs.mode,
+    ) { all, hidden, sc, q, mode ->
         val visible = all.filter { it.app.key !in hidden }
         DrawerUiState(
             apps = visible,
             sections = sectionsOf(visible.map { it.app.label }),
             results = AppSearch.search(q, all, sc),
+            iconMode = mode,
         )
     }
         .flowOn(Dispatchers.Default)
@@ -59,7 +69,8 @@ class DrawerViewModel @Inject constructor(
         savedState[QUERY] = text
     }
 
-    suspend fun icon(key: AppKey, sizePx: Int): ImageBitmap? = icons.icon(key, sizePx)
+    suspend fun icon(key: AppKey, mode: IconMode, sizePx: Int): AppIconImage? =
+        icons.icon(key, themed = mode == IconMode.Themed, sizePx)
 
     /** True when the app opened, so the caller can close the drawer. */
     fun launch(app: LaunchableApp): Boolean = messages.report(actions.launch(app.key))
