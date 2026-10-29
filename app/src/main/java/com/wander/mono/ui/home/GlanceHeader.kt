@@ -14,12 +14,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.ui.theme.CLOCK_MAX_FONT_SCALE
+import com.wander.mono.ui.theme.capFontScale
+import com.wander.mono.ui.theme.secondaryTextColor
 import java.util.Date
 import java.util.Locale
 
-/** Big clock, date and next alarm, formatted for the user's locale and 12/24-hour setting. */
+/**
+ * Big clock, date, next alarm and next calendar event, formatted for the user's locale and 12/24-hour
+ * setting. [compact] (a phone in landscape) trades the airy spacing and display size for list room.
+ */
 @Composable
-fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
+fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier, compact: Boolean = false) {
     val locale = LocalConfiguration.current.locales[0]
     // Re-read on every minute tick; flipping the setting also sends ACTION_TIME_CHANGED.
     val is24Hour = AndroidDateFormat.is24HourFormat(LocalContext.current)
@@ -30,21 +36,28 @@ fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
         remember(next, timeSkeleton, locale) { format(next, ALARM_DAY_SKELETON + timeSkeleton, locale) }
     }
 
-    Column(modifier.padding(top = 48.dp, bottom = 32.dp)) {
-        Text(time, style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onSurface)
-        Text(date, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Column(modifier.padding(top = if (compact) 8.dp else 48.dp, bottom = if (compact) 16.dp else 32.dp)) {
+        val typography = MaterialTheme.typography
+        val clock = if (compact) typography.displayMediumEmphasized else typography.displayLargeEmphasized
+        Text(
+            time,
+            style = clock.capFontScale(CLOCK_MAX_FONT_SCALE).onWallpaper(),
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(date, style = typography.titleMedium.onWallpaper(), color = secondaryTextColor())
+        glance.nextEvent?.let { NextEventLine(it, glance.now, timeSkeleton) }
         if (alarm != null) {
             Text(
                 stringResource(R.string.home_next_alarm, alarm),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.titleMedium.onWallpaper(),
+                color = secondaryTextColor(),
             )
         }
     }
 }
 
 /** ICU picks the right order and separators for the locale from a skeleton. */
-private fun format(millis: Long, skeleton: String, locale: Locale): String =
+internal fun format(millis: Long, skeleton: String, locale: Locale): String =
     DateFormat.getInstanceForSkeleton(skeleton, locale).format(Date(millis))
 
 private const val DATE_SKELETON = "EEEEMMMMd"

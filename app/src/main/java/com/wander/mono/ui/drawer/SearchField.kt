@@ -3,6 +3,7 @@ package com.wander.mono.ui.drawer
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -16,12 +17,13 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.foundation.shape.CircleShape
 import com.wander.mono.R
 
-/** The drawer's search box. The keyboard's action key opens the top result. */
+/** The drawer's search box, with Mono's settings at its end. The keyboard's action key opens the top result. */
 @Composable
 fun SearchField(
     query: String,
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
+    onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     TextField(
@@ -32,6 +34,11 @@ fun SearchField(
         shape = CircleShape,
         placeholder = { Text(stringResource(R.string.drawer_search_hint)) },
         leadingIcon = { Icon(painterResource(R.drawable.sym_search), contentDescription = null) },
+        trailingIcon = {
+            IconButton(onClick = onOpenSettings) {
+                Icon(painterResource(R.drawable.sym_settings), stringResource(R.string.settings_title))
+            }
+        },
         keyboardOptions = KeyboardOptions(
             capitalization = KeyboardCapitalization.None,
             autoCorrectEnabled = false,

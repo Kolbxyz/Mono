@@ -6,4 +6,6 @@ internal data class BadgeCandidate(
     val isOngoing: Boolean,
     val isGroupSummary: Boolean,
     val canShowBadge: Boolean,
+    /** `Notification.number`: how many items the notification stands for, 0 when the app does not say. */
+    val number: Int,
 )

@@ -12,7 +12,8 @@ class BadgeCountingTest {
         ongoing: Boolean = false,
         summary: Boolean = false,
         badge: Boolean = true,
-    ) = BadgeCandidate(owner, ongoing, summary, badge)
+        number: Int = 0,
+    ) = BadgeCandidate(owner, ongoing, summary, badge, number)
 
     @Test
     fun `ongoing, summaries and badge-disabled channels do not count`() {
@@ -26,5 +27,17 @@ class BadgeCountingTest {
             )
         )
         assertEquals(mapOf(phalanx to 2), counts)
+    }
+
+    @Test
+    fun `a notification counts for its number when the app sets one`() {
+        val counts = countBadges(
+            listOf(
+                candidate(phalanx, number = 4),
+                candidate(phalanx),
+                candidate(phalanx, summary = true, number = 5),
+            )
+        )
+        assertEquals(mapOf(phalanx to 5), counts)
     }
 }

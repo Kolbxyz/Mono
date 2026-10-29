@@ -3,11 +3,11 @@ package com.wander.mono.core.media
 import android.content.Context
 import android.media.MediaMetadata
 import android.media.session.MediaController
+import android.media.session.MediaSession
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import android.os.Handler
 import android.os.Looper
-import androidx.compose.ui.graphics.asImageBitmap
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.di.AppScope
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.stateIn
 class MediaSessions @Inject constructor(
     @ApplicationContext context: Context,
     private val access: ListenerAccess,
+    private val outputs: AudioOutputs,
     @AppScope scope: CoroutineScope,
 ) {
     private val sessionManager = context.getSystemService(MediaSessionManager::class.java)
@@ -55,6 +56,22 @@ class MediaSessions @Inject constructor(
         current?.transportControls?.skipToNext()
     }
 
+    fun skipPrevious() {
+        current?.transportControls?.skipToPrevious()
+    }
+
+    fun seekTo(positionMs: Long) {
+        current?.transportControls?.seekTo(positionMs)
+    }
+
+    fun skipToQueueItem(id: Long) {
+        current?.transportControls?.skipToQueueItem(id)
+    }
+
+    fun openOutputSwitcher() {
+        current?.let { outputs.openSwitcher(it.packageName) }
+    }
+
     private fun sessions(): Flow<MediaState> = callbackFlow {
         val handler = Handler(Looper.getMainLooper())
         val watched = mutableMapOf<MediaController, MediaController.Callback>()
@@ -63,7 +80,8 @@ class MediaSessions @Inject constructor(
         fun publish() {
             val chosen = pick(watched.keys.toList())
             current = chosen
-            trySend(chosen?.let { describe(it, art) }?.let(MediaState::Active) ?: MediaState.Idle)
+            val media = chosen?.let { playingMedia(it, art, outputs.current(it)) }
+            trySend(media?.let(MediaState::Active) ?: MediaState.Idle)
         }
 
         fun watch(controllers: List<MediaController>) {
@@ -76,6 +94,8 @@ class MediaSessions @Inject constructor(
                 val callback = object : MediaController.Callback() {
                     override fun onPlaybackStateChanged(state: PlaybackState?) = publish()
                     override fun onMetadataChanged(metadata: MediaMetadata?) = publish()
+                    override fun onQueueChanged(queue: List<MediaSession.QueueItem>?) = publish()
+                    override fun onAudioInfoChanged(info: MediaController.PlaybackInfo) = publish()
                 }
                 controller.registerCallback(callback, handler)
                 watched[controller] = callback
@@ -84,6 +104,7 @@ class MediaSessions @Inject constructor(
         }
 
         val listener = MediaSessionManager.OnActiveSessionsChangedListener { watch(it.orEmpty()) }
+        val unwatchOutputs = outputs.watch(::publish)
         try {
             sessionManager.addOnActiveSessionsChangedListener(listener, access.component, handler)
             watch(sessionManager.getActiveSessions(access.component))
@@ -94,6 +115,7 @@ class MediaSessions @Inject constructor(
         }
         awaitClose {
             sessionManager.removeOnActiveSessionsChangedListener(listener)
+            unwatchOutputs()
             watched.forEach { (controller, callback) -> controller.unregisterCallback(callback) }
             current = null
         }
@@ -103,39 +125,6 @@ class MediaSessions @Inject constructor(
     private fun pick(controllers: List<MediaController>): MediaController? =
         controllers.firstOrNull { it.playbackState?.state == PlaybackState.STATE_PLAYING && it.hasTitle() }
             ?: controllers.firstOrNull { it.hasTitle() }
-
-    private fun MediaController.hasTitle() = metadata?.title() != null
-
-    private fun describe(controller: MediaController, art: ArtMemo): PlayingMedia? {
-        val metadata = controller.metadata ?: return null
-        return metadata.title()?.let { title -> describe(controller, metadata, title, art) }
-    }
-
-    private fun describe(
-        controller: MediaController,
-        metadata: MediaMetadata,
-        title: String,
-        art: ArtMemo,
-    ): PlayingMedia {
-        val bitmap = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
-            ?: metadata.getBitmap(MediaMetadata.METADATA_KEY_ART)
-            ?: metadata.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
-        val playback = controller.playbackState
-        return PlayingMedia(
-            packageName = controller.packageName,
-            title = title,
-            artist = (metadata.getString(MediaMetadata.METADATA_KEY_ARTIST)
-                ?: metadata.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST)
-                ?: metadata.getString(MediaMetadata.METADATA_KEY_DISPLAY_SUBTITLE)),
-            art = bitmap?.asImageBitmap(),
-            artColor = bitmap?.let(art::colorOf),
-            isPlaying = playback?.state == PlaybackState.STATE_PLAYING,
-            canSkipNext = playback != null && playback.actions and PlaybackState.ACTION_SKIP_TO_NEXT != 0L,
-        )
-    }
-
-    private fun MediaMetadata.title(): String? =
-        getString(MediaMetadata.METADATA_KEY_TITLE) ?: getString(MediaMetadata.METADATA_KEY_DISPLAY_TITLE)
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L

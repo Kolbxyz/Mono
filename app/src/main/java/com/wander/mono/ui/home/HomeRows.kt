@@ -4,6 +4,7 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.media.MediaState
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.ui.components.appBadge
 
 /**
  * Builds the home list: the favourites in the user's order (keys of apps not installed right now
@@ -15,11 +16,12 @@ internal fun assembleHomeRows(
     catalog: List<LaunchableApp>,
     badges: Map<PackageUser, Int>,
     media: MediaState,
+    showCounts: Boolean,
 ): List<HomeRow> {
     val installed = catalog.associateBy { it.key }
     val rows: MutableList<HomeRow> = favorites.distinct().mapNotNull(installed::get).map { app ->
         val owner = PackageUser(app.key.packageName, app.key.userSerial)
-        HomeRow.App(app, hasNotifications = (badges[owner] ?: 0) > 0)
+        HomeRow.App(app, appBadge(badges[owner] ?: 0, showCounts))
     }.toMutableList()
 
     when (media) {

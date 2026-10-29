@@ -5,10 +5,10 @@ import java.text.Normalizer
 import java.util.Locale
 
 /**
- * Ranked, case- and accent-insensitive search over app names and shortcut labels. Tiers, best
- * first: exact name, name prefix, every query word prefixing a word of the name, initials ("ym"
- * finds "YouTube Music"), then plain substring. Within a tier apps come before shortcuts, then
- * shorter names first.
+ * Ranked, case- and accent-insensitive matching of names. Tiers, best first: exact name, name
+ * prefix, every query word prefixing a word of the name, initials ("ym" finds "YouTube Music"),
+ * then plain substring. Within a tier shorter names come first. Apps, shortcuts and settings pages
+ * are each ranked this way; [SearchResults] puts the groups in order.
  */
 internal object AppSearch {
     private const val EXACT = 0
@@ -40,23 +40,37 @@ internal object AppSearch {
         }
     }
 
-    /** Every app in [entries] (hidden ones too) and every shortcut matching [query], best first. */
-    fun search(query: String, entries: List<DrawerEntry>, shortcuts: List<AppShortcut>): List<SearchHit> {
+    /**
+     * The [items] matching [query], best first. An item matches by its [label] or, ranked the
+     * same way, any of its [aliases]; ties go to the shorter label.
+     */
+    fun <T> rank(
+        query: String,
+        items: List<T>,
+        label: (T) -> String,
+        aliases: (T) -> List<String> = { emptyList() },
+    ): List<T> {
         val normalized = normalize(query)
         if (normalized.isEmpty()) return emptyList()
-        val owners = entries.associateBy { it.app.key.packageName to it.app.key.userSerial }
-        val candidates = entries.map { SearchHit.App(it) } +
-            shortcuts.map { SearchHit.Shortcut(it, owners[it.packageName to it.userSerial]?.app) }
-        return candidates
-            .mapNotNull { hit -> score(hit.label, normalized)?.let { hit to it } }
+        return items
+            .mapNotNull { item ->
+                (aliases(item) + label(item)).mapNotNull { score(it, normalized) }.minOrNull()?.let { item to it }
+            }
             .sortedWith(
-                compareBy<Pair<SearchHit, Int>> { it.second }
-                    .thenBy { if (it.first is SearchHit.App) 0 else 1 }
-                    .thenBy { it.first.label.length }
-                    .thenBy { it.first.label }
+                compareBy<Pair<T, Int>> { it.second }
+                    .thenBy { label(it.first).length }
+                    .thenBy { label(it.first) },
             )
-            .take(MAX_RESULTS)
             .map { it.first }
+    }
+
+    /** Every app in [entries] (hidden ones too) matching [query], then every matching shortcut. */
+    fun search(query: String, entries: List<DrawerEntry>, shortcuts: List<AppShortcut>): List<SearchHit> {
+        val owners = entries.associateBy { it.app.key.packageName to it.app.key.userSerial }
+        val apps = rank(query, entries, label = { it.app.label }).map { SearchHit.App(it) }
+        val linked = rank(query, shortcuts, label = { it.label })
+            .map { SearchHit.Shortcut(it, owners[it.packageName to it.userSerial]?.app) }
+        return (apps + linked).take(MAX_RESULTS)
     }
 
     private fun String.words(): List<String> = split(wordBreak).filter { it.isNotEmpty() }

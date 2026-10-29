@@ -5,11 +5,23 @@ import androidx.lifecycle.viewModelScope
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.calendar.CalendarActions
+import com.wander.mono.core.calendar.CalendarAgenda
+import com.wander.mono.core.calendar.CalendarEvent
+import com.wander.mono.core.calendar.CalendarEvents
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
+import com.wander.mono.core.notifications.NotificationPreviews
+import com.wander.mono.core.quiet.QuietMode
+import com.wander.mono.core.siblings.WandaUpNext
 import com.wander.mono.core.system.SystemTime
+import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.LiveRowPrefs
+import com.wander.mono.data.settings.BadgeSettings
+import com.wander.mono.data.settings.PreviewSettings
+import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -24,8 +36,16 @@ class HomeViewModel @Inject constructor(
     catalog: AppCatalog,
     prefs: LauncherPrefs,
     counts: NotificationCounts,
+    previews: NotificationPreviews,
+    settings: SettingsStore,
     time: SystemTime,
+    liveRows: LiveRowPrefs,
+    quiet: QuietMode,
+    calendar: CalendarEvents,
+    private val calendarActions: CalendarActions,
+    widgets: Widgets,
     private val media: MediaSessions,
+    wandaUpNext: WandaUpNext,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
     private val messages: UserMessages,
@@ -35,11 +55,25 @@ class HomeViewModel @Inject constructor(
         prefs.favorites,
         catalog.apps.filterNotNull(),
         counts.counts,
-        media.state,
+        combine(wandaUpNext.fill(media.state), liveRows.hidden) { state, hidden -> state.unlessHidden(hidden) },
+        settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+    ).combine(
+        combine(previews.previews, settings[PreviewSettings.ShowPreviews], liveRows.hidden) { all, on, hidden ->
+            if (on) all.unlessHidden(hidden) else emptyMap()
+        },
+        ::withPreviews,
+    ).combine(combine(calendar.agenda, liveRows.hidden, CalendarAgenda?::unlessHidden), ::withCalendarRow)
+        .combine(widgets.placed, ::withWidgetRows)
+        .combine(quiet.state, ::quietHomeRows)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, ::Glance)
+    val glance: StateFlow<Glance> = combine(
+        time.now,
+        time.nextAlarm,
+        calendar.agenda,
+        rows,
+    ) { now, alarm, agenda, home -> Glance(now, alarm, glanceEvent(agenda, now, home)) }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
@@ -50,9 +84,21 @@ class HomeViewModel @Inject constructor(
         messages.report(actions.launch(app.key))
     }
 
+    fun openEvent(event: CalendarEvent) {
+        messages.report(calendarActions.open(event))
+    }
+
     fun togglePlayPause() = media.togglePlayPause()
 
     fun skipNext() = media.skipNext()
+
+    fun skipPrevious() = media.skipPrevious()
+
+    fun seekTo(positionMs: Long) = media.seekTo(positionMs)
+
+    fun playQueueItem(id: Long) = media.skipToQueueItem(id)
+
+    fun openOutputSwitcher() = media.openOutputSwitcher()
 
     fun openListenerSettings() {
         messages.report(listenerAccess.openSettings())
