@@ -43,7 +43,7 @@ fun DrawerAppRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppIcon(entry.app.key, icons)
-        AppLabel(entry.app, entry.hasNotifications, style = MaterialTheme.typography.titleMedium)
+        AppLabel(entry.app, entry.badge, style = MaterialTheme.typography.titleMedium)
     }
 }
 

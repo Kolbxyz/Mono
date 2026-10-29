@@ -23,6 +23,18 @@
     <string name="media_play">Play</string>
     <string name="media_pause">Pause</string>
     <string name="media_next">Next</string>
+    <string name="media_previous">Previous</string>
+    <string name="media_expand">Show controls</string>
+    <string name="media_collapse">Hide controls</string>
+    <string name="media_progress">Playback position</string>
+
+    <!-- Badges: the number, then the same number capped (shown as 99+) -->
+    <string name="badge_count">%1$d</string>
+    <string name="badge_count_capped">%1$d+</string>
+    <plurals name="state_notification_count">
+        <item quantity="one">%1$d notification</item>
+        <item quantity="other">%1$d notifications</item>
+    </plurals>
 
     <!-- Drawer -->
     <string name="drawer_search_hint">Search apps and shortcuts</string>
@@ -78,6 +90,11 @@
     <string name="onboarding_done_title">You are set</string>
     <string name="onboarding_done_body">Swipe up for all apps. Long-press an app to add it to home.</string>
     <string name="onboarding_done_action">Start</string>
+
+    <!-- Badges -->
+    <string name="settings_badges">Notification badges</string>
+    <string name="settings_badge_counts">Show unread count</string>
+    <string name="settings_badge_counts_summary">Off shows a dot instead</string>
 
     <!-- Errors -->
     <string name="error_app_missing">This app is no longer installed</string>

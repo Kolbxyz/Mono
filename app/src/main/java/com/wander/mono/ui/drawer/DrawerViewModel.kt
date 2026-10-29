@@ -13,10 +13,12 @@ import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.data.settings.IconSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.ui.UserMessages
+import com.wander.mono.ui.components.appBadge
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
@@ -42,9 +44,14 @@ class DrawerViewModel @Inject constructor(
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
     val query: StateFlow<String> = savedState.getStateFlow(QUERY, "")
 
-    private val entries = combine(catalog.apps.filterNotNull(), counts.counts) { apps, badges ->
+    private val entries = combine(
+        catalog.apps.filterNotNull(),
+        counts.counts,
+        settings[BadgeSettings.ShowCounts],
+    ) { apps, badges, showCounts ->
         apps.map { app ->
-            DrawerEntry(app, (badges[PackageUser(app.key.packageName, app.key.userSerial)] ?: 0) > 0)
+            val count = badges[PackageUser(app.key.packageName, app.key.userSerial)] ?: 0
+            DrawerEntry(app, appBadge(count, showCounts))
         }
     }
 

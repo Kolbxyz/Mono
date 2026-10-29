@@ -81,6 +81,7 @@ fun LauncherApp(
             onLongPress = { sheet.show(it.key) },
             onTogglePlay = home::togglePlayPause,
             onSkipNext = home::skipNext,
+            onSkipPrevious = home::skipPrevious,
             onGrantAccess = home::openListenerSettings,
             onOpenDrawer = launcher::openDrawer,
             onHomeOptions = { launcher.showHomeOptions(true) },
