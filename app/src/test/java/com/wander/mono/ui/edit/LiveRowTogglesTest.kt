@@ -29,7 +29,10 @@ class LiveRowTogglesTest {
             isPlaying = true,
             canSkipNext = false,
             canSkipPrevious = false,
+            canSeek = false,
             progress = null,
+            upNext = emptyList(),
+            output = null,
         ),
     )
 
