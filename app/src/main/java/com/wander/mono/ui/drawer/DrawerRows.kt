@@ -59,18 +59,26 @@ fun ShortcutRow(
         modifier
             .fillMaxWidth()
             .clickable(onClickLabel = stringResource(R.string.action_open), onClick = onLaunch)
+            .unreadState(hit.badge)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppIcon(hit.owner?.key, icons)
         Column {
-            Text(
-                hit.label,
-                style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    hit.label,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
+                )
+                ShortcutBadge(hit.badge)
+            }
             Text(
                 hit.owner?.label ?: hit.shortcut.packageName,
                 style = MaterialTheme.typography.bodySmall,

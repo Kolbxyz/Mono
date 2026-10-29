@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
 import com.wander.mono.ui.components.rememberOverscrollSwipe
 
@@ -65,7 +66,11 @@ fun HomeScreen(
     onTogglePlay: () -> Unit,
     onSkipNext: () -> Unit,
     onSkipPrevious: () -> Unit,
+    onSeek: (positionMs: Long) -> Unit,
+    onPlayQueueItem: (id: Long) -> Unit,
+    onOpenOutput: () -> Unit,
     onGrantAccess: () -> Unit,
+    onOpenEvent: (CalendarEvent) -> Unit,
     onOpenDrawer: () -> Unit,
     onHomeOptions: () -> Unit,
     createWidgetView: (Context, Int) -> MonoWidgetHostView,
@@ -164,9 +169,14 @@ fun HomeScreen(
                                 onTogglePlay = onTogglePlay,
                                 onSkipNext = onSkipNext,
                                 onSkipPrevious = onSkipPrevious,
+                                onSeek = onSeek,
+                                onPlayQueueItem = onPlayQueueItem,
+                                onOpenOutput = onOpenOutput,
                                 modifier = animated,
                             )
                             HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
+                            is NotificationRow -> NotificationPreviewRow(row, animated)
+                            is CalendarRow -> CalendarCard(row, onOpenEvent, animated)
                             is WidgetHomeRow -> WidgetRow(
                                 row = row,
                                 createView = createWidgetView,

@@ -9,8 +9,8 @@ import javax.inject.Inject
 
 /**
  * Bound by the system once the user grants notification access. Turns the active notifications
- * into per-app counts on every post, removal and ranking change. Its binding is also what lets
- * `core/media` read the active media sessions.
+ * into per-app counts and previews on every post, removal and ranking change. Its binding is
+ * also what lets `core/media` read the active media sessions and the preview rows dismiss.
  */
 @AndroidEntryPoint
 class MonoNotificationListener : NotificationListenerService() {
@@ -23,14 +23,28 @@ class MonoNotificationListener : NotificationListenerService() {
     @Inject
     lateinit var profiles: Profiles
 
+    @Inject
+    lateinit var previews: PreviewPublisher
+
+    @Inject
+    lateinit var cancels: NotificationPreviews
+
     override fun onListenerConnected() {
         access.recheck()
+        cancels.bind(::cancelNotification)
         recount()
     }
 
     override fun onListenerDisconnected() {
         access.recheck()
+        cancels.bind(null)
         counts.publish(emptyMap())
+        previews.clear()
+    }
+
+    override fun onDestroy() {
+        cancels.bind(null)
+        super.onDestroy()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification, rankingMap: RankingMap) = recount()
@@ -57,5 +71,6 @@ class MonoNotificationListener : NotificationListenerService() {
                 }
             )
         )
+        previews.publish(active, rankings)
     }
 }

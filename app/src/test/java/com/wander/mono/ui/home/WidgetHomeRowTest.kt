@@ -22,7 +22,10 @@ class WidgetHomeRowTest {
             isPlaying = true,
             canSkipNext = true,
             canSkipPrevious = true,
+            canSeek = true,
             progress = null,
+            upNext = emptyList(),
+            output = null,
         ),
     )
 
@@ -54,5 +57,12 @@ class WidgetHomeRowTest {
             listOf("widget:2") + keys(listOf(wanda, phalanx)) + "widget:1" + HomeRow.ListenerPrompt.key,
             keys(rows),
         )
+    }
+
+    @Test
+    fun widgetGoesAfterEveryLiveRowOfItsFavourite() {
+        val calendar = CalendarRow(emptyList(), at = 0)
+        val rows = withWidgetRows(listOf(wanda, playing, calendar, phalanx), listOf(widget(1, wanda)))
+        assertEquals(keys(listOf(wanda, playing, calendar)) + "widget:1" + phalanx.key, keys(rows))
     }
 }

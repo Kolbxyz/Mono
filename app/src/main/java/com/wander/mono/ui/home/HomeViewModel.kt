@@ -5,13 +5,19 @@ import androidx.lifecycle.viewModelScope
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.calendar.CalendarActions
+import com.wander.mono.core.calendar.CalendarEvent
+import com.wander.mono.core.calendar.CalendarEvents
+import com.wander.mono.core.calendar.headerEvent
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
+import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.BadgeSettings
+import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,8 +33,11 @@ class HomeViewModel @Inject constructor(
     catalog: AppCatalog,
     prefs: LauncherPrefs,
     counts: NotificationCounts,
+    previews: NotificationPreviews,
     settings: SettingsStore,
     time: SystemTime,
+    calendar: CalendarEvents,
+    private val calendarActions: CalendarActions,
     widgets: Widgets,
     private val media: MediaSessions,
     private val listenerAccess: ListenerAccess,
@@ -43,10 +52,16 @@ class HomeViewModel @Inject constructor(
         media.state,
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
-    ).combine(widgets.placed, ::withWidgetRows)
+    ).combine(
+        combine(previews.previews, settings[PreviewSettings.ShowPreviews]) { all, on -> if (on) all else emptyMap() },
+        ::withPreviews,
+    ).combine(calendar.agenda, ::withCalendarRow)
+        .combine(widgets.placed, ::withWidgetRows)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, ::Glance)
+    val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, calendar.agenda) { now, alarm, agenda ->
+        Glance(now, alarm, agenda?.let { headerEvent(it.events, now) })
+    }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
@@ -57,11 +72,21 @@ class HomeViewModel @Inject constructor(
         messages.report(actions.launch(app.key))
     }
 
+    fun openEvent(event: CalendarEvent) {
+        messages.report(calendarActions.open(event))
+    }
+
     fun togglePlayPause() = media.togglePlayPause()
 
     fun skipNext() = media.skipNext()
 
     fun skipPrevious() = media.skipPrevious()
+
+    fun seekTo(positionMs: Long) = media.seekTo(positionMs)
+
+    fun playQueueItem(id: Long) = media.skipToQueueItem(id)
+
+    fun openOutputSwitcher() = media.openOutputSwitcher()
 
     fun openListenerSettings() {
         messages.report(listenerAccess.openSettings())

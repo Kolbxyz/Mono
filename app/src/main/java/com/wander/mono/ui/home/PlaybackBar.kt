@@ -28,10 +28,16 @@ import kotlinx.coroutines.delay
 /**
  * The Expressive wavy progress bar. The session reports position only on changes, so while playing
  * the bar advances on the frame clock (once a second with reduced motion), only while home is
- * visible. The wave flattens when paused and never moves with reduced motion.
+ * visible. The wave flattens when paused and never moves with reduced motion. A [scrub] fraction,
+ * while the user drags to seek, is shown instead of the playback position.
  */
 @Composable
-internal fun PlaybackBar(progress: PlaybackProgress, color: Color, modifier: Modifier = Modifier) {
+internal fun PlaybackBar(
+    progress: PlaybackProgress,
+    color: Color,
+    modifier: Modifier = Modifier,
+    scrub: Float? = null,
+) {
     val reduced = LocalReducedMotion.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     var now by remember { mutableLongStateOf(SystemClock.elapsedRealtime()) }
@@ -48,7 +54,7 @@ internal fun PlaybackBar(progress: PlaybackProgress, color: Color, modifier: Mod
     val wavy = progress.isAdvancing && !reduced
     val description = stringResource(R.string.media_progress)
     LinearWavyProgressIndicator(
-        progress = { progress.fractionAt(now) },
+        progress = { scrub ?: progress.fractionAt(now) },
         modifier = modifier.fillMaxWidth().semantics { contentDescription = description },
         color = color,
         trackColor = color.copy(alpha = TRACK_ALPHA),

@@ -29,7 +29,10 @@ class HomeRowsTest {
             isPlaying = true,
             canSkipNext = true,
             canSkipPrevious = true,
+            canSeek = true,
             progress = null,
+            upNext = emptyList(),
+            output = null,
         ),
     )
 
@@ -45,6 +48,8 @@ class HomeRowsTest {
             is HomeRow.App -> it.app.label + if (it.app.isMainProfile) "" else " (work)"
             is HomeRow.NowPlaying -> "now:" + it.media.packageName
             HomeRow.ListenerPrompt -> "prompt"
+            is NotificationRow -> "notification:" + it.app.label
+            is CalendarRow -> "calendar"
             is WidgetHomeRow -> "widget:" + it.widget.placement.appWidgetId
         }
     }
