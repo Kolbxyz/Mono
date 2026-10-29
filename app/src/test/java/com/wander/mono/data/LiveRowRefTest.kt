@@ -18,7 +18,10 @@ class LiveRowRefTest {
 
     @Test
     fun `stored values never change`() {
-        assertEquals("now_playing|com.wander.android/com.wander.android.Main/10", LiveRowRef(key, LiveRowKind.NowPlaying).encode())
+        assertEquals(
+            "now_playing|com.wander.android/com.wander.android.Main/10",
+            LiveRowRef(key, LiveRowKind.NowPlaying).encode(),
+        )
     }
 
     @Test

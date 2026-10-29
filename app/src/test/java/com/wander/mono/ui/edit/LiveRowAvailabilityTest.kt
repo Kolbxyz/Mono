@@ -46,7 +46,8 @@ class LiveRowAvailabilityTest {
 
     @Test
     fun `a calendar switch belongs to the calendar app, only when it has events`() {
-        assertEquals(mapOf(etar.key to setOf(LiveRowKind.Calendar)), calendarAvailability(agenda(2), listOf(signal, etar)))
+        val available = calendarAvailability(agenda(2), listOf(signal, etar))
+        assertEquals(mapOf(etar.key to setOf(LiveRowKind.Calendar)), available)
         assertEquals(emptyMap<AppKey, Set<LiveRowKind>>(), calendarAvailability(agenda(0), listOf(etar)))
         assertEquals(emptyMap<AppKey, Set<LiveRowKind>>(), calendarAvailability(null, listOf(etar)))
     }

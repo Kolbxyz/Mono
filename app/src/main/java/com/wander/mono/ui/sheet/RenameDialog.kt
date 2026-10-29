@@ -68,7 +68,9 @@ fun RenameDialog(app: LaunchableApp, onRename: (String?) -> Unit, onDismiss: () 
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onRename(text.text) }) { Text(stringResource(R.string.rename_save)) } },
+        confirmButton = {
+            TextButton(onClick = { onRename(text.text) }) { Text(stringResource(R.string.rename_save)) }
+        },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.rename_cancel)) } },
     )
 }

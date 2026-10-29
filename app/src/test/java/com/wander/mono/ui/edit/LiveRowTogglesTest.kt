@@ -51,7 +51,8 @@ class LiveRowTogglesTest {
             available = mapOf(wanda.key to setOf(LiveRowKind.NowPlaying)),
             hidden = setOf(off),
         )
-        assertEquals(listOf(LiveRowToggle(LiveRowRef(wanda.key, LiveRowKind.NowPlaying), shown = true)), toggles[wanda.key])
+        val playingSwitch = LiveRowToggle(LiveRowRef(wanda.key, LiveRowKind.NowPlaying), shown = true)
+        assertEquals(listOf(playingSwitch), toggles[wanda.key])
         assertEquals(listOf(LiveRowToggle(off, shown = false)), toggles[clock.key])
     }
 

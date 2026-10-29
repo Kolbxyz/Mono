@@ -5,7 +5,8 @@ import org.junit.Assert.assertSame
 import org.junit.Test
 
 class CustomLabelingTest {
-    private val camera = LaunchableApp(AppKey("org.camera", "org.camera.Main", 0), "Camera", true, detail = "GrapheneOS")
+    private val camera =
+        LaunchableApp(AppKey("org.camera", "org.camera.Main", 0), "Camera", true, detail = "GrapheneOS")
     private val clock = LaunchableApp(AppKey("com.clock", "com.clock.Main", 0), "Clock", true)
 
     @Test

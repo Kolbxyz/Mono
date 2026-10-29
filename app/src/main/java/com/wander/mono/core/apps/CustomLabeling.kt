@@ -9,6 +9,10 @@ internal fun withCustomLabels(apps: List<LaunchableApp>, labels: Map<AppKey, Str
     if (labels.isEmpty()) return apps
     return apps.map { app ->
         val custom = labels[app.key]
-        if (custom == null || custom == app.label) app else app.copy(label = custom, detail = null, systemLabel = app.label)
+        if (custom == null || custom == app.label) {
+            app
+        } else {
+            app.copy(label = custom, detail = null, systemLabel = app.label)
+        }
     }
 }

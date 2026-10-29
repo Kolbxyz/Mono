@@ -50,7 +50,10 @@ internal fun previewAvailability(
     .associate { it.key to setOf(LiveRowKind.NotificationPreview) }
 
 /** Which favourites have a calendar row to switch: the main-profile calendar app, when it has events. */
-internal fun calendarAvailability(agenda: CalendarAgenda?, favorites: List<LaunchableApp>): Map<AppKey, Set<LiveRowKind>> {
+internal fun calendarAvailability(
+    agenda: CalendarAgenda?,
+    favorites: List<LaunchableApp>,
+): Map<AppKey, Set<LiveRowKind>> {
     if (agenda == null || agenda.events.isEmpty()) return emptyMap()
     return favorites
         .filter { it.isMainProfile && it.key.packageName == agenda.appPackage }
