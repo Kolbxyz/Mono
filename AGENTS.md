@@ -29,6 +29,7 @@ Single module `:app`, package root `com.wander.mono`.
 | `core/apps` | `LauncherApps` catalog, profile callbacks, shortcuts, icon cache, launch / app info / uninstall. |
 | `core/notifications` | `MonoNotificationListener`, per-app notification counts, notification-access state. |
 | `core/media` | Active media sessions (through the listener's grant) and the playing item. |
+| `core/calendar` | Opt-in upcoming events (`READ_CALENDAR`) from `CalendarContract.Instances`, observed, re-read only at event boundaries. |
 | `core/system` | Clock tick and next alarm, from system broadcasts; wallpaper colours and hints; settings pages, web search hand-off, clipboard. |
 | `core/contacts` | Opt-in contact lookup by name for search (`READ_CONTACTS`), never cached. |
 | `data` | DataStore: ordered favourites and hidden apps. |

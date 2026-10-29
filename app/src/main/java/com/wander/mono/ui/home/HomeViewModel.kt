@@ -5,6 +5,10 @@ import androidx.lifecycle.viewModelScope
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.calendar.CalendarActions
+import com.wander.mono.core.calendar.CalendarEvent
+import com.wander.mono.core.calendar.CalendarEvents
+import com.wander.mono.core.calendar.headerEvent
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
@@ -31,6 +35,8 @@ class HomeViewModel @Inject constructor(
     previews: NotificationPreviews,
     settings: SettingsStore,
     time: SystemTime,
+    calendar: CalendarEvents,
+    private val calendarActions: CalendarActions,
     private val media: MediaSessions,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
@@ -47,9 +53,12 @@ class HomeViewModel @Inject constructor(
     ).combine(
         combine(previews.previews, settings[PreviewSettings.ShowPreviews]) { all, on -> if (on) all else emptyMap() },
         ::withPreviews,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+    ).combine(calendar.agenda, ::withCalendarRow)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, ::Glance)
+    val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, calendar.agenda) { now, alarm, agenda ->
+        Glance(now, alarm, agenda?.let { headerEvent(it.events, now) })
+    }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
@@ -60,11 +69,21 @@ class HomeViewModel @Inject constructor(
         messages.report(actions.launch(app.key))
     }
 
+    fun openEvent(event: CalendarEvent) {
+        messages.report(calendarActions.open(event))
+    }
+
     fun togglePlayPause() = media.togglePlayPause()
 
     fun skipNext() = media.skipNext()
 
     fun skipPrevious() = media.skipPrevious()
+
+    fun seekTo(positionMs: Long) = media.seekTo(positionMs)
+
+    fun playQueueItem(id: Long) = media.skipToQueueItem(id)
+
+    fun openOutputSwitcher() = media.openOutputSwitcher()
 
     fun openListenerSettings() {
         messages.report(listenerAccess.openSettings())

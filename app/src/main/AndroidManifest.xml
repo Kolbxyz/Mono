@@ -8,6 +8,9 @@
     -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!-- Upcoming events on home. Opt-in: asked for only when the Calendar setting is switched on. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
     <!-- Contacts in search: opt-in from settings, asked for only when the user switches it on. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
@@ -16,6 +19,10 @@
         <intent>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- SystemUI's media output switcher, so the now-playing chip shows only where it can open. -->
+        <intent>
+            <action android:name="com.android.systemui.action.LAUNCH_MEDIA_OUTPUT_DIALOG" />
         </intent>
         <!-- Search: the settings pages it offers (core/system/SettingsPages) and the browser's web search. -->
         <intent>

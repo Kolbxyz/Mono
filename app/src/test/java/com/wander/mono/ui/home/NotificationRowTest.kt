@@ -40,6 +40,7 @@ class NotificationRowTest {
             is NotificationRow -> "preview:" + it.preview.text
             is HomeRow.NowPlaying -> "now"
             HomeRow.ListenerPrompt -> "prompt"
+            is CalendarRow -> "calendar"
         }
     }
 
@@ -53,7 +54,20 @@ class NotificationRowTest {
     @Test
     fun `the preview comes before the favourite's now-playing row`() {
         val media = MediaState.Active(
-            PlayingMedia("org.phalanx.android", "Voice note", "Léa", null, null, true, false, false, null),
+            PlayingMedia(
+                "org.phalanx.android",
+                "Voice note",
+                "Léa",
+                art = null,
+                artColor = null,
+                isPlaying = true,
+                canSkipNext = false,
+                canSkipPrevious = false,
+                canSeek = false,
+                progress = null,
+                upNext = emptyList(),
+                output = null,
+            ),
         )
         val base = assembleHomeRows(listOf(phalanx.key), listOf(phalanx), emptyMap(), media, showCounts = true)
         val rows = withPreviews(base, mapOf(owner(phalanx) to preview(owner(phalanx), "hi")))

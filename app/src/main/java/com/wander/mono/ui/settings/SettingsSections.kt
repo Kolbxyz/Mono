@@ -12,5 +12,6 @@ internal val settingsSections: List<@Composable (SettingsViewModel) -> Unit> = l
     { IconSection(it) },
     { BadgeSection(it) },
     { PreviewSection(it) },
+    { CalendarSection() },
     { SearchSection(it) },
 )

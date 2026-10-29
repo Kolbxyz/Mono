@@ -95,7 +95,11 @@ fun LauncherApp(
             onTogglePlay = home::togglePlayPause,
             onSkipNext = home::skipNext,
             onSkipPrevious = home::skipPrevious,
+            onSeek = home::seekTo,
+            onPlayQueueItem = home::playQueueItem,
+            onOpenOutput = home::openOutputSwitcher,
             onGrantAccess = home::openListenerSettings,
+            onOpenEvent = home::openEvent,
             onOpenDrawer = launcher::openDrawer,
             onHomeOptions = { launcher.showHomeOptions(true) },
         )
