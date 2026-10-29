@@ -1,5 +1,6 @@
 package com.wander.mono.ui.home
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -22,8 +23,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.onLongClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
@@ -31,7 +35,8 @@ import com.wander.mono.ui.components.rememberOverscrollSwipe
 
 /**
  * The home list over the wallpaper: glance header, then the rows. Swiping up past the end of the
- * list (or the button at the bottom) opens the drawer.
+ * list (or the button at the bottom) opens the drawer. Long-pressing the clock or an empty spot
+ * opens the home options; rows consume their own presses, so they never reach the list's detector.
  */
 @Composable
 fun HomeScreen(
@@ -44,6 +49,7 @@ fun HomeScreen(
     onSkipNext: () -> Unit,
     onGrantAccess: () -> Unit,
     onOpenDrawer: () -> Unit,
+    onHomeOptions: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val swipeUp = rememberOverscrollSwipe(upward = true, onSwipe = onOpenDrawer)
@@ -59,12 +65,26 @@ fun HomeScreen(
         Box(Modifier.fillMaxSize()) {
             LazyColumn(
                 state = listState,
-                modifier = Modifier.fillMaxSize().nestedScroll(swipeUp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(onHomeOptions) { detectTapGestures(onLongPress = { onHomeOptions() }) }
+                    .nestedScroll(swipeUp),
                 contentPadding = WindowInsets.safeDrawing
                     .add(WindowInsets(left = 24.dp, right = 24.dp, bottom = BOTTOM_CLEARANCE))
                     .asPaddingValues(),
             ) {
-                item(key = "glance", contentType = "glance") { GlanceHeader(glance) }
+                item(key = "glance", contentType = "glance") {
+                    val label = stringResource(R.string.action_home_options)
+                    GlanceHeader(
+                        glance,
+                        Modifier.semantics {
+                            onLongClick(label) {
+                                onHomeOptions()
+                                true
+                            }
+                        },
+                    )
+                }
                 // The now-playing and prompt rows are not favourites: the hint shows until there is one.
                 if (rows != null && rows.none { it is HomeRow.App }) {
                     item(key = "empty", contentType = "empty") {

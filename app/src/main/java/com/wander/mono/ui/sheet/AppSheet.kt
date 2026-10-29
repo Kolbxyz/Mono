@@ -62,7 +62,7 @@ fun AppSheet(
 }
 
 @Composable
-private fun SheetAction(label: String, onClick: () -> Unit) {
+internal fun SheetAction(label: String, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
