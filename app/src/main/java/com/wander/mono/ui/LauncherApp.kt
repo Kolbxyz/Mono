@@ -83,6 +83,7 @@ fun LauncherApp(
             onSkipNext = home::skipNext,
             onSkipPrevious = home::skipPrevious,
             onGrantAccess = home::openListenerSettings,
+            onOpenEvent = home::openEvent,
             onOpenDrawer = launcher::openDrawer,
             onHomeOptions = { launcher.showHomeOptions(true) },
         )

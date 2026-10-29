@@ -17,7 +17,7 @@ import com.wander.mono.R
 import java.util.Date
 import java.util.Locale
 
-/** Big clock, date and next alarm, formatted for the user's locale and 12/24-hour setting. */
+/** Big clock, date, next alarm and next calendar event, formatted for the user's locale and 12/24-hour setting. */
 @Composable
 fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
     val locale = LocalConfiguration.current.locales[0]
@@ -33,6 +33,7 @@ fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
     Column(modifier.padding(top = 48.dp, bottom = 32.dp)) {
         Text(time, style = MaterialTheme.typography.displayLarge, color = MaterialTheme.colorScheme.onSurface)
         Text(date, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        glance.nextEvent?.let { NextEventLine(it, glance.now, timeSkeleton) }
         if (alarm != null) {
             Text(
                 stringResource(R.string.home_next_alarm, alarm),
@@ -44,7 +45,7 @@ fun GlanceHeader(glance: Glance, modifier: Modifier = Modifier) {
 }
 
 /** ICU picks the right order and separators for the locale from a skeleton. */
-private fun format(millis: Long, skeleton: String, locale: Locale): String =
+internal fun format(millis: Long, skeleton: String, locale: Locale): String =
     DateFormat.getInstanceForSkeleton(skeleton, locale).format(Date(millis))
 
 private const val DATE_SKELETON = "EEEEMMMMd"

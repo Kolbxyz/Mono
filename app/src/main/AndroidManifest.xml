@@ -3,10 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-      No INTERNET permission, ever: a launcher has nothing to fetch. Uninstall is the only
-      permission asked for, and it is a normal one: the system still shows its own confirmation.
+      No INTERNET permission, ever: a launcher has nothing to fetch. Uninstall is a normal
+      permission: the system still shows its own confirmation.
     -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
+
+    <!-- Upcoming events on home. Opt-in: asked for only when the Calendar setting is switched on. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
 
     <!-- Package visibility: every app with a launcher entry, which is exactly what the drawer lists. -->
     <queries>
