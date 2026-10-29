@@ -29,6 +29,12 @@
     -->
     <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
 
+    <!--
+      Search hands "timer 10m" or "alarm 7:30" to the clock app, and the glance header opens its
+      alarm list (core/system/ClockActions). A normal permission the clock app requires of callers.
+    -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
     <!-- Contacts in search: opt-in from settings, asked for only when the user switches it on. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
@@ -111,6 +117,13 @@
         </intent>
         <intent>
             <action android:name="android.intent.action.WEB_SEARCH" />
+        </intent>
+        <!-- Search: the clock app that takes timers and alarms (core/system/ClockActions). -->
+        <intent>
+            <action android:name="android.intent.action.SET_TIMER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SET_ALARM" />
         </intent>
         <!-- Sibling providers (core/siblings), release and debug builds. -->
         <provider android:authorities="com.wander.android.mono" />

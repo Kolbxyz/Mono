@@ -26,6 +26,7 @@ import com.wander.mono.core.security.HiddenAppsLock
 import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.siblings.PhalanxUnread
 import com.wander.mono.core.siblings.WandaTrack
+import com.wander.mono.core.system.ClockActions
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.SystemContrast
 import com.wander.mono.core.system.Wallpaper
@@ -62,6 +63,7 @@ class DrawerViewModel @Inject constructor(
     private val icons: IconCache,
     private val messages: UserMessages,
     private val sources: SearchSources,
+    private val clock: ClockActions,
     private val hiddenLock: HiddenAppsLock,
     private val privateSpace: PrivateSpace,
     private val workProfiles: WorkProfiles,
@@ -116,6 +118,7 @@ class DrawerViewModel @Inject constructor(
             sections = sectionsOf(lists.apps.map { it.app.label }),
             results = SearchResults.assemble(
                 q,
+                sources.actions(q),
                 hidden.searchableApps(searchableApps(all, work)),
                 hidden.searchableShortcuts(searchableShortcuts(extra.shortcuts, work)),
                 extra.contacts,
@@ -170,6 +173,8 @@ class DrawerViewModel @Inject constructor(
         is SearchHit.App -> opened(launch(hit.entry.app))
         is SearchHit.Shortcut -> opened(messages.report(actions.launchShortcut(hit.shortcut)))
         is SearchHit.Calculation -> sources.copy(hit)
+        is SearchHit.Timer -> opened(messages.report(clock.setTimer(hit.seconds)))
+        is SearchHit.Alarm -> opened(messages.report(clock.setAlarm(hit.time.hour, hit.time.minute)))
         is SearchHit.Person -> sources.open(hit)
         is SearchHit.Track -> sources.open(hit)
         is SearchHit.Setting -> sources.open(hit)

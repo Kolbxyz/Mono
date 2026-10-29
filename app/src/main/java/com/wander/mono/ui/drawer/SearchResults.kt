@@ -7,9 +7,9 @@ import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.WebSearchTarget
 
 /**
- * Everything search shows for a query, in this order: the calculator's result, apps (the best one
- * first), shortcuts, contacts, songs in Wanda, settings pages, and only when nothing else matched, a web search
- * handed to the browser.
+ * Everything search shows for a query, in this order: its [actions] (a sum, a conversion, a timer
+ * or an alarm, from [SearchActions]), apps (the best one first), shortcuts, contacts, songs in Wanda,
+ * settings pages, and only when nothing else matched, a web search handed to the browser.
  */
 internal object SearchResults {
     const val MAX_CONTACTS = 5
@@ -18,6 +18,7 @@ internal object SearchResults {
     /** [webTarget] is only asked for when nothing else matched, since it resolves an intent. */
     fun assemble(
         query: String,
+        actions: List<SearchHit>,
         entries: List<DrawerEntry>,
         shortcuts: List<AppShortcut>,
         contacts: List<Contact>,
@@ -27,7 +28,7 @@ internal object SearchResults {
     ): List<SearchHit> {
         if (query.isBlank()) return emptyList()
         val hits = buildList {
-            Calculator.evaluate(query)?.let { add(SearchHit.Calculation(it)) }
+            addAll(actions)
             addAll(AppSearch.search(query, entries, shortcuts))
             addAll(AppSearch.rank(query, contacts, label = { it.name }).take(MAX_CONTACTS).map { SearchHit.Person(it) })
             // Wanda already matched and ordered them (most played first); its order is kept.
