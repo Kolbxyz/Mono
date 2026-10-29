@@ -20,8 +20,7 @@ import com.wander.mono.ui.components.rememberCredentialPrompt
  * and the list with Unhide, shown once unlocked. Unlocking lasts until the section leaves the screen.
  */
 @Composable
-@Suppress("UnusedParameter") // Every section takes the shared settings; this one keeps its own state.
-fun HiddenAppsSection(settings: SettingsViewModel, hidden: HiddenAppsViewModel = viewModel()) {
+fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
     val apps by hidden.apps.collectAsStateWithLifecycle()
     val locks by hidden.locks.collectAsStateWithLifecycle()
     val revealed by hidden.revealed.collectAsStateWithLifecycle()

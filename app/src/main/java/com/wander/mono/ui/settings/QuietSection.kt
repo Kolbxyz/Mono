@@ -22,8 +22,7 @@ import com.wander.mono.R
  * the row asks for with its reason) Android's Do Not Disturb switched together with it.
  */
 @Composable
-@Suppress("UnusedParameter") // Every section takes the shared settings; this one keeps its own state.
-fun QuietSection(settings: SettingsViewModel, quiet: QuietSettingsViewModel = viewModel()) {
+fun QuietSection(quiet: QuietSettingsViewModel = viewModel()) {
     val enabled by quiet.enabled.collectAsStateWithLifecycle()
     val choices by quiet.choices.collectAsStateWithLifecycle()
     val links by quiet.linksDoNotDisturb.collectAsStateWithLifecycle()
