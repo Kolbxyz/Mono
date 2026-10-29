@@ -1,5 +1,6 @@
 package com.wander.mono.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -74,10 +75,24 @@ private class Strips {
 }
 
 /** Corner radius of a segmented group's outer edges. */
-val SegmentOuter = 24.dp
+val SegmentOuter = 26.dp
 
 /** Corner radius at the seams between strips. */
-val SegmentInner = 6.dp
+val SegmentInner = 8.dp
 
 /** The gap between the strips of a segmented group. */
 val SegmentGap = 2.dp
+
+/**
+ * Draws one item of a lazy list as strip [index] of a [count]-strip segmented group: same corners
+ * and colour as [SegmentedColumn]. Put [SegmentGap] between items with the list's arrangement.
+ */
+@Composable
+fun Modifier.groupedListItem(
+    index: Int,
+    count: Int,
+    color: Color = MaterialTheme.colorScheme.surfaceContainer,
+): Modifier {
+    val shape = segmentedShape(index, count)
+    return clip(shape).background(color, shape)
+}
