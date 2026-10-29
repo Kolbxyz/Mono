@@ -10,12 +10,15 @@ import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.ActionResult
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.usage.AppUsage
+import com.wander.mono.data.HeadphoneApps
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.settings.HeadphoneSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.UsageSettings
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -36,6 +39,7 @@ class AppSheetViewModel @Inject constructor(
     private val messages: UserMessages,
     settings: SettingsStore,
     private val usage: AppUsage,
+    private val headphoneApps: HeadphoneApps,
 ) : ViewModel() {
     private val target: StateFlow<String?> = savedState.getStateFlow(TARGET, null)
 
@@ -44,9 +48,9 @@ class AppSheetViewModel @Inject constructor(
         target,
         catalog.apps,
         prefs.favorites,
-        prefs.hidden,
+        combine(prefs.hidden, headphoneChoices(settings, headphoneApps), ::Pair),
         shortcuts.all,
-    ) { encoded, apps, favorites, hidden, allShortcuts ->
+    ) { encoded, apps, favorites, (hidden, lifting), allShortcuts ->
         val key = encoded?.let(AppKey::decode) ?: return@combine null
         val app = apps?.firstOrNull { it.key == key } ?: return@combine null
         AppSheetState(
@@ -55,6 +59,7 @@ class AppSheetViewModel @Inject constructor(
             favoriteCount = favorites.size,
             isHidden = key in hidden,
             shortcuts = allShortcuts.filter { it.packageName == key.packageName && it.userSerial == key.userSerial },
+            liftsWithHeadphones = lifting?.takeIf { key in favorites }?.contains(key),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
@@ -87,6 +92,11 @@ class AppSheetViewModel @Inject constructor(
         viewModelScope.launch { prefs.moveFavorite(key, by) }
     }
 
+    /** Keeps the sheet open, so the switch is seen to change. */
+    fun setLiftsWithHeadphones(key: AppKey, lifts: Boolean) {
+        viewModelScope.launch { headphoneApps.setLifted(key, lifts) }
+    }
+
     fun setHidden(key: AppKey, hidden: Boolean) = edit { prefs.setHidden(key, hidden) }
 
     fun openAppInfo(key: AppKey) = finish(actions.openAppInfo(key))
@@ -104,6 +114,10 @@ class AppSheetViewModel @Inject constructor(
         dismiss()
         messages.report(result)
     }
+
+    /** The apps chosen for headphones, or null while the setting is off. */
+    private fun headphoneChoices(settings: SettingsStore, apps: HeadphoneApps): Flow<Set<AppKey>?> =
+        combine(settings[HeadphoneSettings.LiftApps], apps.apps) { on, chosen -> chosen.takeIf { on } }
 
     private companion object {
         const val TARGET = "sheet_target"

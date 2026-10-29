@@ -22,6 +22,9 @@ class HomeEditing(
     val onRename: (AppKey) -> Unit,
     val onSetLiveRow: (LiveRowRef, Boolean) -> Unit,
 ) {
+    /** In edit mode or while a drag settles, home shows the saved order, never one arranged for the moment. */
+    val showsSavedOrder: Boolean get() = active || reorder.order != null
+
     /**
      * The rows home shows: all of them normally; in edit mode, or while a drag settles, only the
      * favourites (live rows give way to their switches), in the dragged order.
@@ -29,7 +32,7 @@ class HomeEditing(
     fun shownRows(rows: List<HomeRow>?): List<HomeRow> {
         val all = rows.orEmpty()
         val order = reorder.order
-        if (!active && order == null) return all
+        if (!showsSavedOrder) return all
         val apps = all.filterIsInstance<HomeRow.App>()
         val byKey = apps.associateBy { it.key }
         return order?.let { dragged -> dragged.mapNotNull(byKey::get) + apps.filter { it.key !in dragged } } ?: apps

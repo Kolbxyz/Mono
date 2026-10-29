@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.edit.ReorderableFavorite
@@ -60,10 +61,12 @@ import com.wander.mono.ui.theme.LocalHighContrast
  * bottom so favourites sit in the thumb zone, and the drawer button under them. Swiping up
  * anywhere (past the end of the list when it scrolls) opens the drawer. Long-pressing the clock or
  * an empty spot opens the home options; rows consume their own presses, so they never reach it.
+ * The [lifted] favourites go first while headphones are connected, outside edit mode only.
  */
 @Composable
 fun HomeScreen(
     rows: List<HomeRow>?,
+    lifted: Set<AppKey>,
     glance: Glance,
     look: HomeLook,
     listState: LazyListState,
@@ -166,8 +169,10 @@ fun HomeScreen(
                             EmptyHome(onChooseFavorites = onOpenDrawer, modifier = Modifier.animateItem())
                         }
                     }
-                    val shown = editing.shownRows(rows)
-                    val favorites = shown.filterIsInstance<HomeRow.App>().map { it.key }
+                    val ordered = editing.shownRows(rows)
+                    // Saved order: a drag or a TalkBack move starts from it, never from the lifted one.
+                    val favorites = ordered.filterIsInstance<HomeRow.App>().map { it.key }
+                    val shown = if (editing.showsSavedOrder) ordered else liftedFirst(ordered, lifted)
                     items(shown, key = { it.key }, contentType = { it::class }) { row ->
                         val animated = Modifier.animateItem(
                             fadeInSpec = motion.defaultEffectsSpec(),
