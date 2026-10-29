@@ -29,7 +29,10 @@ class HomeRowsTest {
             isPlaying = true,
             canSkipNext = true,
             canSkipPrevious = true,
+            canSeek = true,
             progress = null,
+            upNext = emptyList(),
+            output = null,
         ),
     )
 

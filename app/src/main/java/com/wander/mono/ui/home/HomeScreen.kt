@@ -48,6 +48,9 @@ fun HomeScreen(
     onTogglePlay: () -> Unit,
     onSkipNext: () -> Unit,
     onSkipPrevious: () -> Unit,
+    onSeek: (positionMs: Long) -> Unit,
+    onPlayQueueItem: (id: Long) -> Unit,
+    onOpenOutput: () -> Unit,
     onGrantAccess: () -> Unit,
     onOpenDrawer: () -> Unit,
     onHomeOptions: () -> Unit,
@@ -115,6 +118,9 @@ fun HomeScreen(
                             onTogglePlay = onTogglePlay,
                             onSkipNext = onSkipNext,
                             onSkipPrevious = onSkipPrevious,
+                            onSeek = onSeek,
+                            onPlayQueueItem = onPlayQueueItem,
+                            onOpenOutput = onOpenOutput,
                             modifier = animated,
                         )
                         HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)

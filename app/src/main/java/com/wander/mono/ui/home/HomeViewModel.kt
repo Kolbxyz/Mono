@@ -60,6 +60,12 @@ class HomeViewModel @Inject constructor(
 
     fun skipPrevious() = media.skipPrevious()
 
+    fun seekTo(positionMs: Long) = media.seekTo(positionMs)
+
+    fun playQueueItem(id: Long) = media.skipToQueueItem(id)
+
+    fun openOutputSwitcher() = media.openOutputSwitcher()
+
     fun openListenerSettings() {
         messages.report(listenerAccess.openSettings())
     }

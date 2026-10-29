@@ -44,7 +44,8 @@ import kotlin.math.abs
 /**
  * The playing media, inline under its app and tinted by the artwork. Collapsed it is one calm line:
  * artwork, title, artist, play/pause and the wavy progress. A tap expands it to bigger artwork and
- * previous / play / next; a horizontal swipe skips either way.
+ * previous / play / next, the output device, a draggable bar to seek and what plays next; a
+ * horizontal swipe skips either way.
  */
 @Composable
 fun NowPlayingCard(
@@ -52,6 +53,9 @@ fun NowPlayingCard(
     onTogglePlay: () -> Unit,
     onSkipNext: () -> Unit,
     onSkipPrevious: () -> Unit,
+    onSeek: (positionMs: Long) -> Unit,
+    onPlayQueueItem: (id: Long) -> Unit,
+    onOpenOutput: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val motion = MaterialTheme.motionScheme
@@ -116,15 +120,36 @@ fun NowPlayingCard(
                 }
                 if (!expanded) PlayPauseButton(media.isPlaying, onTogglePlay)
             }
-            AnimatedVisibility(
-                visible = expanded,
-                enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.fastEffectsSpec()),
-                exit = shrinkVertically(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
-            ) {
-                MediaTransport(media, onTogglePlay, onSkipNext, onSkipPrevious)
+            ExpandedPart(expanded) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    MediaTransport(media, onTogglePlay, onSkipNext, onSkipPrevious)
+                    media.output?.let { OutputChip(it, onOpenOutput) }
+                }
             }
-            media.progress?.let { PlaybackBar(it, color = content) }
+            media.progress?.let {
+                if (expanded && media.canSeek) {
+                    SeekablePlaybackBar(it, color = content, onSeek = onSeek)
+                } else {
+                    PlaybackBar(it, color = content)
+                }
+            }
+            if (media.upNext.isNotEmpty()) {
+                ExpandedPart(expanded) { UpNextList(media.upNext, onPlayQueueItem) }
+            }
         }
+    }
+}
+
+/** Content only the expanded card shows, growing in and out with the card. */
+@Composable
+private fun ExpandedPart(expanded: Boolean, content: @Composable () -> Unit) {
+    val motion = MaterialTheme.motionScheme
+    AnimatedVisibility(
+        visible = expanded,
+        enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.fastEffectsSpec()),
+        exit = shrinkVertically(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+    ) {
+        content()
     }
 }
 

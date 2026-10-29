@@ -13,8 +13,14 @@ data class PlayingMedia(
     val isPlaying: Boolean,
     val canSkipNext: Boolean,
     val canSkipPrevious: Boolean,
+    /** The session accepts `seekTo`, so the expanded bar can be dragged. */
+    val canSeek: Boolean,
     /** Null when the session reports no usable position or duration. */
     val progress: PlaybackProgress?,
+    /** The next few queue items; empty when the session publishes no queue or cannot jump within it. */
+    val upNext: List<QueueEntry>,
+    /** Where it is heard; null when the system output switcher cannot be opened from here. */
+    val output: AudioOutput?,
 )
 
 sealed interface MediaState {

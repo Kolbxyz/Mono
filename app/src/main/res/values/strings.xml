@@ -27,6 +27,10 @@
     <string name="media_expand">Show controls</string>
     <string name="media_collapse">Hide controls</string>
     <string name="media_progress">Playback position</string>
+    <string name="media_up_next">Up next</string>
+    <string name="media_play_this">Play this</string>
+    <string name="media_output_remote">Another device</string>
+    <string name="media_output_switch">Switch output</string>
 
     <!-- Badges: the number, then the same number capped (shown as 99+) -->
     <string name="badge_count">%1$d</string>
