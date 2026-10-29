@@ -8,6 +8,7 @@ import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
+import com.wander.mono.core.quiet.QuietMode
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.BadgeSettings
@@ -28,6 +29,7 @@ class HomeViewModel @Inject constructor(
     counts: NotificationCounts,
     settings: SettingsStore,
     time: SystemTime,
+    quiet: QuietMode,
     private val media: MediaSessions,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
@@ -41,7 +43,7 @@ class HomeViewModel @Inject constructor(
         media.state,
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
-    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+    ).combine(quiet.state, ::quietHomeRows).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, ::Glance)
         .stateIn(

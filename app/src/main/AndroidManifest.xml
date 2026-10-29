@@ -8,6 +8,18 @@
     -->
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
+    <!--
+      Opt-in, each from its own settings row, and granted by the user in Android's settings:
+      Do Not Disturb access (quiet mode can switch Mono's own Android mode) and usage access
+      (today's time in an app's long-press options). USE_BIOMETRIC is a normal permission for the
+      system prompt that guards hidden apps when the user locks them.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
     <!-- Package visibility: every app with a launcher entry, which is exactly what the drawer lists. -->
     <queries>
         <intent>
@@ -64,6 +76,21 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
+        </service>
+
+        <!-- Quick Settings tile switching quiet mode; a toggle, so TalkBack announces on/off. -->
+        <service
+            android:name=".core.quiet.QuietTileService"
+            android:exported="true"
+            android:icon="@drawable/sym_quiet"
+            android:label="@string/quiet_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
         </service>
     </application>
 </manifest>

@@ -96,7 +96,45 @@
     <string name="settings_badge_counts">Show unread count</string>
     <string name="settings_badge_counts_summary">Off shows a dot instead</string>
 
+    <!-- Quiet mode -->
+    <string name="home_sheet_quiet_on">Turn on quiet mode</string>
+    <string name="home_sheet_quiet_off">Turn off quiet mode</string>
+    <string name="quiet_tile_label">Quiet mode</string>
+    <string name="quiet_zen_rule_name">Mono quiet mode</string>
+    <string name="quiet_gate_title">Quiet mode is on</string>
+    <string name="quiet_gate_body">Your quiet apps are on home. Everything else can wait.</string>
+    <string name="quiet_gate_show_all">Show all apps</string>
+    <string name="quiet_gate_back">Back to home</string>
+    <string name="settings_quiet">Quiet mode</string>
+    <string name="settings_quiet_mode">Quiet mode</string>
+    <string name="settings_quiet_mode_summary">Home shows only your quiet apps, without badges or previews. All apps take one more tap.</string>
+    <string name="settings_quiet_apps">Apps that stay on home</string>
+    <string name="settings_quiet_apps_empty">Add favourites to home first</string>
+    <string name="settings_quiet_dnd">Turn on Do Not Disturb with quiet mode</string>
+    <string name="settings_quiet_dnd_summary">Uses a mode of Mono\'s own, with your Do Not Disturb exceptions</string>
+    <string name="settings_quiet_dnd_grant">Do Not Disturb with quiet mode</string>
+    <string name="settings_quiet_dnd_grant_summary">To switch Do Not Disturb with quiet mode, Mono needs Do Not Disturb access. Tap to allow it in Android settings. Mono uses it only for its own mode.</string>
+
+    <!-- Hidden apps -->
+    <string name="drawer_unlock_hidden">Search hidden apps too</string>
+    <string name="hidden_unlock_title">Show hidden apps</string>
+    <string name="settings_hidden">Hidden apps</string>
+    <string name="settings_hidden_lock">Lock hidden apps</string>
+    <string name="settings_hidden_lock_summary">Ask for your screen lock before hidden apps show in search or here</string>
+    <string name="settings_hidden_show">Show hidden apps</string>
+    <string name="settings_hidden_empty">No hidden apps</string>
+
+    <!-- App usage -->
+    <string name="sheet_usage_under_minute">Today: under a minute</string>
+    <string name="sheet_usage_minutes">Today: %1$d min</string>
+    <string name="sheet_usage_hours">Today: %1$d h %2$d min</string>
+    <string name="settings_usage">App usage</string>
+    <string name="settings_usage_in_sheet">Show today\'s time in app options</string>
+    <string name="settings_usage_summary">Long-press an app to see how long you used it today. Read on your phone only.</string>
+    <string name="settings_usage_grant_summary">Needs usage access. Tap to allow it in Android settings; Mono reads it only when you long-press an app.</string>
+
     <!-- Errors -->
+    <string name="error_no_screen_lock">Set a screen lock in Android settings first</string>
     <string name="error_app_missing">This app is no longer installed</string>
     <string name="error_not_allowed">Android did not allow opening this</string>
     <string name="error_profile_locked">The work profile is paused or locked</string>

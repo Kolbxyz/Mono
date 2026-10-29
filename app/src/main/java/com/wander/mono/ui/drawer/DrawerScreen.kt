@@ -53,6 +53,7 @@ fun DrawerScreen(
     onLongPress: (LaunchableApp) -> Unit,
     onClose: () -> Unit,
     onOpenSettings: () -> Unit,
+    onUnlockHidden: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val icons = remember(state.iconMode, loadIcon) { AppIcons(state.iconMode, loadIcon) }
@@ -87,6 +88,7 @@ fun DrawerScreen(
                             is SearchHit.Shortcut -> ShortcutRow(hit, icons, onLaunch = { onLaunchHit(hit) })
                         }
                     }
+                    if (state.hiddenLocked) item(key = "unlock-hidden") { UnlockHiddenRow(onUnlockHidden) }
                 }
             }
         }
