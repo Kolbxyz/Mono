@@ -13,6 +13,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wander.mono.core.apps.ShortcutRepository
+import com.wander.mono.core.calendar.CalendarAccess
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.themeChoice
@@ -35,6 +36,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var settings: SettingsStore
+
+    @Inject
+    lateinit var calendarAccess: CalendarAccess
 
     private val launcher: LauncherViewModel by viewModels()
     private val sheet: AppSheetViewModel by viewModels()
@@ -70,6 +74,7 @@ class MainActivity : ComponentActivity() {
         // user changes both in Settings and comes back here, so this is the moment to look.
         shortcuts.recheckHostPermission()
         listenerAccess.recheck()
+        calendarAccess.recheck()
     }
 
     override fun onStop() {
