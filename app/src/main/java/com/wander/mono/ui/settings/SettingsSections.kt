@@ -37,6 +37,7 @@ internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = whe
     SettingsCategory.PrivacyAbout -> listOf(
         { HiddenAppsSection() },
         { UsageSection(it) },
+        { BackupSection() },
         { AboutSection() },
     )
 }

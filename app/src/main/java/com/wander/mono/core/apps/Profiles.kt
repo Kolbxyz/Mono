@@ -26,6 +26,9 @@ class Profiles @Inject constructor(@ApplicationContext context: Context) {
 
     fun serialOf(user: UserHandle): Long = userManager.getSerialNumberForUser(user)
 
+    /** Serials of the other profiles this launcher can show (work profile, private space). */
+    fun otherSerials(): Set<Long> = launcherApps.profiles.filter { it != main }.mapTo(mutableSetOf(), ::serialOf)
+
     /** Null once the profile has been removed. */
     fun userOf(serial: Long): UserHandle? = userManager.getUserForSerialNumber(serial)
 

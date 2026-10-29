@@ -140,8 +140,9 @@
     </queries>
 
     <!--
-      allowBackup=false: favourites and hidden apps are per-device choices. dataExtractionRules
-      governs device-to-device transfer on Android 12+, which allowBackup does not cover.
+      allowBackup=false: nothing goes to a cloud backup or a device transfer on its own.
+      dataExtractionRules governs device-to-device transfer on Android 12+, which allowBackup does
+      not cover. Moving choices to another phone is the user's own backup file (data/backup).
     -->
     <application
         android:name=".MonoApplication"
