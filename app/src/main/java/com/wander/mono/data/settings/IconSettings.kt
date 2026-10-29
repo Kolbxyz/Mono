@@ -9,4 +9,11 @@ enum class IconMode(override val stored: String) : StoredEnum {
 
 object IconSettings {
     val Mode = EnumSetting("icon_mode", IconMode.Colour, IconMode.entries)
+
+    /** The icon pack's package name, used in [IconMode.Colour]; empty for the apps' own icons. */
+    val Pack = StringSetting("icon_pack", default = SYSTEM_ICON_PACK)
 }
+
+/** [IconSettings.Pack] when no pack is chosen. */
+const val SYSTEM_ICON_PACK = ""
+

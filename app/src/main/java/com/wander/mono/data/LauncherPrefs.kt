@@ -50,6 +50,14 @@ class LauncherPrefs @Inject constructor(@ApplicationContext context: Context) {
         }
     }
 
+    /** Replaces the home list and the hidden apps at once, for a restored backup. */
+    suspend fun replace(favorites: List<AppKey>, hidden: Set<AppKey>) {
+        store.edit { prefs ->
+            prefs.writeFavorites(favorites.distinct())
+            prefs[HIDDEN] = hidden.map { it.encode() }.toSet()
+        }
+    }
+
     private suspend fun editFavorites(change: (List<AppKey>) -> List<AppKey>) {
         store.edit { prefs -> prefs.writeFavorites(change(prefs.readFavorites())) }
     }

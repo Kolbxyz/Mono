@@ -14,7 +14,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.ui.components.AppIcon
@@ -29,6 +32,8 @@ fun DrawerAppRow(
     onLaunch: () -> Unit,
     onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
+    iconSize: Dp = 40.dp,
+    labelStyle: TextStyle = MaterialTheme.typography.titleMedium,
 ) {
     Row(
         modifier
@@ -44,18 +49,24 @@ fun DrawerAppRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(entry.app.key, icons)
-        AppLabel(entry.app, entry.badge, style = MaterialTheme.typography.titleMedium)
+        AppIcon(entry.app.key, icons, size = iconSize)
+        AppLabel(entry.app, entry.badge, style = labelStyle)
     }
 }
 
-/** A shortcut search result: its label, and the app it belongs to underneath. */
+/**
+ * A shortcut search result: its own icon badged with its app's, its label, and the app it belongs to
+ * underneath. [ring] is the colour the row sits on, cut around the badge.
+ */
 @Composable
 fun ShortcutRow(
     hit: SearchHit.Shortcut,
     icons: AppIcons,
     onLaunch: () -> Unit,
     modifier: Modifier = Modifier,
+    iconSize: Dp = 40.dp,
+    labelStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    ring: Color = MaterialTheme.colorScheme.surfaceContainer,
 ) {
     Row(
         modifier
@@ -67,7 +78,7 @@ fun ShortcutRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(hit.owner?.key, icons)
+        ShortcutIcon(hit, icons, size = iconSize, ring = ring)
         Column {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -75,7 +86,7 @@ fun ShortcutRow(
             ) {
                 Text(
                     hit.label,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = labelStyle,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),

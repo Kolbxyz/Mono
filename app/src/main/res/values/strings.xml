@@ -22,6 +22,7 @@
     <!-- States announced by TalkBack -->
     <string name="state_has_notifications">Has notifications</string>
     <string name="state_work_profile">Work profile</string>
+    <string name="state_private_space">Private space</string>
 
     <!-- Now playing -->
     <string name="media_artwork">Artwork</string>
@@ -146,6 +147,11 @@
 
     <!-- Hidden apps -->
     <string name="drawer_unlock_hidden">Search hidden apps too</string>
+    <string name="drawer_private">Private</string>
+    <string name="drawer_private_unlock">Unlock private space</string>
+    <string name="drawer_private_lock">Lock private space</string>
+    <string name="drawer_private_settings">Private space settings</string>
+    <string name="drawer_private_locked">Locked</string>
     <string name="hidden_unlock_title">Show hidden apps</string>
     <string name="settings_hidden">Hidden apps</string>
     <string name="settings_hidden_lock">Lock hidden apps</string>
@@ -161,6 +167,26 @@
     <string name="settings_usage_in_sheet">Show today\'s time in app options</string>
     <string name="settings_usage_summary">Long-press an app to see how long you used it today. Read on your phone only.</string>
     <string name="settings_usage_grant_summary">Needs usage access. Tap to allow it in Android settings; Mono reads it only when you long-press an app.</string>
+
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_export">Save to a file</string>
+    <string name="settings_backup_export_summary">Favourites, hidden apps, names, live rows, quiet and headphone apps and settings, in a file you choose. Widgets are not included.</string>
+    <string name="settings_backup_import">Restore from a file</string>
+    <string name="settings_backup_import_summary">Replaces your favourites and settings with a saved backup</string>
+    <string name="backup_unlock_title">Unlock to include hidden apps</string>
+    <string name="backup_restore_title">Restore this backup?</string>
+    <string name="backup_restore_text">It replaces your favourites, hidden apps, names, live rows, quiet and headphone apps and settings. Widgets on home stay as they are.</string>
+    <string name="backup_restore_confirm">Restore</string>
+    <string name="backup_restore_cancel">Cancel</string>
+    <string name="backup_saved">Backup saved</string>
+    <string name="backup_restored">Backup restored</string>
+    <string name="backup_error_unreadable">Mono can\'t open this file</string>
+    <string name="backup_error_not_backup">This file is not a Mono backup</string>
+    <string name="backup_error_newer">This backup is from a newer Mono. Update Mono, then try again.</string>
+    <string name="backup_error_malformed">This backup is damaged. Nothing was changed.</string>
+    <string name="backup_error_write">Mono can\'t save the backup there</string>
+    <string name="backup_error_restore">Restoring stopped partway. Try again.</string>
+    <string name="backup_error_no_picker">No app on this phone can pick a file</string>
     <!-- Notification previews -->
     <string name="settings_previews">Notification previews</string>
     <string name="settings_previews_show">Show notification previews</string>
@@ -199,6 +225,13 @@
     <string name="search_contact">Contact</string>
     <string name="search_web_in">Search in %1$s</string>
     <string name="search_web">Search the web</string>
+    <!-- %1$s is a duration such as "10 min" or "1 hr, 30 min". -->
+    <string name="search_timer">Set a %1$s timer</string>
+    <string name="search_timer_kind">Timer in your clock app</string>
+    <!-- %1$s is a time of day such as "7:30 AM". -->
+    <string name="search_alarm">Set an alarm for %1$s</string>
+    <string name="search_alarm_kind">Alarm in your clock app</string>
+    <string name="action_set">Set</string>
     <string name="settings_search">Search</string>
     <string name="settings_search_contacts">Search contacts</string>
     <string name="settings_search_contacts_summary">Find people by name. Needs access to your contacts; they are read only while you type and never stored.</string>
@@ -257,6 +290,10 @@
 
     <!-- Rename -->
     <string name="sheet_rename">Rename</string>
+    <string name="sheet_headphones_top">First on home with headphones</string>
+    <string name="settings_headphones">Headphones</string>
+    <string name="settings_headphones_lift">Media apps first</string>
+    <string name="settings_headphones_lift_summary">While headphones are connected, the favourites you choose from their options move to the top of home.</string>
     <string name="rename_title">Rename app</string>
     <string name="rename_field">Name</string>
     <string name="rename_original">Original name: %1$s</string>
@@ -274,6 +311,7 @@
     <string name="error_calendar_missing">No app can open this event</string>
     <string name="error_settings_missing">This settings page is not available on this phone</string>
     <string name="error_no_browser">No browser can search the web</string>
+    <string name="error_no_clock_app">No clock app can set this</string>
     <string name="error_no_contacts_app">No app can show this contact</string>
 
     <!-- Sibling apps (Wanda, Phalanx) -->

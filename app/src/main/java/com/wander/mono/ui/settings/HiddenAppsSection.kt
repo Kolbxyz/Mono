@@ -48,12 +48,13 @@ fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
                     }
                 },
                 title = R.string.settings_hidden_lock,
-                summary = R.string.settings_hidden_lock_summary,
+                summary = R.string.settings_hidden_lock_short,
+                icon = R.drawable.sym_lock,
             )
         }
         val list = apps
         when {
-            revealed == false -> ActionRow(R.string.settings_hidden_show) {
+            revealed == false -> ActionRow(R.string.settings_hidden_show, icon = R.drawable.sym_visibility) {
                 turnOffAfterUnlock = false
                 prompt()
             }
@@ -61,6 +62,7 @@ fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
             list.isEmpty() -> ListItem { Text(stringResource(R.string.settings_hidden_empty)) }
             else -> list.forEach { app ->
                 ListItem(
+                    colors = settingRowColors(),
                     trailingContent = {
                         TextButton(onClick = { hidden.unhide(app.key) }) {
                             Text(stringResource(R.string.sheet_unhide))

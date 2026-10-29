@@ -1,33 +1,31 @@
 package com.wander.mono.ui.sheet
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.heading
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
-import com.wander.mono.ui.components.ReadableLayout
+import com.wander.mono.ui.components.ActionButtonGroup
+import com.wander.mono.ui.components.ActionEmphasis
+import com.wander.mono.ui.components.AppIcon
+import com.wander.mono.ui.components.AppIcons
+import com.wander.mono.ui.components.MenuAction
+import com.wander.mono.ui.components.MonoSheet
 
-/** Long-press options for one app: its shortcuts, then home list, visibility, app info and uninstall. */
+/**
+ * Long-press options for one app: its icon, name and today's use, then its actions as one button
+ * group (Wanda's context menu): home in or out first, the app's shortcuts and the rest in pairs,
+ * a headphones toggle, the moves as icons, uninstall at the foot.
+ */
 @Composable
 fun AppSheet(
     state: AppSheetState,
+    icons: AppIcons,
     usageToday: Long?,
     onDismiss: () -> Unit,
     onShortcut: (AppShortcut) -> Unit,
@@ -35,46 +33,90 @@ fun AppSheet(
     onRemoveFromHome: (AppKey) -> Unit,
     onMove: (AppKey, Int) -> Unit,
     onSetHidden: (AppKey, Boolean) -> Unit,
+    onSetLiftsWithHeadphones: (AppKey, Boolean) -> Unit,
     onRename: (AppKey) -> Unit,
     onAppInfo: (AppKey) -> Unit,
     onUninstall: (AppKey) -> Unit,
 ) {
     val key = state.app.key
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetMaxWidth = ReadableLayout.MaxColumnWidth) {
-        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 16.dp)) {
-            Text(
-                state.app.label,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp).semantics { heading() },
+    MonoSheet(onDismissRequest = onDismiss) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
+            SheetHeader(
+                title = state.app.label,
+                leading = { AppIcon(key, icons, size = 48.dp) },
+                supporting = if (usageToday != null) {
+                    { UsageLine(usageToday) }
+                } else {
+                    null
+                },
             )
-            usageToday?.let { UsageLine(it) }
-            state.shortcuts.forEach { shortcut -> SheetAction(shortcut.label) { onShortcut(shortcut) } }
-            if (state.shortcuts.isNotEmpty()) HorizontalDivider(Modifier.padding(vertical = 8.dp))
-            if (state.isFavorite) {
-                if (state.canMoveUp) SheetAction(stringResource(R.string.sheet_move_up)) { onMove(key, -1) }
-                if (state.canMoveDown) SheetAction(stringResource(R.string.sheet_move_down)) { onMove(key, 1) }
-                SheetAction(stringResource(R.string.sheet_remove_from_home)) { onRemoveFromHome(key) }
-            } else {
-                SheetAction(stringResource(R.string.sheet_add_to_home)) { onAddToHome(key) }
-            }
-            SheetAction(stringResource(R.string.sheet_rename)) { onRename(key) }
-            if (state.isHidden) {
-                SheetAction(stringResource(R.string.sheet_unhide)) { onSetHidden(key, false) }
-            } else {
-                SheetAction(stringResource(R.string.sheet_hide)) { onSetHidden(key, true) }
-            }
-            SheetAction(stringResource(R.string.sheet_app_info)) { onAppInfo(key) }
-            SheetAction(stringResource(R.string.sheet_uninstall)) { onUninstall(key) }
+            ActionButtonGroup(
+                appActions(
+                    state,
+                    onShortcut,
+                    onAddToHome,
+                    onRemoveFromHome,
+                    onMove,
+                    onSetHidden,
+                    onSetLiftsWithHeadphones,
+                    onRename,
+                    onAppInfo,
+                    onUninstall,
+                ),
+                Modifier.padding(top = 8.dp),
+            )
         }
     }
 }
 
-@Composable
-internal fun SheetAction(label: String, onClick: () -> Unit) {
-    ListItem(
-        modifier = Modifier.clickable(role = Role.Button, onClick = onClick),
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    ) {
-        Text(label)
+@Suppress("LongParameterList")
+private fun appActions(
+    state: AppSheetState,
+    onShortcut: (AppShortcut) -> Unit,
+    onAddToHome: (AppKey) -> Unit,
+    onRemoveFromHome: (AppKey) -> Unit,
+    onMove: (AppKey, Int) -> Unit,
+    onSetHidden: (AppKey, Boolean) -> Unit,
+    onSetLiftsWithHeadphones: (AppKey, Boolean) -> Unit,
+    onRename: (AppKey) -> Unit,
+    onAppInfo: (AppKey) -> Unit,
+    onUninstall: (AppKey) -> Unit,
+): List<MenuAction> {
+    val key = state.app.key
+    return buildList {
+        if (state.isFavorite) {
+            add(MenuAction(R.drawable.sym_remove_circle, R.string.sheet_remove_from_home, ActionEmphasis.Primary) {
+                onRemoveFromHome(key)
+            })
+        } else if (state.canGoOnHome) {
+            add(MenuAction(R.drawable.sym_keep, R.string.sheet_add_to_home, ActionEmphasis.Primary) {
+                onAddToHome(key)
+            })
+        }
+        add(MenuAction(R.drawable.sym_info, R.string.sheet_app_info, ActionEmphasis.Secondary) { onAppInfo(key) })
+        state.shortcuts.forEach { shortcut ->
+            add(MenuAction(R.drawable.sym_arrow_outward, R.string.sheet_shortcut, labelArg = shortcut.label) {
+                onShortcut(shortcut)
+            })
+        }
+        add(MenuAction(R.drawable.sym_edit, R.string.sheet_rename) { onRename(key) })
+        val hideLabel = if (state.isHidden) R.string.sheet_unhide else R.string.sheet_hide
+        add(MenuAction(R.drawable.sym_visibility, hideLabel) { onSetHidden(key, !state.isHidden) })
+        state.liftsWithHeadphones?.let { lifts ->
+            add(MenuAction(R.drawable.sym_headphones, R.string.sheet_headphones_top, selected = lifts) {
+                onSetLiftsWithHeadphones(key, !lifts)
+            })
+        }
+        if (state.canMoveUp) {
+            add(MenuAction(R.drawable.sym_keyboard_arrow_up, R.string.sheet_move_up, ActionEmphasis.Icon) {
+                onMove(key, -1)
+            })
+        }
+        if (state.canMoveDown) {
+            add(MenuAction(R.drawable.sym_keyboard_arrow_down, R.string.sheet_move_down, ActionEmphasis.Icon) {
+                onMove(key, 1)
+            })
+        }
+        add(MenuAction(R.drawable.sym_delete, R.string.sheet_uninstall, ActionEmphasis.Danger) { onUninstall(key) })
     }
 }

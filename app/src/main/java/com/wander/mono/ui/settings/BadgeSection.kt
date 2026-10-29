@@ -13,6 +13,7 @@ fun BadgeSection(settings: SettingsViewModel) {
             BadgeSettings.ShowCounts,
             title = R.string.settings_badge_counts,
             summary = R.string.settings_badge_counts_summary,
+            icon = R.drawable.sym_counter_1,
         )
     }
 }

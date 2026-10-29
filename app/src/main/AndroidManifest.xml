@@ -22,6 +22,19 @@
     <!-- Upcoming events on home. Opt-in: asked for only when the Calendar setting is switched on. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 
+    <!--
+      Android 15's private space. A normal permission, but Android honours it only for the default
+      home app (the HOME role): only then does LauncherApps list the private profile, its apps and
+      its settings. Any other app holding it still sees no private space.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_HIDDEN_PROFILES" />
+
+    <!--
+      Search hands "timer 10m" or "alarm 7:30" to the clock app, and the glance header opens its
+      alarm list (core/system/ClockActions). A normal permission the clock app requires of callers.
+    -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
     <!-- Contacts in search: opt-in from settings, asked for only when the user switches it on. -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
@@ -105,16 +118,31 @@
         <intent>
             <action android:name="android.intent.action.WEB_SEARCH" />
         </intent>
+        <!-- Search: the clock app that takes timers and alarms (core/system/ClockActions). -->
+        <intent>
+            <action android:name="android.intent.action.SET_TIMER" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SET_ALARM" />
+        </intent>
         <!-- Sibling providers (core/siblings), release and debug builds. -->
         <provider android:authorities="com.wander.android.mono" />
         <provider android:authorities="com.wander.android.debug.mono" />
         <provider android:authorities="org.phalanx.android.mono" />
         <provider android:authorities="org.phalanx.android.debug.mono" />
+        <!-- Icon packs (core/apps/IconPacks): the ADW and Nova theme actions packs answer. -->
+        <intent>
+            <action android:name="org.adw.launcher.THEMES" />
+        </intent>
+        <intent>
+            <action android:name="com.novalauncher.THEME" />
+        </intent>
     </queries>
 
     <!--
-      allowBackup=false: favourites and hidden apps are per-device choices. dataExtractionRules
-      governs device-to-device transfer on Android 12+, which allowBackup does not cover.
+      allowBackup=false: nothing goes to a cloud backup or a device transfer on its own.
+      dataExtractionRules governs device-to-device transfer on Android 12+, which allowBackup does
+      not cover. Moving choices to another phone is the user's own backup file (data/backup).
     -->
     <application
         android:name=".MonoApplication"
@@ -164,6 +192,24 @@
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
+        </service>
+
+        <!--
+          Double tap to lock and swipe down for notifications on home: off until the user switches
+          it on in Android's accessibility settings. Requests no events and no window content
+          (res/xml/gesture_service.xml); it only runs those two global actions.
+        -->
+        <service
+            android:name=".core.system.GestureService"
+            android:exported="false"
+            android:label="@string/gesture_service_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/gesture_service" />
         </service>
 
         <!-- Quick Settings tile switching quiet mode; a toggle, so TalkBack announces on/off. -->

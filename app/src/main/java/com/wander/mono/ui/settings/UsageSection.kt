@@ -28,7 +28,8 @@ fun UsageSection(settings: SettingsViewModel, access: UsageAccessViewModel = vie
                 if (on && !granted) access.openSettings()
             },
             title = R.string.settings_usage_in_sheet,
-            summary = if (shown && !granted) R.string.settings_usage_grant_summary else R.string.settings_usage_summary,
+            summary = if (shown && !granted) R.string.settings_usage_grant_short else R.string.settings_usage_short,
+            icon = R.drawable.sym_hourglass_bottom,
         )
     }
 }

@@ -34,7 +34,9 @@ class WidgetProviders @Inject constructor(
     fun load(): List<WidgetApp> {
         val pm = context.packageManager
         val collator = Collator.getInstance()
+        // No widgets from the private space: its apps never go on home.
         return launcherApps.profiles
+            .filterNot(profiles::isPrivate)
             .flatMap { user -> manager.getInstalledProvidersForProfile(user) }
             .filter { it.widgetCategory and AppWidgetProviderInfo.WIDGET_CATEGORY_HOME_SCREEN != 0 }
             .groupBy { it.provider.packageName to it.profile }

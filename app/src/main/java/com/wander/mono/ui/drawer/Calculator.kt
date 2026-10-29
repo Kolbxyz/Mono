@@ -36,11 +36,11 @@ internal object Calculator {
     }
 
     /**
-     * At most [SIGNIFICANT_DIGITS] significant digits and no trailing zeros; an exponent only for
+     * At most [significantDigits] significant digits and no trailing zeros; an exponent only for
      * very large or small values. Uses `,` as the decimal mark when the query did.
      */
-    fun format(value: Double, decimalComma: Boolean = false): String {
-        val rounded = BigDecimal(value).round(MathContext(SIGNIFICANT_DIGITS)).stripTrailingZeros()
+    fun format(value: Double, decimalComma: Boolean = false, significantDigits: Int = SIGNIFICANT_DIGITS): String {
+        val rounded = BigDecimal(value).round(MathContext(significantDigits)).stripTrailingZeros()
         val magnitude = rounded.precision() - rounded.scale() - 1
         val plain = when {
             value == 0.0 -> "0"

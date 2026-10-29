@@ -45,22 +45,41 @@ class RailMathTest {
     }
 
     @Test
-    fun `current section is the last one starting at or before the first visible item`() {
-        val sections = listOf(Section("A", 0), Section("C", 4), Section("F", 9))
-        assertEquals(0, RailMath.sectionIndexFor(sections, 0))
-        assertEquals(0, RailMath.sectionIndexFor(sections, 3))
-        assertEquals(1, RailMath.sectionIndexFor(sections, 4))
-        assertEquals(2, RailMath.sectionIndexFor(sections, 30))
-        assertEquals(-1, RailMath.sectionIndexFor(emptyList(), 3))
-    }
-
-    @Test
     fun `every letter is drawn on a tall rail, every other or third on a short one`() {
         assertEquals(1, RailMath.labelStride(height = 600f, count = 26, minSlot = 16f))
         assertEquals(2, RailMath.labelStride(height = 260f, count = 26, minSlot = 16f))
         assertEquals(3, RailMath.labelStride(height = 150f, count = 26, minSlot = 16f))
         assertEquals(1, RailMath.labelStride(height = 0f, count = 26, minSlot = 16f))
         assertEquals(1, RailMath.labelStride(height = 300f, count = 0, minSlot = 16f))
+    }
+
+    @Test
+    fun `travel counts only the slide toward the list, mirrored right to left`() {
+        assertEquals(30f, RailMath.travel(downX = 40f, x = 10f, mirror = 1f), DELTA)
+        assertEquals(0f, RailMath.travel(downX = 40f, x = 70f, mirror = 1f), DELTA)
+        assertEquals(30f, RailMath.travel(downX = 10f, x = 40f, mirror = -1f), DELTA)
+        assertEquals(0f, RailMath.travel(downX = 40f, x = 10f, mirror = -1f), DELTA)
+    }
+
+    @Test
+    fun `bow follows the finger at first and never passes its limit`() {
+        assertEquals(0f, RailMath.bow(travel = 0f, limit = 100f), DELTA)
+        assertEquals(0f, RailMath.bow(travel = -20f, limit = 100f), DELTA)
+        // A short slide moves the letter almost as far as the finger.
+        assertTrue(RailMath.bow(travel = 5f, limit = 100f) > 4.7f)
+        assertTrue(RailMath.bow(travel = 10_000f, limit = 100f) < 100f)
+        val samples = (0..50).map { it * 10f }
+        samples.zipWithNext().forEach { (near, far) ->
+            assertTrue(RailMath.bow(near, limit = 100f) < RailMath.bow(far, limit = 100f))
+        }
+    }
+
+    @Test
+    fun `letters under the finger move furthest and the wave scales with the bow`() {
+        assertEquals(40f, RailMath.letterOffset(index = 3, slot = 3f, bow = 40f), DELTA)
+        assertEquals(20f, RailMath.letterOffset(index = 5, slot = 3f, bow = 40f), DELTA)
+        assertEquals(0f, RailMath.letterOffset(index = 9, slot = 3f, bow = 40f), DELTA)
+        assertEquals(0f, RailMath.letterOffset(index = 3, slot = 3f, bow = 0f), DELTA)
     }
 
     private companion object {

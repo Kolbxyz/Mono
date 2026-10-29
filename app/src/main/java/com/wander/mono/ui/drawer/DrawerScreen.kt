@@ -1,8 +1,7 @@
 package com.wander.mono.ui.drawer
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -12,59 +11,87 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.apps.WorkProfile
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.readableColumn
-import com.wander.mono.ui.components.rememberOverscrollSwipe
-import kotlinx.coroutines.launch
 
 /**
- * All apps, alphabetical, with the letter rail; or, while a query is typed, the ranked results.
- * Swiping down past the top of the list closes it.
+ * All apps, alphabetical, with the letter rail and the work profile and private space at the bottom;
+ * or, while a query is typed, the ranked results. Drawn on the background the user chose. With
+ * [focusSearch] (opened from home's search bar) the search field takes focus and the keyboard opens.
+ * Dragging it closed is handled by its container.
  */
 @Composable
 fun DrawerScreen(
     query: String,
     state: DrawerUiState,
     loadIcon: suspend (AppKey, IconMode, Int) -> AppIconImage?,
+    loadShortcutIcon: ShortcutIconLoader,
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onLaunchApp: (LaunchableApp) -> Unit,
     onLaunchHit: (SearchHit) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
-    onClose: () -> Unit,
     onOpenSettings: () -> Unit,
     onUnlockHidden: () -> Unit,
+    privateActions: PrivateSpaceActions,
+    onSetWorkPaused: (WorkProfile, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     pickingApp: Boolean = false,
+    focusSearch: Boolean = false,
 ) {
-    val icons = remember(state.iconMode, loadIcon) { AppIcons(state.iconMode, loadIcon) }
-    val swipeDown = rememberOverscrollSwipe(upward = false, onSwipe = onClose)
+    val icons = remember(state.iconMode, state.iconPack, loadIcon) {
+        AppIcons(state.iconMode, loadIcon, state.iconPack)
+    }
     val bottom = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom).asPaddingValues()
     val topAndSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
-    Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Column(Modifier.windowInsetsPadding(topAndSides).readableColumn()) {
-            SearchField(query, onQueryChange, onSubmit, onOpenSettings, Modifier.fillMaxWidth().padding(16.dp))
+    val searchFocus = remember { FocusRequester() }
+    val keyboard = LocalSoftwareKeyboardController.current
+    LaunchedEffect(focusSearch) {
+        if (!focusSearch) return@LaunchedEffect
+        // The field can only take focus once it is laid out, a frame after the drawer first composes.
+        withFrameNanos { }
+        searchFocus.requestFocus()
+        keyboard?.show()
+    }
+    // Over the wallpaper (scrim or blur) as over the surface, text takes the surface's content colour.
+    CompositionLocalProvider(
+        LocalContentColor provides MaterialTheme.colorScheme.onSurface,
+        LocalShortcutIcons provides loadShortcutIcon,
+    ) {
+        Column(
+            modifier
+                .fillMaxSize()
+                .background(drawerBackdrop(state.look))
+                .windowInsetsPadding(topAndSides)
+                .readableColumn(),
+        ) {
+            SearchField(
+                query,
+                onQueryChange,
+                onSubmit,
+                onOpenSettings,
+                searchFocus,
+                Modifier.fillMaxWidth().padding(16.dp),
+            )
             if (pickingApp) {
                 Text(
                     stringResource(R.string.edit_pick_hint),
@@ -74,61 +101,19 @@ fun DrawerScreen(
                 )
             }
             if (query.isBlank()) {
-                AppList(state, icons, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
+                // Picking for home leaves the private space out: its apps never go on home.
+                val actions = privateActions.takeUnless { pickingApp }
+                DrawerAppList(state, icons, actions, onSetWorkPaused, onLaunchApp, onLongPress, bottom)
             } else {
                 SearchResultList(
-                    results = state.results,
+                    results = if (pickingApp) pickable(state.results) else state.results,
                     icons = icons,
                     onLaunchHit = onLaunchHit,
                     onLongPress = onLongPress,
                     contentPadding = bottom,
-                    modifier = Modifier.nestedScroll(swipeDown),
                     onUnlockHidden = onUnlockHidden.takeIf { state.hiddenLocked },
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun AppList(
-    state: DrawerUiState,
-    icons: AppIcons,
-    onLaunchApp: (LaunchableApp) -> Unit,
-    onLongPress: (LaunchableApp) -> Unit,
-    bottom: PaddingValues,
-    modifier: Modifier = Modifier,
-) {
-    val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
-    Box(Modifier.fillMaxSize()) {
-        LazyColumn(
-            state = listState,
-            modifier = modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                end = RAIL_WIDTH,
-                bottom = bottom.calculateBottomPadding(),
-            ),
-        ) {
-            items(state.apps, key = { it.app.key.encode() }) { entry ->
-                DrawerAppRow(
-                    entry = entry,
-                    icons = icons,
-                    onLaunch = { onLaunchApp(entry.app) },
-                    onLongPress = { onLongPress(entry.app) },
-                )
-            }
-        }
-        val current by remember(state.sections) {
-            derivedStateOf { RailMath.sectionIndexFor(state.sections, listState.firstVisibleItemIndex) }
-        }
-        LetterRail(
-            sections = state.sections,
-            current = current,
-            onSelect = { section -> scope.launch { listState.scrollToItem(section.index) } },
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(bottom = bottom.calculateBottomPadding(), top = 8.dp),
-        )
     }
 }

@@ -32,6 +32,11 @@ class LiveRowPrefs @Inject constructor(@ApplicationContext context: Context) {
         }
     }
 
+    /** Replaces every switched-off row, for a restored backup. */
+    suspend fun replace(hidden: Set<LiveRowRef>) {
+        store.edit { prefs -> prefs[HIDDEN] = hidden.map { it.encode() }.toSet() }
+    }
+
     private companion object {
         val HIDDEN = stringSetPreferencesKey("hidden")
     }

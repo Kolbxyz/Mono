@@ -1,6 +1,8 @@
 package com.wander.mono.ui.home
 
 import android.content.Context
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.rememberScrollableState
@@ -18,11 +20,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableFloatStateOf
@@ -33,40 +32,47 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
-import com.wander.mono.ui.edit.HomeEditing
-import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
+import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.ReadableLayout
 import com.wander.mono.ui.components.readableColumn
-import com.wander.mono.ui.components.rememberOverscrollSwipe
+import com.wander.mono.ui.edit.EditToolbarClearance
+import com.wander.mono.ui.edit.HomeEditing
+import com.wander.mono.ui.edit.ReorderableFavorite
+import com.wander.mono.ui.edit.ReorderableWidget
 import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
  * The home screen over the wallpaper: the glance header at the top, the rows anchored to the
- * bottom so favourites sit in the thumb zone, and the drawer button under them. Swiping up
- * anywhere (past the end of the list when it scrolls) opens the drawer. Long-pressing the clock or
- * an empty spot opens the home options; rows consume their own presses, so they never reach it.
+ * bottom so favourites sit in the thumb zone, and the search dock under them. Drags anywhere
+ * (past the end of the list when it scrolls) go to [gestureScroll]: up pulls the drawer, down
+ * opens the notification shade. Long-pressing the clock or an empty spot opens the home options and
+ * double-tapping one runs [onDoubleTap]; rows consume their own presses, so they never reach them.
+ * The [lifted] favourites go first while headphones are connected, outside edit mode only.
  */
 @Composable
 fun HomeScreen(
     rows: List<HomeRow>?,
+    lifted: Set<AppKey>,
     glance: Glance,
     look: HomeLook,
     listState: LazyListState,
+    icons: AppIcons,
     editing: HomeEditing,
     onLaunch: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
@@ -80,13 +86,15 @@ fun HomeScreen(
     onGrantAccess: () -> Unit,
     onOpenEvent: (CalendarEvent) -> Unit,
     onOpenDrawer: () -> Unit,
+    onSearch: () -> Unit,
+    gestureScroll: NestedScrollConnection,
+    onDoubleTap: (() -> Unit)?,
     onHomeOptions: () -> Unit,
     createWidgetView: (Context, Int) -> MonoWidgetHostView,
     onWidgetLongPress: (WidgetHomeRow) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val swipeUp = rememberOverscrollSwipe(upward = true, onSwipe = onOpenDrawer)
-    // The header and drawer button are not scrollable; this lets drags on them reach swipeUp too.
+    // The header and search dock are not scrollable; this lets drags on them reach gestureScroll too.
     val stillDrag = rememberScrollableState { 0f }
     val motion = MaterialTheme.motionScheme
     val scheme = MaterialTheme.colorScheme
@@ -98,13 +106,16 @@ fun HomeScreen(
     }
     // Edit mode dims the wallpaper (spec 4.6).
     val editDim = animateFloatAsState(if (editing.active) EDIT_DIM else 0f, motion.defaultEffectsSpec())
+    val editPadding = animateDpAsState(if (editing.active) EditToolbarClearance else 16.dp, motion.defaultSpatialSpec())
     val scrimAlpha = homeScrimAlpha(legibleAlpha, look.textShadow, look.highContrast)
-    val shadow = if (look.textShadow) {
-        with(density) {
+    // The user's text shadow replaces the scrim; otherwise a soft halo in the scrim's colour
+    // carries the text where the eased scrim has thinned out.
+    val shadow = with(density) {
+        if (look.textShadow) {
             Shadow(scheme.scrim.copy(alpha = SHADOW_ALPHA), Offset(0f, 1.dp.toPx()), blurRadius = 4.dp.toPx())
+        } else {
+            Shadow(scheme.surface.copy(alpha = HALO_ALPHA), Offset.Zero, blurRadius = 12.dp.toPx())
         }
-    } else {
-        null
     }
 
     // Without onSurface as the content colour, the clock and favourites would fall back to black.
@@ -120,11 +131,16 @@ fun HomeScreen(
                     color = scheme.surface.copy(alpha = scrimAlpha),
                     headerBottom = { headerBottom.floatValue },
                     listTop = { listViewportTop.floatValue + listState.contentTop() },
-                    fade = with(density) { SCRIM_FADE.toPx() },
+                    reach = with(density) { SCRIM_REACH.toPx() },
                 )
                 .drawBehind { drawRect(scheme.surface.copy(alpha = editDim.value)) }
-                .pointerInput(onHomeOptions) { detectTapGestures(onLongPress = { onHomeOptions() }) }
-                .nestedScroll(swipeUp)
+                .pointerInput(onHomeOptions, onDoubleTap) {
+                    detectTapGestures(
+                        onDoubleTap = if (onDoubleTap != null) { _ -> onDoubleTap() } else null,
+                        onLongPress = { onHomeOptions() },
+                    )
+                }
+                .nestedScroll(gestureScroll)
                 .scrollable(stillDrag, Orientation.Vertical),
             contentAlignment = Alignment.TopCenter,
         ) {
@@ -158,7 +174,8 @@ fun HomeScreen(
                         .fillMaxWidth()
                         .onGloballyPositioned { listViewportTop.floatValue = it.positionInRoot().y },
                     verticalArrangement = Arrangement.Bottom,
-                    contentPadding = PaddingValues(bottom = 16.dp),
+                    // In edit mode the floating toolbar covers the list's foot: keep the last row clear of it.
+                    contentPadding = PaddingValues(bottom = editPadding.value),
                 ) {
                     // The now-playing and prompt rows are not favourites: the empty state shows until there is one.
                     if (rows != null && !editing.active && rows.none { it is HomeRow.App }) {
@@ -166,8 +183,10 @@ fun HomeScreen(
                             EmptyHome(onChooseFavorites = onOpenDrawer, modifier = Modifier.animateItem())
                         }
                     }
-                    val shown = editing.shownRows(rows)
-                    val favorites = shown.filterIsInstance<HomeRow.App>().map { it.key }
+                    val ordered = editing.shownRows(rows)
+                    val movable = ordered.filter { it is HomeRow.App || it is WidgetHomeRow }.map { it.key }
+                    // Saved order while editing; outside it, favourites chosen for headphones go first.
+                    val shown = if (editing.showsSavedOrder) ordered else liftedFirst(ordered, lifted)
                     items(shown, key = { it.key }, contentType = { it::class }) { row ->
                         val animated = Modifier.animateItem(
                             fadeInSpec = motion.defaultEffectsSpec(),
@@ -177,7 +196,8 @@ fun HomeScreen(
                         when (row) {
                             is HomeRow.App -> ReorderableFavorite(
                                 row = row,
-                                siblings = favorites,
+                                icons = icons,
+                                siblings = movable,
                                 rows = rows.orEmpty(),
                                 editing = editing,
                                 onLaunch = { onLaunch(row.app) },
@@ -193,29 +213,31 @@ fun HomeScreen(
                                 onSeek = onSeek,
                                 onPlayQueueItem = onPlayQueueItem,
                                 onOpenOutput = onOpenOutput,
-                                modifier = animated,
+                                // No fade-out: a removed card leaves at once and its neighbours close the space.
+                                modifier = Modifier.animateItem(
+                                    fadeInSpec = motion.defaultEffectsSpec(),
+                                    placementSpec = motion.defaultSpatialSpec(),
+                                    fadeOutSpec = null,
+                                ),
                             )
                             HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
                             is NotificationRow -> NotificationPreviewRow(row, animated)
                             is CalendarRow -> CalendarCard(row, onOpenEvent, animated)
-                            is WidgetHomeRow -> WidgetRow(
-                                row = row,
-                                createView = createWidgetView,
-                                onLongPress = { onWidgetLongPress(row) },
-                                modifier = animated,
-                            )
+                            is WidgetHomeRow -> if (editing.active) {
+                                ReorderableWidget(row, movable, rows.orEmpty(), editing, animated)
+                            } else {
+                                WidgetRow(
+                                    row = row,
+                                    createView = createWidgetView,
+                                    onLongPress = { onWidgetLongPress(row) },
+                                    modifier = animated,
+                                )
+                            }
                         }
                     }
                 }
                 // In edit mode the floating toolbar takes this place.
-                if (!editing.active) {
-                    IconButton(onClick = onOpenDrawer) {
-                        Icon(
-                            painterResource(R.drawable.sym_apps),
-                            contentDescription = stringResource(R.string.action_open_drawer),
-                        )
-                    }
-                }
+                if (!editing.active) SearchDock(onSearch, Modifier.padding(top = 8.dp, bottom = 8.dp))
             }
         }
     }
@@ -233,5 +255,8 @@ private const val EDIT_DIM = 0.6f
 /** Text shadow strength, per spec 5.4: the `scrim` role at 40 %. */
 private const val SHADOW_ALPHA = 0.4f
 
-/** How far the scrim fades out into the empty space between header and list. */
-private val SCRIM_FADE = 48.dp
+/** The halo under home text when the scrim is on: the surface colour, soft and wide. */
+private const val HALO_ALPHA = 0.55f
+
+/** How far the scrim eases out into the empty space past the header and before the list. */
+private val SCRIM_REACH = 120.dp

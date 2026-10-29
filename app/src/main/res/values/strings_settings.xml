@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings hub -->
+    <string name="settings_category_home">Home &amp; clock</string>
+    <string name="settings_category_home_sub">Clock face, lines under it, calendar</string>
+    <string name="settings_category_drawer">Drawer &amp; search</string>
+    <string name="settings_category_drawer_sub">Background, contacts in search</string>
+    <string name="settings_category_appearance">Appearance &amp; icons</string>
+    <string name="settings_category_appearance_sub">Theme, icon pack, contrast</string>
+    <string name="settings_category_notifications">Notifications</string>
+    <string name="settings_category_notifications_sub">Badges, previews, quiet mode</string>
+    <string name="settings_category_gestures">Gestures</string>
+    <string name="settings_category_gestures_sub">Swipe down, double tap</string>
+    <string name="settings_category_privacy">Privacy &amp; about</string>
+    <string name="settings_category_privacy_sub">Hidden apps, usage, licences</string>
+
+    <!-- Short summaries: one line, only where the title needs it -->
+    <string name="settings_text_shadow_short">Instead of dimming the wallpaper</string>
+    <string name="settings_high_contrast_short">Stronger backdrop behind home text</string>
+    <string name="settings_calendar_short">Read only, never leaves your phone</string>
+    <string name="settings_calendar_denied_short">Access refused. Tap to allow in App info</string>
+    <string name="settings_search_contacts_short">Read only while you type</string>
+    <string name="settings_quiet_mode_short">Only your quiet apps on home</string>
+    <string name="settings_quiet_dnd_grant_short">Needs Do Not Disturb access. Tap to allow</string>
+    <string name="settings_hidden_lock_short">Ask for your screen lock first</string>
+    <string name="settings_usage_short">Long-press an app to see it</string>
+    <string name="settings_usage_grant_short">Needs usage access. Tap to allow</string>
+
+    <!-- Icon packs -->
+    <string name="settings_icon_pack">Icon pack</string>
+    <string name="settings_icon_pack_system">App icons</string>
+    <string name="settings_icon_pack_none">No icon packs installed</string>
+
+    <!-- Clock -->
+    <string name="settings_clock">Clock</string>
+    <string name="settings_clock_font">Font</string>
+    <string name="settings_clock_font_flex">Flex</string>
+    <string name="settings_clock_font_rounded">Rounded</string>
+    <string name="settings_clock_font_serif">Serif</string>
+    <string name="settings_clock_font_mono">Mono</string>
+    <string name="settings_clock_font_condensed">Condensed</string>
+    <string name="settings_clock_weight">Weight</string>
+    <string name="settings_clock_size">Size</string>
+    <string name="settings_clock_style">Layout</string>
+    <string name="settings_clock_style_default">Large</string>
+    <string name="settings_clock_style_stacked">Stacked</string>
+    <string name="settings_clock_style_small">Small</string>
+    <string name="settings_clock_alignment">Alignment</string>
+    <string name="settings_clock_align_start">Start</string>
+    <string name="settings_clock_align_center">Centre</string>
+    <string name="settings_clock_date">Date</string>
+    <string name="settings_glance_lines">Under the clock</string>
+    <string name="settings_glance_date">Date</string>
+    <string name="settings_glance_alarm">Next alarm</string>
+    <string name="settings_glance_alarm_short">Within the next 24 hours</string>
+    <string name="settings_glance_event">Next event</string>
+    <string name="settings_glance_event_short">Needs the calendar on</string>
+    <string name="settings_glance_battery">Battery</string>
+    <string name="settings_glance_battery_short">When low or charging</string>
+
+    <!-- Glance header -->
+    <string name="glance_open_clock">Open alarms</string>
+    <string name="glance_open_alarms">Open alarms</string>
+    <string name="glance_open_calendar">Open calendar</string>
+    <string name="glance_open_event">Open event</string>
+    <string name="glance_battery_percent">%1$d%%</string>
+    <string name="glance_battery_low">Battery low, %1$d percent</string>
+    <string name="glance_battery_charging">Charging, %1$d percent</string>
+    <string name="glance_quiet">Quiet</string>
+    <string name="glance_quiet_until">Quiet until %1$s</string>
+    <string name="glance_quiet_end">End quiet mode now</string>
+    <string name="glance_quiet_extend">One more hour, then end</string>
+    <string name="error_clock_missing">No clock app can show alarms</string>
+    <string name="error_calendar_app_missing">No calendar app is installed</string>
+
+    <!-- About -->
+    <string name="settings_about">About</string>
+    <string name="settings_about_version">Version</string>
+    <string name="settings_about_licences">Font licences</string>
+    <string name="settings_about_ofl">SIL Open Font License 1.1</string>
+    <string name="about_licence_close">Close</string>
+    <string name="about_font_google_sans_flex">Google Sans Flex</string>
+    <string name="about_font_nunito">Nunito</string>
+    <string name="about_font_dm_serif_display">DM Serif Display</string>
+    <string name="about_font_jetbrains_mono">JetBrains Mono</string>
+    <string name="about_font_oswald">Oswald</string>
+</resources>

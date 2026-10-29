@@ -2,7 +2,9 @@ package com.wander.mono.ui.edit
 
 import androidx.compose.runtime.Stable
 import com.wander.mono.core.apps.AppKey
+import com.wander.mono.core.widgets.WidgetSize
 import com.wander.mono.data.LiveRowRef
+import com.wander.mono.data.moved
 import com.wander.mono.ui.home.HomeRow
 
 /**
@@ -16,29 +18,44 @@ class HomeEditing(
     val toggles: Map<AppKey, List<LiveRowToggle>>,
     val reorder: ReorderState,
     val onEnter: () -> Unit,
-    val onReorder: (List<AppKey>) -> Unit,
+    val onArrange: (HomeArrangement) -> Unit,
     val onMove: (AppKey, Int) -> Unit,
     val onRemove: (AppKey) -> Unit,
     val onRename: (AppKey) -> Unit,
     val onSetLiveRow: (LiveRowRef, Boolean) -> Unit,
+    val onResizeWidget: (appWidgetId: Int, WidgetSize) -> Unit,
+    val onRemoveWidget: (appWidgetId: Int) -> Unit,
 ) {
+    /** In edit mode or while a drag settles, home shows the saved order, never one arranged for the moment. */
+    val showsSavedOrder: Boolean get() = active || reorder.order != null
+
     /**
      * The rows home shows: all of them normally; in edit mode, or while a drag settles, only the
-     * favourites (live rows give way to their switches), in the dragged order.
+     * favourites and widgets (live rows give way to their placeholders under each favourite), in
+     * the dragged order.
      */
     fun shownRows(rows: List<HomeRow>?): List<HomeRow> {
         val all = rows.orEmpty()
         val order = reorder.order
-        if (!active && order == null) return all
-        val apps = all.filterIsInstance<HomeRow.App>()
-        val byKey = apps.associateBy { it.key }
-        return order?.let { dragged -> dragged.mapNotNull(byKey::get) + apps.filter { it.key !in dragged } } ?: apps
+        if (!showsSavedOrder) return all
+        val movable = all.filter(::isMovable)
+        val byKey = movable.associateBy { it.key }
+        return order?.let { dragged -> dragged.mapNotNull(byKey::get) + movable.filter { it.key !in dragged } }
+            ?: movable
     }
 
     /** Ends the drag and saves the new order. */
     fun drop(rows: List<HomeRow>) {
         val order = reorder.drop() ?: return
-        val byKey = rows.filterIsInstance<HomeRow.App>().associateBy { it.key }
-        onReorder(order.mapNotNull { byKey[it]?.app?.key })
+        arrange(order, rows)
+    }
+
+    /** Moves the row keyed [key] [by] places among [siblings] (TalkBack's move actions) and saves it. */
+    fun moveBy(key: String, by: Int, siblings: List<String>, rows: List<HomeRow>) =
+        arrange(siblings.moved(key, by), rows)
+
+    private fun arrange(order: List<Any>, rows: List<HomeRow>) {
+        val byKey = rows.filter(::isMovable).associateBy { it.key }
+        onArrange(homeArrangement(order.mapNotNull(byKey::get)))
     }
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="edit_add_widget">Add widget</string>
+    <!-- A widget's placeholder in edit mode: "Widget · Medium". -->
+    <string name="edit_widget_kind">Widget · %1$s</string>
+    <string name="edit_live_row_shown">Live row · shown</string>
+    <string name="edit_live_row_hidden">Live row · hidden</string>
+    <!-- An app shortcut in the long-press options: just its own label. -->
+    <string name="sheet_shortcut" translatable="false">%1$s</string>
+</resources>
