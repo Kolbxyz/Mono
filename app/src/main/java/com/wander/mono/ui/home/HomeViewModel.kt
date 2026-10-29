@@ -14,6 +14,7 @@ import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.quiet.QuietMode
+import com.wander.mono.core.siblings.WandaUpNext
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.LauncherPrefs
@@ -44,6 +45,7 @@ class HomeViewModel @Inject constructor(
     private val calendarActions: CalendarActions,
     widgets: Widgets,
     private val media: MediaSessions,
+    wandaUpNext: WandaUpNext,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
     private val messages: UserMessages,
@@ -53,7 +55,7 @@ class HomeViewModel @Inject constructor(
         prefs.favorites,
         catalog.apps.filterNotNull(),
         counts.counts,
-        combine(media.state, liveRows.hidden) { state, hidden -> state.unlessHidden(hidden) },
+        combine(wandaUpNext.fill(media.state), liveRows.hidden) { state, hidden -> state.unlessHidden(hidden) },
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
     ).combine(

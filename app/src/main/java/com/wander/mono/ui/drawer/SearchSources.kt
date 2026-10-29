@@ -3,6 +3,8 @@ package com.wander.mono.ui.drawer
 import com.wander.mono.R
 import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.contacts.ContactSearch
+import com.wander.mono.core.siblings.WandaSearch
+import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.Clipboard
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.SettingsPages
@@ -18,12 +20,14 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
 /** Search results beyond apps and shortcuts (contacts, settings pages, the web, sums) and what tapping them does. */
 class SearchSources @Inject constructor(
     private val settings: SettingsStore,
     private val contactSearch: ContactSearch,
+    private val wandaSearch: WandaSearch,
     private val settingsPages: SettingsPages,
     private val webSearch: WebSearch,
     private val clipboard: Clipboard,
@@ -37,6 +41,11 @@ class SearchSources @Inject constructor(
         combine(query, settings[SearchSettings.Contacts]) { text, enabled -> if (enabled) text.trim() else "" }
             .distinctUntilChanged()
             .mapLatest { text -> if (text.isEmpty()) emptyList() else contactSearch.find(text, PROVIDER_LIMIT) }
+
+    /** Songs from Wanda's library for each [query]; empty when Wanda is absent or not signed like Mono. */
+    fun tracks(query: Flow<String>): Flow<List<WandaTrack>> = query.map { it.trim() }
+        .distinctUntilChanged()
+        .mapLatest { text -> wandaSearch.find(text, PROVIDER_LIMIT) }
 
     /** The settings pages this phone can open, resolved afresh each time search starts being watched. */
     fun pages(): Flow<List<SettingsPage>> = flow { emit(settingsPages.available()) }.flowOn(Dispatchers.Default)
@@ -54,6 +63,8 @@ class SearchSources @Inject constructor(
         null -> HitOutcome.OpenMonoSettings
         else -> opened(messages.report(settingsPages.open(hit.page)))
     }
+
+    fun open(hit: SearchHit.Track): HitOutcome = opened(messages.report(wandaSearch.open(hit.track)))
 
     fun open(hit: SearchHit.Web): HitOutcome = opened(messages.report(webSearch.search(hit.query)))
 

@@ -32,6 +32,7 @@ Single module `:app`, package root `com.wander.mono`.
 | `core/calendar` | Opt-in upcoming events (`READ_CALENDAR`) from `CalendarContract.Instances`, observed, re-read only at event boundaries. |
 | `core/system` | Clock tick and next alarm, from system broadcasts; wallpaper colours and hints; settings pages, web search hand-off, clipboard. |
 | `core/contacts` | Opt-in contact lookup by name for search (`READ_CONTACTS`), never cached. |
+| `core/siblings` | Wanda and Phalanx providers (signature permission, `docs/design/sibling-contract.md`): up next, library search, per-room unread; absent means hidden. |
 | `data` | DataStore: ordered favourites and hidden apps. |
 | `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
