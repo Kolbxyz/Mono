@@ -50,6 +50,7 @@ fun DrawerScreen(
     onLongPress: (LaunchableApp) -> Unit,
     onClose: () -> Unit,
     onOpenSettings: () -> Unit,
+    onUnlockHidden: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val icons = remember(state.iconMode, loadIcon) { AppIcons(state.iconMode, loadIcon) }
@@ -69,6 +70,7 @@ fun DrawerScreen(
                     onLongPress = onLongPress,
                     contentPadding = bottom,
                     modifier = Modifier.nestedScroll(swipeDown),
+                    onUnlockHidden = onUnlockHidden.takeIf { state.hiddenLocked },
                 )
             }
         }
