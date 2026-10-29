@@ -10,6 +10,7 @@ import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.ui.UserMessages
@@ -28,6 +29,7 @@ class HomeViewModel @Inject constructor(
     counts: NotificationCounts,
     settings: SettingsStore,
     time: SystemTime,
+    liveRows: LiveRowPrefs,
     private val media: MediaSessions,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
@@ -38,7 +40,7 @@ class HomeViewModel @Inject constructor(
         prefs.favorites,
         catalog.apps.filterNotNull(),
         counts.counts,
-        media.state,
+        combine(media.state, liveRows.hidden) { state, hidden -> state.unlessHidden(hidden) },
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
     ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)

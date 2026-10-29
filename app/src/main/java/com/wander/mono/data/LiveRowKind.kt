@@ -30,7 +30,3 @@ data class LiveRowRef(val app: AppKey, val kind: LiveRowKind) {
         }
     }
 }
-
-/** True when the user switched [kind] off for any of [owners] (an app can have one key per activity). */
-fun Set<LiveRowRef>.hides(kind: LiveRowKind, owners: Iterable<AppKey>): Boolean =
-    owners.any { LiveRowRef(it, kind) in this }
