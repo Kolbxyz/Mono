@@ -58,6 +58,20 @@
 
     <!-- Long-press options for home itself -->
     <string name="home_sheet_settings">Mono settings</string>
+    <string name="home_sheet_add_widget">Add widget</string>
+
+    <!-- Widgets -->
+    <string name="widget_picker_title">Widgets</string>
+    <string name="widget_picker_empty">No installed app offers widgets</string>
+    <string name="widget_picker_work_app">%1$s · %2$s</string>
+    <string name="widget_size">Size</string>
+    <string name="widget_size_small">Small</string>
+    <string name="widget_size_medium">Medium</string>
+    <string name="widget_size_large">Large</string>
+    <string name="widget_reconfigure">Widget settings</string>
+    <string name="widget_remove">Remove widget</string>
+    <string name="action_widget_options">Widget options</string>
+    <string name="action_add_widget">Add to home</string>
 
     <!-- Settings -->
     <string name="settings_title">Settings</string>

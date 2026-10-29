@@ -38,6 +38,8 @@ import com.wander.mono.ui.sheet.AppSheet
 import com.wander.mono.ui.settings.SettingsScreen
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.sheet.HomeSheet
+import com.wander.mono.ui.widgets.WidgetSheets
+import com.wander.mono.ui.widgets.WidgetsViewModel
 
 /** Home, with the drawer and settings sliding over it, the long-press sheets and the error snackbar. */
 @Composable
@@ -47,6 +49,7 @@ fun LauncherApp(
     homeLookModel: HomeLookViewModel = viewModel(),
     drawer: DrawerViewModel = viewModel(),
     sheet: AppSheetViewModel = viewModel(),
+    widgets: WidgetsViewModel = viewModel(),
 ) {
     val drawerOpen by launcher.drawerOpen.collectAsStateWithLifecycle()
     val settingsOpen by launcher.settingsOpen.collectAsStateWithLifecycle()
@@ -98,6 +101,8 @@ fun LauncherApp(
             onGrantAccess = home::openListenerSettings,
             onOpenDrawer = launcher::openDrawer,
             onHomeOptions = { launcher.showHomeOptions(true) },
+            createWidgetView = widgets::createView,
+            onWidgetLongPress = { widgets.showOptions(it.widget.placement.appWidgetId) },
         )
         AnimatedVisibility(
             visible = drawerOpen,
@@ -145,8 +150,16 @@ fun LauncherApp(
     }
 
     if (homeOptionsOpen) {
-        HomeSheet(onDismiss = { launcher.showHomeOptions(false) }, onOpenSettings = launcher::openSettings)
+        HomeSheet(
+            onDismiss = { launcher.showHomeOptions(false) },
+            onOpenSettings = launcher::openSettings,
+            onAddWidget = {
+                launcher.showHomeOptions(false)
+                widgets.openPicker()
+            },
+        )
     }
+    WidgetSheets(widgets)
     sheetState?.let { state ->
         AppSheet(
             state = state,

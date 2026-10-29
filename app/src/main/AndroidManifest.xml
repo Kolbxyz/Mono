@@ -17,6 +17,10 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Widget providers, so apps that only offer widgets show up in the widget picker too. -->
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent>
         <!-- Search: the settings pages it offers (core/system/SettingsPages) and the browser's web search. -->
         <intent>
             <action android:name="android.settings.WIFI_SETTINGS" />

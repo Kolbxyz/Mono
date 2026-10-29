@@ -11,9 +11,10 @@ import com.wander.mono.R
 
 /** Long-press options for home itself (the clock or an empty spot), as opposed to one app's. */
 @Composable
-fun HomeSheet(onDismiss: () -> Unit, onOpenSettings: () -> Unit) {
+fun HomeSheet(onDismiss: () -> Unit, onOpenSettings: () -> Unit, onAddWidget: () -> Unit) {
     ModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.padding(bottom = 16.dp)) {
+            SheetAction(stringResource(R.string.home_sheet_add_widget), onAddWidget)
             SheetAction(stringResource(R.string.home_sheet_settings), onOpenSettings)
         }
     }
