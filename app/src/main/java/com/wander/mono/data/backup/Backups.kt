@@ -8,6 +8,7 @@ import com.wander.mono.core.apps.ActionResult
 import com.wander.mono.core.apps.Profiles
 import com.wander.mono.core.quiet.QuietMode
 import com.wander.mono.data.CustomLabels
+import com.wander.mono.data.HeadphoneApps
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.QuietApps
@@ -34,6 +35,7 @@ class Backups @Inject constructor(
     private val customLabels: CustomLabels,
     private val liveRows: LiveRowPrefs,
     private val quietApps: QuietApps,
+    private val headphoneApps: HeadphoneApps,
     private val settings: SettingsStore,
     private val quietMode: QuietMode,
     private val profiles: Profiles,
@@ -72,6 +74,7 @@ class Backups @Inject constructor(
         customLabels.replace(backup.labels)
         liveRows.replace(backup.liveRowsOff)
         quietApps.replace(backup.quietApps)
+        headphoneApps.replace(backup.headphoneApps)
         settings.restore(backup.settings)
         quietMode.setLinksDoNotDisturb(quietMode.linksDoNotDisturb.first())
         ActionResult.Done
@@ -86,6 +89,7 @@ class Backups @Inject constructor(
         labels = customLabels.labels.first(),
         liveRowsOff = liveRows.hidden.first(),
         quietApps = quietApps.apps.first(),
+        headphoneApps = headphoneApps.apps.first(),
         settings = settings.snapshot(backedUpSettings),
     )
 

@@ -170,12 +170,12 @@
 
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_export">Save to a file</string>
-    <string name="settings_backup_export_summary">Favourites, hidden apps, names, live rows, quiet apps and settings, in a file you choose. Widgets are not included.</string>
+    <string name="settings_backup_export_summary">Favourites, hidden apps, names, live rows, quiet and headphone apps and settings, in a file you choose. Widgets are not included.</string>
     <string name="settings_backup_import">Restore from a file</string>
     <string name="settings_backup_import_summary">Replaces your favourites and settings with a saved backup</string>
     <string name="backup_unlock_title">Unlock to include hidden apps</string>
     <string name="backup_restore_title">Restore this backup?</string>
-    <string name="backup_restore_text">It replaces your favourites, hidden apps, names, live rows, quiet apps and settings. Widgets on home stay as they are.</string>
+    <string name="backup_restore_text">It replaces your favourites, hidden apps, names, live rows, quiet and headphone apps and settings. Widgets on home stay as they are.</string>
     <string name="backup_restore_confirm">Restore</string>
     <string name="backup_restore_cancel">Cancel</string>
     <string name="backup_saved">Backup saved</string>

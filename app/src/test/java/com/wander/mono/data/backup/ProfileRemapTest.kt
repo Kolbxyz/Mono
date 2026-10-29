@@ -45,6 +45,7 @@ class ProfileRemapTest {
             labels = mapOf(mail to "Post", work to "Chat"),
             liveRowsOff = setOf(LiveRowRef(mail, LiveRowKind.Calendar), LiveRowRef(work, LiveRowKind.Calendar)),
             quietApps = setOf(mail, work),
+            headphoneApps = setOf(work),
             settings = emptyList(),
         )
         val moved = backup.remapped(mainSerial = 5) { serial -> if (serial == 0L) 5L else null }
@@ -57,6 +58,7 @@ class ProfileRemapTest {
                 labels = mapOf(mailHere to "Post"),
                 liveRowsOff = setOf(LiveRowRef(mailHere, LiveRowKind.Calendar)),
                 quietApps = setOf(mailHere),
+                headphoneApps = emptySet(),
                 settings = emptyList(),
             ),
             moved,

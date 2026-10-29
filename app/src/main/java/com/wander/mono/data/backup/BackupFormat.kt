@@ -41,6 +41,7 @@ internal object BackupFormat {
         "labels" to backup.labels.entries.associate { (key, label) -> key.encode() to label },
         "liveRowsOff" to backup.liveRowsOff.map { it.encode() },
         "quietApps" to backup.quietApps.map { it.encode() },
+        "headphoneApps" to backup.headphoneApps.map { it.encode() },
         "settings" to backup.settings.associate { it.setting.name to it.stored },
     )
 
@@ -67,6 +68,7 @@ internal object BackupFormat {
             labels = tree.field<Map<*, *>>("labels").entries.associate { (key, label) -> appKey(key) to string(label) },
             liveRowsOff = tree.strings("liveRowsOff").mapTo(mutableSetOf(), ::liveRow),
             quietApps = tree.strings("quietApps").mapTo(mutableSetOf(), ::appKey),
+            headphoneApps = tree.strings("headphoneApps").mapTo(mutableSetOf(), ::appKey),
             settings = settings.map { setting -> settingValue(setting, stored[setting.name]) },
         )
     }

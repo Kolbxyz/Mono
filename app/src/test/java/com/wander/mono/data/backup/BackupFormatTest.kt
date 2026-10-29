@@ -22,6 +22,7 @@ class BackupFormatTest {
         labels = mapOf(mail to "Post"),
         liveRowsOff = setOf(LiveRowRef(mail, LiveRowKind.NotificationPreview)),
         quietApps = setOf(mail),
+        headphoneApps = setOf(mail),
         settings = backedUpSettings.map { SettingValue.default(it) }
             .replace(SettingValue(ThemeSettings.Mode, ThemeMode.Dark))
             .replace(SettingValue(BadgeSettings.ShowCounts, false)),
