@@ -45,6 +45,7 @@ class HomeRowsTest {
             is HomeRow.App -> it.app.label + if (it.app.isMainProfile) "" else " (work)"
             is HomeRow.NowPlaying -> "now:" + it.media.packageName
             HomeRow.ListenerPrompt -> "prompt"
+            is WidgetHomeRow -> "widget:" + it.widget.placement.appWidgetId
         }
     }
 
