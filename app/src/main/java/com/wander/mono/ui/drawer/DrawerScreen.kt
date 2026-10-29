@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -26,9 +25,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.wander.mono.R
 import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
@@ -66,30 +63,15 @@ fun DrawerScreen(
             if (query.isBlank()) {
                 AppList(state, icons, onLaunchApp, onLongPress, bottom, Modifier.nestedScroll(swipeDown))
             } else {
-                LazyColumn(Modifier.fillMaxSize().nestedScroll(swipeDown), contentPadding = bottom) {
-                    if (state.results.isEmpty()) {
-                        item(key = "none") {
-                            Text(
-                                stringResource(R.string.drawer_no_results),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(16.dp),
-                            )
-                        }
-                    }
-                    items(state.results, key = { it.key }, contentType = { it::class }) { hit ->
-                        when (hit) {
-                            is SearchHit.App -> DrawerAppRow(
-                                entry = hit.entry,
-                                icons = icons,
-                                onLaunch = { onLaunchHit(hit) },
-                                onLongPress = { onLongPress(hit.entry.app) },
-                            )
-                            is SearchHit.Shortcut -> ShortcutRow(hit, icons, onLaunch = { onLaunchHit(hit) })
-                        }
-                    }
-                    if (state.hiddenLocked) item(key = "unlock-hidden") { UnlockHiddenRow(onUnlockHidden) }
-                }
+                SearchResultList(
+                    results = state.results,
+                    icons = icons,
+                    onLaunchHit = onLaunchHit,
+                    onLongPress = onLongPress,
+                    contentPadding = bottom,
+                    modifier = Modifier.nestedScroll(swipeDown),
+                    onUnlockHidden = onUnlockHidden.takeIf { state.hiddenLocked },
+                )
             }
         }
     }

@@ -43,7 +43,9 @@ class HomeViewModel @Inject constructor(
         media.state,
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
-    ).combine(quiet.state, ::quietHomeRows).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+    )
+        .combine(quiet.state, ::quietHomeRows)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     val glance: StateFlow<Glance> = combine(time.now, time.nextAlarm, ::Glance)
         .stateIn(

@@ -33,6 +33,8 @@ import com.wander.mono.R
 import com.wander.mono.ui.components.rememberCredentialPrompt
 import com.wander.mono.ui.drawer.DrawerScreen
 import com.wander.mono.ui.drawer.DrawerViewModel
+import com.wander.mono.ui.drawer.HitOutcome
+import com.wander.mono.ui.home.HomeLookViewModel
 import com.wander.mono.ui.home.HomeScreen
 import com.wander.mono.ui.home.HomeViewModel
 import com.wander.mono.ui.quiet.QuietDrawerGate
@@ -47,6 +49,7 @@ import com.wander.mono.ui.sheet.HomeSheet
 fun LauncherApp(
     launcher: LauncherViewModel = viewModel(),
     home: HomeViewModel = viewModel(),
+    homeLookModel: HomeLookViewModel = viewModel(),
     drawer: DrawerViewModel = viewModel(),
     sheet: AppSheetViewModel = viewModel(),
     quiet: QuietViewModel = viewModel(),
@@ -57,6 +60,7 @@ fun LauncherApp(
     val overlaysAnimate by launcher.overlaysAnimate.collectAsStateWithLifecycle()
     val rows by home.rows.collectAsStateWithLifecycle()
     val glance by home.glance.collectAsStateWithLifecycle()
+    val homeLook by homeLookModel.look.collectAsStateWithLifecycle()
     val query by drawer.query.collectAsStateWithLifecycle()
     val drawerState by drawer.state.collectAsStateWithLifecycle()
     val sheetState by sheet.state.collectAsStateWithLifecycle()
@@ -71,6 +75,14 @@ fun LauncherApp(
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val motion = MaterialTheme.motionScheme
+
+    val afterHit: (HitOutcome) -> Unit = { outcome ->
+        when (outcome) {
+            HitOutcome.Opened -> launcher.closeDrawer()
+            HitOutcome.OpenMonoSettings -> launcher.openSettings()
+            HitOutcome.Stayed -> Unit
+        }
+    }
 
     LaunchedEffect(launcher) { launcher.messages.collect { snackbar.showSnackbar(resources.getString(it)) } }
     LaunchedEffect(launcher) { launcher.scrollToTop.collect { homeList.animateScrollToItem(0) } }
@@ -89,6 +101,7 @@ fun LauncherApp(
         HomeScreen(
             rows = rows,
             glance = glance,
+            look = homeLook,
             listState = homeList,
             onLaunch = home::launch,
             onLongPress = { sheet.show(it.key) },
@@ -117,9 +130,9 @@ fun LauncherApp(
                     state = drawerState,
                     loadIcon = drawer::icon,
                     onQueryChange = drawer::setQuery,
-                    onSubmit = { if (drawer.launchTopResult()) launcher.closeDrawer() },
+                    onSubmit = { afterHit(drawer.launchTopResult()) },
                     onLaunchApp = { if (drawer.launch(it)) launcher.closeDrawer() },
-                    onLaunchHit = { if (drawer.launch(it)) launcher.closeDrawer() },
+                    onLaunchHit = { afterHit(drawer.launch(it)) },
                     onLongPress = { sheet.show(it.key) },
                     onClose = launcher::closeDrawer,
                     onOpenSettings = launcher::openSettings,

@@ -9,12 +9,15 @@ import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
+import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.IconCache
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.apps.ShortcutRepository
+import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.core.security.HiddenAppsLock
+import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.IconMode
@@ -43,6 +46,7 @@ class DrawerViewModel @Inject constructor(
     private val actions: AppActions,
     private val icons: IconCache,
     private val messages: UserMessages,
+    private val sources: SearchSources,
     private val hiddenLock: HiddenAppsLock,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
@@ -59,20 +63,32 @@ class DrawerViewModel @Inject constructor(
         }
     }
 
+    /** What search looks in besides the apps themselves. */
+    private val searchable = combine(shortcuts.all, sources.contacts(query), sources.pages()) { sc, people, pages ->
+        Searchable(sc, people, pages)
+    }
+
     private val hidden = combine(prefs.hidden, hiddenLock.revealed, ::HiddenApps)
 
     val state: StateFlow<DrawerUiState> = combine(
         entries,
         hidden,
-        shortcuts.all,
+        searchable,
         query,
         settings[IconSettings.Mode],
-    ) { all, hidden, sc, q, mode ->
+    ) { all, hidden, extra, q, mode ->
         val visible = all.filter { it.app.key !in hidden.keys }
         DrawerUiState(
             apps = visible,
             sections = sectionsOf(visible.map { it.app.label }),
-            results = AppSearch.search(q, hidden.searchableApps(all), hidden.searchableShortcuts(sc)),
+            results = SearchResults.assemble(
+                q,
+                hidden.searchableApps(all),
+                hidden.searchableShortcuts(extra.shortcuts),
+                extra.contacts,
+                extra.pages,
+                sources::webTarget,
+            ),
             iconMode = mode,
             hiddenLocked = hidden.locked,
         )
@@ -90,13 +106,25 @@ class DrawerViewModel @Inject constructor(
     /** True when the app opened, so the caller can close the drawer. */
     fun launch(app: LaunchableApp): Boolean = messages.report(actions.launch(app.key))
 
-    fun launch(hit: SearchHit): Boolean = when (hit) {
-        is SearchHit.App -> launch(hit.entry.app)
-        is SearchHit.Shortcut -> messages.report(actions.launchShortcut(hit.shortcut))
+    fun launch(hit: SearchHit): HitOutcome = when (hit) {
+        is SearchHit.App -> opened(launch(hit.entry.app))
+        is SearchHit.Shortcut -> opened(messages.report(actions.launchShortcut(hit.shortcut)))
+        is SearchHit.Calculation -> sources.copy(hit)
+        is SearchHit.Person -> sources.open(hit)
+        is SearchHit.Setting -> sources.open(hit)
+        is SearchHit.Web -> sources.open(hit)
     }
 
-    /** The keyboard's action key opens the best match. */
-    fun launchTopResult(): Boolean = state.value.results.firstOrNull()?.let(::launch) ?: false
+    /** The keyboard's action key does what tapping the top (highlighted) result does. */
+    fun launchTopResult(): HitOutcome = state.value.results.firstOrNull()?.let(::launch) ?: HitOutcome.Stayed
+
+    private fun opened(done: Boolean) = if (done) HitOutcome.Opened else HitOutcome.Stayed
+
+    private data class Searchable(
+        val shortcuts: List<AppShortcut>,
+        val contacts: List<Contact>,
+        val pages: List<SettingsPage>,
+    )
 
     fun unlockHidden() = hiddenLock.unlock()
 

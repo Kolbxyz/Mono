@@ -1,8 +1,5 @@
 package com.wander.mono.core.usage
 
-/** One of an app's activities coming to the front ([resumed]) or leaving it, at [time] ms. */
-data class ActivityMark(val activity: String, val resumed: Boolean, val time: Long)
-
 /**
  * How long the app had at least one activity in front between [start] and [end], from its
  * activity [marks] in time order. An activity that leaves the front before any came to it was
