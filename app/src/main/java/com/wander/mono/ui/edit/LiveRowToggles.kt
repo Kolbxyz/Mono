@@ -9,9 +9,6 @@ import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.data.LiveRowKind
 import com.wander.mono.data.LiveRowRef
 
-/** A live row switch under a favourite in edit mode. */
-data class LiveRowToggle(val row: LiveRowRef, val shown: Boolean)
-
 /**
  * The live row switches of each favourite: one per kind the app has right now ([available], real
  * data only) or that the user switched off (so it can be switched back on), in [LiveRowKind] order.

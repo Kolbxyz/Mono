@@ -31,9 +31,8 @@ class HomeEditing(
         val order = reorder.order
         if (!active && order == null) return all
         val apps = all.filterIsInstance<HomeRow.App>()
-        if (order == null) return apps
         val byKey = apps.associateBy { it.key }
-        return order.mapNotNull(byKey::get) + apps.filter { it.key !in order }
+        return order?.let { dragged -> dragged.mapNotNull(byKey::get) + apps.filter { it.key !in dragged } } ?: apps
     }
 
     /** Ends the drag and saves the new order. */

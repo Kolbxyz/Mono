@@ -13,20 +13,6 @@ import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.positionChange
 
-/** What a favourite row does with its gestures; read fresh on every event. */
-internal class FavoriteGestureCallbacks(
-    val editing: Boolean,
-    val onTap: () -> Unit,
-    /** The hold timeout passed: the moment for the pick-up haptic. */
-    val onHeld: () -> Unit,
-    /** Held and let go without moving, outside edit mode: the row's options. */
-    val onHold: () -> Unit,
-    /** Held: the row lifts, entering edit mode first when needed. */
-    val onLift: () -> Unit,
-    val onDrag: (Float) -> Unit,
-    val onDrop: () -> Unit,
-)
-
 /**
  * Tap, hold, and hold-then-drag on one favourite. A tap launches; holding then letting go opens
  * its options; holding then moving (or just holding, in edit mode) lifts it and drags it. A drag
@@ -97,17 +83,20 @@ private suspend fun AwaitPointerEventScope.awaitMoveAfterHold(
     callbacks: State<FavoriteGestureCallbacks>,
 ): Float? {
     var total = Offset.Zero
-    while (true) {
-        val change = awaitPointerEvent().changes.firstOrNull { it.id == id } ?: return null
-        if (!change.pressed) {
-            change.consume()
-            callbacks.value.onHold()
-            return null
+    var released = false
+    while (!released && total.getDistance() <= viewConfiguration.touchSlop) {
+        val change = awaitPointerEvent().changes.firstOrNull { it.id == id }
+        change?.consume()
+        when {
+            change == null -> released = true
+            !change.pressed -> {
+                released = true
+                callbacks.value.onHold()
+            }
+            else -> total += change.positionChange()
         }
-        total += change.positionChange()
-        change.consume()
-        if (total.getDistance() > viewConfiguration.touchSlop) return total.y
     }
+    return if (released) null else total.y
 }
 
 private suspend fun AwaitPointerEventScope.dragUntilUp(id: PointerId, callbacks: State<FavoriteGestureCallbacks>) {

@@ -25,8 +25,7 @@ data class LiveRowRef(val app: AppKey, val kind: LiveRowKind) {
 
         fun decode(encoded: String): LiveRowRef? {
             val kind = LiveRowKind.entries.firstOrNull { encoded.startsWith(it.stored + SEPARATOR) } ?: return null
-            val app = AppKey.decode(encoded.substring(kind.stored.length + 1)) ?: return null
-            return LiveRowRef(app, kind)
+            return AppKey.decode(encoded.substring(kind.stored.length + 1))?.let { LiveRowRef(it, kind) }
         }
     }
 }

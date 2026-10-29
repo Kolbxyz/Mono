@@ -39,15 +39,21 @@ class ReorderState(private val list: LazyListState) {
     /** Follows the finger by [dy]; true when the row took a new slot. */
     fun dragBy(dy: Float): Boolean {
         dragged += dy
-        val key = dragging ?: return false
-        val current = order ?: return false
-        val info = itemInfo(key) ?: return false
-        val middle = (startOffset + dragged + info.size / 2f).toInt()
-        val target = list.layoutInfo.visibleItemsInfo.firstOrNull {
-            it.key != key && it.key in current && middle in it.offset until it.offset + it.size
-        } ?: return false
-        order = current.moved(key, current.indexOf(target.key) - current.indexOf(key))
+        val key = dragging
+        val current = order
+        val target = if (key != null && current != null) slotUnder(key, current) else null
+        if (key == null || current == null || target == null) return false
+        order = current.moved(key, current.indexOf(target) - current.indexOf(key))
         return true
+    }
+
+    /** The key of the sibling whose slot the dragged row's middle is over, if any. */
+    private fun slotUnder(key: Any, current: List<Any>): Any? {
+        val info = itemInfo(key) ?: return null
+        val middle = (startOffset + dragged + info.size / 2f).toInt()
+        return list.layoutInfo.visibleItemsInfo.firstOrNull {
+            it.key != key && it.key in current && middle in it.offset until it.offset + it.size
+        }?.key
     }
 
     /** How far the dragged row reaches past the top (negative) or bottom of the viewport. */
