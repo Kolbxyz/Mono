@@ -1,7 +1,7 @@
 # Sibling-app contract: Wanda and Phalanx ↔ Mono
 
-Status: **proposal**. Nothing on the sibling side is implemented; Mono's side is not implemented
-either. This document fixes names and shapes so the three apps can be changed independently.
+Status: **Mono side implemented** (§5); Wanda and Phalanx sides are still proposals. This document
+fixes names and shapes so the three apps can be changed independently.
 
 Spec reference: `ui-ux-spec.md` §4.4 ("Sibling-app contract") and the *Later* table.
 
@@ -163,16 +163,33 @@ Opening a room: Mono launches Phalanx's launcher activity with
    `name` set to an empty string; on logout, delete the snapshot and `notifyChange`.
 6. Tests: snapshot mapping (filtering, ordering, muted rooms kept).
 
-## 5. Mono side (when implemented)
+## 5. Mono side (implemented)
 
-- `core/siblings/SiblingProviders.kt`: resolves each authority (`resolveContentProvider`) and checks
-  `checkSelfPermission(SIBLING_READ)`; absent or denied → the feature is off, no error.
-- `<queries><provider android:authorities="com.wander.android.mono" />...` for package visibility.
-- `core/siblings/WandaUpNext.kt`: `callbackFlow` with a `ContentObserver`; when present, the
-  now-playing card prefers it over `MediaController.queue` (shuffle-correct).
-- `core/siblings/WandaSearch.kt`: drawer search source, results launched by `play_uri`.
-- `core/siblings/PhalanxRooms.kt`: unread row under Phalanx with per-room counts, muted rooms dimmed.
-- Queries run on `Dispatchers.IO`, only while home is started (same `WhileSubscribed` as media).
+- Manifest: the `<permission>` and `<uses-permission>` of §2.1, and one
+  `<queries><provider android:authorities="…" />` per authority of §2.2 (release and debug).
+- `core/siblings/SiblingProviders.kt`: checks `checkSelfPermission(SIBLING_READ)` and resolves the
+  first authority that answers (`resolveContentProvider`), release package before debug. Reads run on
+  `Dispatchers.IO`; a `SecurityException` (other signing key) means "absent". Observed paths re-read
+  on `ContentObserver.onChange`, conflated; nothing is polled.
+- `core/siblings/SiblingRows.kt`: cursor rows to models by column name. Rows missing a required
+  column (`queue_id`/`title`; `track_id`/`title`/`play_uri`; `room_id`) are dropped.
+- `core/siblings/WandaUpNext.kt`: used **only when the playing session is Wanda and its own queue
+  gives no up-next** (the session queue still wins when it has one). Only the Wanda build that is
+  playing is asked. Tapping an item still calls `skipToQueueItem(queue_id)`.
+- `core/siblings/WandaSearch.kt`: drawer search asks `search?q=&limit=20` per query; at most 3
+  songs are shown, in Wanda's order, after contacts and before settings pages. Tapping sends
+  `ACTION_VIEW` on `play_uri` with `setPackage(<the Wanda build that answered>)`.
+- `core/siblings/PhalanxRooms.kt`: per-room counts go on Phalanx's **conversation shortcut search
+  hits** (Phalanx's shortcut id is the room id), replacing the notification-derived count for that
+  package in Mono's own profile. A room absent from the cursor has no badge; `is_marked_unread`
+  without a count is a dot. No separate unread row and no dimming of muted rooms (not needed for
+  a badge). When `snapshot_at_ms` is older than a day, Mono ignores the snapshot and falls back to
+  notification counts.
+- All flows are collected only while home or the drawer is watched (`WhileSubscribed`), and the
+  provider is re-resolved each time collection starts, so installing a sibling is picked up the next
+  time home is shown.
+- Debug signing is unchanged: Mono debug uses AGP's per-machine key, so the contract is absent in
+  debug unless that key matches the sibling's.
 
 ## 6. Security notes
 

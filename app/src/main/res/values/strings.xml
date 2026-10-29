@@ -272,4 +272,10 @@
     <string name="error_settings_missing">This settings page is not available on this phone</string>
     <string name="error_no_browser">No browser can search the web</string>
     <string name="error_no_contacts_app">No app can show this contact</string>
+
+    <!-- Sibling apps (Wanda, Phalanx) -->
+    <string name="sibling_permission_label">read what Mono shows from its sibling apps</string>
+    <string name="search_track">Song in Wanda</string>
+    <string name="search_track_by">%1$s · %2$s</string>
+    <string name="error_wanda_missing">Wanda can\'t open this song</string>
 </resources>

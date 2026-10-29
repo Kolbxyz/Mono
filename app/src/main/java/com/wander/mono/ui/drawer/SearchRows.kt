@@ -53,6 +53,21 @@ fun PersonRow(hit: SearchHit.Person, icons: AppIcons, onOpen: () -> Unit, modifi
     )
 }
 
+/** A song in Wanda; the subtitle says so, with the artist when Wanda knows it. */
+@Composable
+fun TrackRow(hit: SearchHit.Track, icons: AppIcons, onPlay: () -> Unit, modifier: Modifier = Modifier) {
+    val kind = stringResource(R.string.search_track)
+    SymbolRow(
+        symbol = R.drawable.sym_music_note,
+        title = hit.label,
+        subtitle = hit.track.artist?.let { stringResource(R.string.search_track_by, kind, it) } ?: kind,
+        clickLabel = R.string.media_play,
+        icons = icons,
+        onClick = onPlay,
+        modifier = modifier,
+    )
+}
+
 @Composable
 fun SettingRow(hit: SearchHit.Setting, icons: AppIcons, onOpen: () -> Unit, modifier: Modifier = Modifier) {
     SymbolRow(
