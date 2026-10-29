@@ -75,6 +75,9 @@
     <string name="settings_home_look">Home</string>
     <string name="settings_text_shadow">Text shadow</string>
     <string name="settings_text_shadow_summary">Shadow under home text instead of dimming the wallpaper</string>
+    <string name="settings_accessibility">Accessibility</string>
+    <string name="settings_high_contrast_text">High contrast text</string>
+    <string name="settings_high_contrast_text_summary">Stronger backdrop behind home text and no dimmed lines. Also on when Android asks for more contrast.</string>
     <string name="settings_icons">Icons</string>
     <string name="settings_icon_mode">App icons</string>
     <string name="settings_icon_colour">Full colour</string>
