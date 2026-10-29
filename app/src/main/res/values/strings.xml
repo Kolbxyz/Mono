@@ -32,6 +32,10 @@
     <string name="media_expand">Show controls</string>
     <string name="media_collapse">Hide controls</string>
     <string name="media_progress">Playback position</string>
+    <string name="media_up_next">Up next</string>
+    <string name="media_play_this">Play this</string>
+    <string name="media_output_remote">Another device</string>
+    <string name="media_output_switch">Switch output</string>
 
     <!-- Badges: the number, then the same number capped (shown as 99+) -->
     <string name="badge_count">%1$d</string>
@@ -103,6 +107,36 @@
     <string name="settings_badges">Notification badges</string>
     <string name="settings_badge_counts">Show unread count</string>
     <string name="settings_badge_counts_summary">Off shows a dot instead</string>
+
+    <!-- Notification previews -->
+    <string name="settings_previews">Notification previews</string>
+    <string name="settings_previews_show">Show notification previews</string>
+    <string name="settings_previews_show_summary">The latest notification under each favourite. What apps hide from the lock screen stays hidden.</string>
+    <string name="preview_hidden">New notification</string>
+    <string name="preview_reply">Reply</string>
+    <string name="preview_reply_hint">Message</string>
+    <string name="preview_send">Send</string>
+    <string name="preview_dismiss">Dismiss</string>
+    <string name="preview_open">Open notification</string>
+    <plurals name="state_unread_messages">
+        <item quantity="one">%1$d unread message</item>
+        <item quantity="other">%1$d unread messages</item>
+    </plurals>
+    <!-- Calendar -->
+    <string name="home_next_event">%1$s · %2$s</string>
+    <string name="home_event_now">now</string>
+    <plurals name="home_event_in_minutes">
+        <item quantity="one">in %1$d min</item>
+        <item quantity="other">in %1$d min</item>
+    </plurals>
+    <string name="calendar_all_day">All day</string>
+    <string name="calendar_now">Now</string>
+    <string name="calendar_untitled">(No title)</string>
+    <string name="action_open_event">Open event</string>
+    <string name="settings_calendar">Calendar</string>
+    <string name="settings_calendar_show">Show upcoming events</string>
+    <string name="settings_calendar_summary">Your next events under the clock and in the list. Needs calendar access; Mono only reads them and nothing leaves your phone.</string>
+    <string name="settings_calendar_denied">Calendar access was refused. Tap to open App info and allow Calendar there.</string>
 
     <!-- Search results beyond apps -->
     <string name="search_calculator_result">= %1$s</string>
@@ -178,10 +212,12 @@
     <string name="rename_cancel">Cancel</string>
 
     <!-- Errors -->
+    <string name="error_notification_gone">This notification is no longer available</string>
     <string name="error_app_missing">This app is no longer installed</string>
     <string name="error_not_allowed">Android did not allow opening this</string>
     <string name="error_profile_locked">The work profile is paused or locked</string>
     <string name="error_profile_gone">This profile no longer exists</string>
+    <string name="error_calendar_missing">No app can open this event</string>
     <string name="error_settings_missing">This settings page is not available on this phone</string>
     <string name="error_no_browser">No browser can search the web</string>
     <string name="error_no_contacts_app">No app can show this contact</string>
