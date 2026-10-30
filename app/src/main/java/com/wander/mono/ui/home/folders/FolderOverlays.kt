@@ -4,7 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -51,7 +50,7 @@ private fun FolderSheet(folder: HomeFolder, folders: FolderViewModel) {
                 Box(
                     Modifier
                         .size(48.dp)
-                        .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(percent = 30)),
+                        .background(MaterialTheme.colorScheme.secondaryContainer, folderShape()),
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
