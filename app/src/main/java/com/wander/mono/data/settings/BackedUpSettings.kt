@@ -35,6 +35,8 @@ val backedUpSettings: List<Setting<*>> = listOf(
     SearchSettings.Shortcuts,
     SearchSettings.SettingsPages,
     SearchSettings.QuickAnswers,
+    SearchSettings.Notifications,
+    SearchSettings.RememberRecent,
     QuietSettings.LinkDoNotDisturb,
     HiddenAppSettings.Lock,
     UsageSettings.ShowInSheet,
