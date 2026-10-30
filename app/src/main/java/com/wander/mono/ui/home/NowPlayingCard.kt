@@ -64,7 +64,12 @@ fun NowPlayingCard(
     val tint = media.artColor?.let { lerp(scheme.surfaceContainerHigh, Color(it), ART_TINT) }
         ?: scheme.surfaceContainerHigh
     val container by animateColorAsState(tint, motion.defaultEffectsSpec(), label = "art-tint")
-    val content = mostContrasting(container, scheme.onSurface, scheme.inverseOnSurface)
+    // Chosen for the tint it goes to and eased alongside it, so the text never flips in one frame.
+    val content by animateColorAsState(
+        mostContrasting(tint, scheme.onSurface, scheme.inverseOnSurface),
+        motion.defaultEffectsSpec(),
+        label = "art-content",
+    )
     val corner by animateDpAsState(
         if (expanded) EXPANDED_CORNER else COLLAPSED_CORNER,
         motion.defaultSpatialSpec(),

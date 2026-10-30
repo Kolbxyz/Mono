@@ -25,19 +25,20 @@ fun Modifier.homeScrim(color: Color, headerBottom: () -> Float, listTop: () -> F
 /**
  * Gradient stops as (fraction of [height], strength 0..1). The top holds full strength over the
  * upper half of the header, then eases to 0 by [reach] below [headerBottom]; the bottom rises from 0
- * at [reach] above [listTop] to full at the screen's bottom edge. Full everywhere when the gap
- * between them is too short for both.
+ * at [reach] above [listTop] to full at the screen's bottom edge. As the gap between them closes
+ * below room for both falloffs, a floor rises with it, reaching full everywhere when the content
+ * meets: the scrim never jumps from one layout to the next.
  */
 internal fun scrimStops(height: Float, headerBottom: Float, listTop: Float, reach: Float): List<Pair<Float, Float>> {
-    // No room for both falloffs: the content fills the screen, so it all needs the scrim.
-    if (height <= 0f || listTop - headerBottom < 2 * reach) return listOf(0f to 1f, 1f to 1f)
+    if (height <= 0f) return listOf(0f to 1f, 1f to 1f)
     val topHold = headerBottom * TOP_HOLD
     val topEnd = headerBottom + reach
     val bottomStart = listTop - reach
+    val floor = if (reach > 0f) (1f - (listTop - headerBottom) / (2 * reach)).coerceIn(0f, 1f) else 0f
     fun strength(y: Float): Float {
         val top = 1f - smoothstep(topHold, topEnd, y)
         val bottom = smoothstep(bottomStart, height, y)
-        return maxOf(top, bottom)
+        return maxOf(top, bottom, floor)
     }
     return (0..STEPS).map { step ->
         val fraction = step / STEPS.toFloat()
