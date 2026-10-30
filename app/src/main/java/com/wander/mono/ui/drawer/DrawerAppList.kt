@@ -40,7 +40,8 @@ import kotlinx.coroutines.launch
  * Category chips unfold above it and a floating toolbar sets it up from below, getting out of the
  * way as the list scrolls on. [listState] is the caller's, so the list keeps its place while search
  * results show instead. Dragging up once the list has nowhere further to go runs [onPullUp].
- * TalkBack gets a "Jump to" action per letter on the list itself.
+ * TalkBack gets a "Jump to" action per letter on the list itself. Rows rise in as the list first
+ * shows, and its ends fade out while there is more to scroll to; [railScrub] drives the rail from home.
  */
 @Composable
 internal fun DrawerAppList(
@@ -55,6 +56,7 @@ internal fun DrawerAppList(
     listState: LazyListState,
     onPullUp: () -> Unit,
     modifier: Modifier = Modifier,
+    railScrub: RailScrub? = null,
 ) {
     val scope = rememberCoroutineScope()
     val choices = state.controls.choices
@@ -73,6 +75,7 @@ internal fun DrawerAppList(
         }
     }
     val searchPull = rememberSearchPullConnection(onPullUp)
+    val entrance = rememberListEntrance()
     val toolbarScroll = rememberToolbarScroll()
     // Always there while the list cannot scroll back, so it is never lost on a short list.
     val toolbarShown by remember(listState, toolbarScroll) {
@@ -96,6 +99,7 @@ internal fun DrawerAppList(
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
+                        .listFadingEdges(listState)
                         .nestedScroll(searchPull)
                         .nestedScroll(toolbarScroll)
                         .semantics { customActions = jumpActions },
@@ -105,9 +109,7 @@ internal fun DrawerAppList(
                         bottom = bottom.calculateBottomPadding() + DrawerToolbarClearance + 16.dp,
                     ),
                 ) {
-                    items(state.groups, key = { it.key }) { group ->
-                        AppGroupItem(group, icons, onLaunchApp, onLongPress, schemeAnimateItem())
-                    }
+                    appGroupItems(state.groups, icons, listState, entrance, onLaunchApp, onLongPress)
                     // After the groups, so the rail's indexes still match the list's.
                     items(state.work, key = { "work:${it.profile.serial}" }) { section ->
                         WorkSectionCard(section, icons, onSetWorkPaused, onLaunchApp, onLongPress, schemeAnimateItem())
@@ -158,6 +160,7 @@ internal fun DrawerAppList(
                             .padding(bottom = navigationBottom + 8.dp, top = 8.dp),
                         atStart = atStart,
                         lock = lock,
+                        scrub = railScrub,
                     )
                 }
             }
