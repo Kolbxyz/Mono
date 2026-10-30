@@ -20,9 +20,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.apps.PrivateSpaceState
 import com.wander.mono.core.apps.WorkProfile
@@ -35,7 +40,8 @@ import kotlinx.coroutines.launch
  * The main profile's apps under their letters, with the letter rail, then a card per work profile
  * and the private space at the very bottom; no private space without [privateActions] (while
  * picking an app for home, where private apps never go). [listState] is the caller's, so the list
- * keeps its place while search results show instead.
+ * keeps its place while search results show instead. Dragging up once the list has nowhere further
+ * to go runs [onPullUp]. TalkBack gets a "Jump to" action per letter on the list itself.
  */
 @Composable
 internal fun DrawerAppList(
@@ -47,18 +53,33 @@ internal fun DrawerAppList(
     onLongPress: (LaunchableApp) -> Unit,
     bottom: PaddingValues,
     listState: LazyListState,
+    onPullUp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     // One list item per letter, so the rail's sections and the list's items share their indexes.
     val groups = remember(state.apps, state.sections) { letterGroups(state.apps, state.sections) }
+    val resources = LocalResources.current
+    val jumpActions = remember(state.sections, resources, listState) {
+        state.sections.mapIndexed { item, section ->
+            CustomAccessibilityAction(resources.getString(R.string.drawer_jump_to_letter, section.letter)) {
+                scope.launch { listState.scrollToItem(item) }
+                true
+            }
+        }
+    }
+    val searchPull = rememberSearchPullConnection(onPullUp)
+    val atStart = state.railAtStart
     Box(modifier.fillMaxSize()) {
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .nestedScroll(searchPull)
+                .semantics { customActions = jumpActions },
             contentPadding = PaddingValues(
-                start = 16.dp,
-                end = RAIL_WIDTH,
+                start = if (atStart) RAIL_WIDTH else 16.dp,
+                end = if (atStart) 16.dp else RAIL_WIDTH,
                 bottom = bottom.calculateBottomPadding() + 16.dp,
             ),
         ) {
@@ -103,18 +124,24 @@ internal fun DrawerAppList(
                 }
             }
         }
-        val current by remember(listState) { derivedStateOf { listState.firstVisibleItemIndex } }
+        val sectionCount = state.sections.size
+        val current by remember(listState, sectionCount) {
+            derivedStateOf {
+                val first = listState.firstVisibleItemIndex
+                RailMath.railIndexFor(first, listState.firstVisibleItemScrollOffset, sectionCount)
+            }
+        }
         // Not the keyboard: the rail would re-measure, and its letters reflow, every frame it slides.
         val navigationBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         LetterRail(
             sections = state.sections,
-            current = current.coerceAtMost(state.sections.lastIndex.coerceAtLeast(0)),
-            onSelect = { section ->
-                scope.launch { listState.scrollToItem(state.sections.indexOf(section).coerceAtLeast(0)) }
-            },
+            current = current,
+            // ★ is the top of the list: the drawer has no favourites of its own to jump to.
+            onSelect = { entry -> scope.launch { listState.scrollToItem(RailMath.listItemFor(entry)) } },
             modifier = Modifier
-                .align(Alignment.CenterEnd)
+                .align(if (atStart) Alignment.CenterStart else Alignment.CenterEnd)
                 .padding(bottom = navigationBottom + 8.dp, top = 8.dp),
+            atStart = atStart,
         )
     }
 }

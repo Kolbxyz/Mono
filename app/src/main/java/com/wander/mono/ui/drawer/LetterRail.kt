@@ -25,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -34,46 +35,45 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.ProgressBarRangeInfo
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.progressBarRangeInfo
-import androidx.compose.ui.semantics.setProgress
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.ui.theme.LocalReducedMotion
-import kotlin.math.roundToInt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * The fast-scroll rail on the end edge. Sliding a finger along it jumps the list to each letter,
- * shows the letter in a bubble and ticks once per letter. Sliding the finger off the rail toward the
- * list bows the letters around it out in a wave that follows the finger, so it can scrub from
- * wherever the thumb rests. With reduced motion the wave stays flat and only the letter under the
- * finger lights up.
- * TalkBack sees one adjustable control: swiping up or down moves to the next or previous letter.
+ * The fast-scroll rail, on the end edge or, [atStart], the start edge: ★ for the top of the list,
+ * then [sections]' letters. Sliding a finger along it jumps the list to each entry ([onSelect] takes
+ * the rail index; [current] is one too), shows the entry in a bubble and ticks once per entry.
+ * Sliding the finger off the rail toward the list bows the letters around it out in a wave that
+ * follows the finger, so it can scrub from wherever the thumb rests; wave and bubble face the list
+ * whichever edge the rail is on. With reduced motion the wave stays flat and only the letter under
+ * the finger lights up.
+ * TalkBack sees one adjustable control: swiping up or down moves to the next or previous entry.
  */
 @Composable
 fun LetterRail(
     sections: List<Section>,
     current: Int,
-    onSelect: (Section) -> Unit,
+    onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    atStart: Boolean = false,
 ) {
     val view = LocalView.current
     val motion = MaterialTheme.motionScheme
     val reducedMotion = LocalReducedMotion.current
-    val mirror = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
+    val mirror = RailMath.mirror(rtl = LocalLayoutDirection.current == LayoutDirection.Rtl, atStart = atStart)
+    val top = stringResource(R.string.drawer_rail_top)
+    val topSpoken = stringResource(R.string.drawer_rail_top_spoken)
+    val letters = remember(sections, top) { listOf(top) + sections.map { it.letter } }
     val bowLimit = with(LocalDensity.current) { WAVE_AMPLITUDE.toPx() }
     val pressBow = with(LocalDensity.current) { PRESS_BOW.toPx() }
     val scope = rememberCoroutineScope()
     // A drawn letter needs one labelMedium line, at the user's font scale.
     val minSlot = with(LocalDensity.current) { MaterialTheme.typography.labelMedium.lineHeight.toPx() }
-    val currentSections by rememberUpdatedState(sections)
+    val currentLetters by rememberUpdatedState(letters)
     val currentOnSelect by rememberUpdatedState(onSelect)
     // Read by the long-lived pointer handler, so it sees a changed setting or layout direction.
     val currentMirror by rememberUpdatedState(mirror)
@@ -99,37 +99,22 @@ fun LetterRail(
 
     fun follow(y: Float) {
         fingerY = y
-        val index = RailMath.letterAt(y, currentLettersTop, lettersHeight.toFloat(), currentSections.size)
+        val index = RailMath.letterAt(y, currentLettersTop, lettersHeight.toFloat(), currentLetters.size)
         if (index < 0 || index == active) return
         active = index
-        bubbleLetter = currentSections[index].letter
+        bubbleLetter = currentLetters[index]
         view.performHapticFeedback(LETTER_TICK)
-        currentOnSelect(currentSections[index])
+        currentOnSelect(index)
     }
 
     val railLabel = stringResource(R.string.drawer_rail)
-    val currentLetter = sections.getOrNull(current)?.letter.orEmpty()
+    val spoken = remember(letters, topSpoken) { listOf(topSpoken) + letters.drop(1) }
     Box(
         modifier
             .fillMaxHeight()
             .width(RAIL_WIDTH)
             .onSizeChanged { height = it.height }
-            .clearAndSetSemantics {
-                contentDescription = railLabel
-                stateDescription = currentLetter
-                if (sections.size > 1) {
-                    progressBarRangeInfo = ProgressBarRangeInfo(
-                        current = current.toFloat(),
-                        range = 0f..sections.lastIndex.toFloat(),
-                        steps = sections.size - 2,
-                    )
-                    setProgress { target ->
-                        val index = target.roundToInt().coerceIn(0, sections.lastIndex)
-                        if (index != current) onSelect(sections[index])
-                        true
-                    }
-                }
-            }
+            .railSemantics(railLabel, spoken, current, onSelect)
             .pointerInput(Unit) {
                 awaitEachGesture {
                     val down = awaitFirstDown()
@@ -159,7 +144,7 @@ fun LetterRail(
             },
     ) {
         // A short rail (landscape) draws every other or third letter; all of them still scrub.
-        val stride = RailMath.labelStride(lettersHeight.toFloat(), sections.size, minSlot)
+        val stride = RailMath.labelStride(lettersHeight.toFloat(), letters.size, minSlot)
         // The letters sit on a slim tonal pill, so the rail reads as one control.
         Column(
             Modifier
@@ -170,12 +155,12 @@ fun LetterRail(
                 .padding(vertical = TRACK_PADDING)
                 .onSizeChanged { lettersHeight = it.height },
         ) {
-            sections.forEachIndexed { index, section ->
+            letters.forEachIndexed { index, letter ->
                 val lit = scrubbing && index == active
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     if (lit || index % stride == 0) {
                         Text(
-                            section.letter,
+                            letter,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = if (lit) FontWeight.Bold else null,
                             color = if (lit) {
@@ -185,7 +170,7 @@ fun LetterRail(
                             },
                             modifier = Modifier.graphicsLayer {
                                 val slot =
-                                    RailMath.fingerSlot(fingerY, lettersTop, lettersHeight.toFloat(), sections.size)
+                                    RailMath.fingerSlot(fingerY, lettersTop, lettersHeight.toFloat(), letters.size)
                                 val bow = pressBow * pressed + dragBow
                                 translationX = -mirror * RailMath.letterOffset(index, slot, bow)
                             },
@@ -200,12 +185,13 @@ fun LetterRail(
             fingerY = { fingerY },
             railHeight = { height.toFloat() },
             bow = { pressBow * pressed + dragBow },
-            modifier = Modifier.align(Alignment.TopStart),
+            mirror = mirror,
+            modifier = Modifier.align(if (mirror > 0f) AbsoluteAlignment.TopLeft else AbsoluteAlignment.TopRight),
         )
     }
 }
 
-/** Width of the rail's touch area, which the list leaves free at its end. */
+/** Width of the rail's touch area, which the list leaves free on the rail's side. */
 internal val RAIL_WIDTH = 48.dp
 
 /** Space on each side of the rail's pill, inside its touch area. */
