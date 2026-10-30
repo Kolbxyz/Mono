@@ -67,8 +67,8 @@ fun DrawerLayer(
 }
 
 /**
- * Home behind the drawer fades out as the drawer rises; applied to all of home, scrim included, so
- * the wallpaper is never left bare at its edges.
+ * Home behind the drawer fades out as the drawer rises; applied to all of home and to its scrim's
+ * layer alike, so the wallpaper is never left bare at its edges.
  */
 fun Modifier.fadeBehindDrawer(motion: DrawerMotion): Modifier = graphicsLayer { alpha = 1f - motion.shown }
 

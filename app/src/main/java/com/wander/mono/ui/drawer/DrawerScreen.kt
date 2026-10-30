@@ -48,9 +48,8 @@ import com.wander.mono.ui.theme.LocalHighContrast
  * focus, [recentSearches] show under it as chips; contacts in the results offer [onReach]'s actions.
  * Drawn on the background the user chose, its blur following how far the drawer is [revealed]. With
  * [focusSearch] (opened from home's search bar or a search gesture), or on every opening when the
- * user asked for the keyboard on open, the search field takes focus and the keyboard opens; so does
- * a second swipe up the list. Once no longer [open], the keyboard goes. Dragging it closed is handled
- * by its container.
+ * user asked for the keyboard on open, the search field takes focus and the keyboard opens; a swipe
+ * never does. Once no longer [open], the keyboard goes. Dragging it closed is handled by its container.
  */
 @Composable
 fun DrawerScreen(
@@ -152,10 +151,6 @@ fun DrawerScreen(
                         onLongPress,
                         bottom,
                         appListState,
-                        onPullUp = {
-                            searchFocus.requestFocus()
-                            keyboard?.show()
-                        },
                     )
                 } else {
                     SearchResultList(

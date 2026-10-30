@@ -89,7 +89,8 @@ private fun windowBlur(fullBlur: Dp, revealed: () -> Float): Boolean {
     val window: Window = LocalActivity.current?.window ?: return false
     val fullRadius = with(LocalDensity.current) { fullBlur.roundToPx() }
     var enabled by remember { mutableStateOf(window.windowManager.isCrossWindowBlurEnabled) }
-    // Changes only at each of the few steps, not every frame of the drawer's motion.
+    // Changes only at each step, fine enough to read as a smooth ramp without a window update on
+    // every frame of the drawer's motion.
     val radius by remember(revealed, fullRadius) {
         derivedStateOf { steppedBlur(fullRadius, revealed(), BLUR_STEPS) }
     }
@@ -111,8 +112,8 @@ private val BLUR_RADIUS = 48.dp
 /** The soft blur: the wallpaper still reads as itself, only its detail goes. */
 private val SOFT_BLUR_RADIUS = 12.dp
 
-/** How many steps the blur takes from none to its full radius as the drawer opens. */
-private const val BLUR_STEPS = 4
+/** How many steps the blur takes from none to its full radius as the drawer opens: a few px each. */
+private const val BLUR_STEPS = 16
 
 /** The blur evens the wallpaper out, so text needs this share of the home scrim on top of it. */
 private const val BLUR_SCRIM = 0.6f
