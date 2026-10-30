@@ -10,8 +10,10 @@ internal class FavoriteGestureCallbacks(
     val onSwipeLeft: (() -> Unit)?,
     /** The hold timeout passed: the moment for the pick-up haptic. */
     val onHeld: () -> Unit,
-    /** Held and let go without moving, outside edit mode: the row's options. */
+    /** The hold timeout passed outside edit mode: the row's options, open while the finger is down. */
     val onHold: () -> Unit,
+    /** The finger moved on after [onHold]: the options close at once and the row lifts into a drag. */
+    val onHoldCancelled: () -> Unit,
     /** Held: the row lifts, entering edit mode first when needed. */
     val onLift: () -> Unit,
     val onDrag: (Float) -> Unit,
