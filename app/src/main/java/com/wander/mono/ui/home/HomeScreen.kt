@@ -207,7 +207,7 @@ fun HomeScreen(
                 if (shell.reachable) header()
                 // Once, until the drawer is first opened; the empty state already says the same.
                 SwipeHint(
-                    hidden = editing.active || rows.orEmpty().none { it is HomeRow.App },
+                    hidden = editing.active || rows.orEmpty().none { it is HomeRow.App || it is HomeRow.Folder },
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
                 // In edit mode the floating toolbar takes this place; the dock folds away as the

@@ -101,7 +101,7 @@ class LivePublisher @Inject constructor(
             progress = progressIn(extras),
             chronometer = chronometer,
             icon = if (candidate.kind == LiveActivityKind.Navigation) turnIconOf(notification) else null,
-            actions = buttonsOf(notification),
+            actions = buttonsOf(notification, candidate.owner),
             contentIntent = notification.contentIntent,
         )
     }

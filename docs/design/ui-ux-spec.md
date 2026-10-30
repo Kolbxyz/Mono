@@ -343,7 +343,7 @@ Until it is known whether setup was done (a few ms on a cold start) nothing is d
 ### 7.9 Focus / quiet mode
 
 1. Toggle from: long-press clock → *Quiet mode*, or Settings, or a Quick Settings tile (`TileService`).
-2. Effects (shipped): home shows only the favourites chosen as quiet apps, without badges or previews; every other row is hidden rather than dimmed. Opening the drawer meets a gate ("Quiet mode is on") with *Show all apps* and *Back to home*, the friction Before-style launchers add (`ref:before-launcher/01`).
+2. Effects (shipped): home shows only the favourites chosen as quiet apps, without badges or previews, plus the playing media and a quiet app's running timer or directions (progress rows stay out); every other row is hidden rather than dimmed. Opening the drawer meets a gate ("Quiet mode is on") with *Show all apps* and *Back to home*, the friction Before-style launchers add (`ref:before-launcher/01`).
 3. Optional: link to an Android **Mode** via `NotificationManager.addAutomaticZenRule` (needs `ACCESS_NOTIFICATION_POLICY`), so DND and Mono's quiet mode switch together.
 4. Header shows a small "Quiet" chip; tap → end now / for 1 h.
 
@@ -439,3 +439,14 @@ Effort: **S** ≤ 1 day, **M** 2–4 days, **L** ≥ 1 week. Status (2026-10-30)
 | Contacts in search (`READ_CONTACTS`, opt-in) | M |
 | Tablet/foldable centred column & landscape | M |
 | Usage-aware long-press sheet (`UsageStatsManager`, opt-in, `ref:ratio/01`) | M |
+
+### Next — "Home, shaped"
+| Item | Effort |
+| --- | --- |
+| Folders on home: grouped favourites that open in place | M |
+| Live updates: ongoing timers, navigation and progress as rows under their app | L |
+| Routines: a daily window that brings chosen apps first | M |
+| App lock: launches and notifications of a locked app wait for the screen lock | M |
+| Wide layout: home and the drawer side by side, two-pane settings | M |
+| Reachable layout: clock low, everything in thumb reach | S |
+| Simple mode ("Large and simple"): bigger rows and text, only the clock and date | S |

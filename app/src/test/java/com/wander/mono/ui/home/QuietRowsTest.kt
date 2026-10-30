@@ -3,6 +3,9 @@ package com.wander.mono.ui.home
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.media.PlayingMedia
+import com.wander.mono.core.notifications.LiveActivity
+import com.wander.mono.core.notifications.LiveActivityKind
+import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.core.quiet.QuietState
 import com.wander.mono.ui.components.AppBadge
 import org.junit.Assert.assertEquals
@@ -26,12 +29,34 @@ class QuietRowsTest {
         output = null,
         collapseAtMs = null,
     )
+    private val timer = live(clock, LiveActivityKind.Timer)
+    private val download = live(clock, LiveActivityKind.Progress)
+    private val directions = live(phalanx, LiveActivityKind.Navigation)
     private val rows = listOf(
         HomeRow.App(phalanx, AppBadge.Count(3)),
+        directions,
         HomeRow.NowPlaying(media),
         HomeRow.App(clock, AppBadge.Dot),
+        timer,
+        download,
         HomeRow.ListenerPrompt,
         CalendarRow(emptyList(), at = 0),
+    )
+
+    private fun live(app: LaunchableApp, kind: LiveActivityKind) = LiveActivityRow(
+        app,
+        LiveActivity(
+            key = "${app.key.packageName}:$kind",
+            owner = PackageUser(app.key.packageName, app.key.userSerial),
+            kind = kind,
+            title = "Title",
+            text = null,
+            progress = null,
+            chronometer = null,
+            icon = null,
+            actions = emptyList(),
+            contentIntent = null,
+        ),
     )
 
     @Test
@@ -42,7 +67,13 @@ class QuietRowsTest {
     @Test
     fun `on keeps only quiet apps, without badges, and the playing media`() {
         val result = quietHomeRows(rows, QuietState(enabled = true, apps = setOf(phalanx.key)))
-        assertEquals(listOf(HomeRow.App(phalanx, AppBadge.None), HomeRow.NowPlaying(media)), result)
+        assertEquals(listOf(HomeRow.App(phalanx, AppBadge.None), directions, HomeRow.NowPlaying(media)), result)
+    }
+
+    @Test
+    fun `on keeps a kept app's timer and directions, never its progress`() {
+        val result = quietHomeRows(rows, QuietState(enabled = true, apps = setOf(clock.key)))
+        assertEquals(listOf(HomeRow.NowPlaying(media), HomeRow.App(clock, AppBadge.None), timer), result)
     }
 
     @Test

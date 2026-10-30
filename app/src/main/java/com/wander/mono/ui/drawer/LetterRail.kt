@@ -37,6 +37,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.ui.components.rememberMonoHaptics
 import com.wander.mono.ui.theme.LocalReducedMotion
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -64,6 +65,7 @@ fun LetterRail(
     lock: RailLock? = null,
 ) {
     val view = LocalView.current
+    val haptics = rememberMonoHaptics()
     val motion = MaterialTheme.motionScheme
     val reducedMotion = LocalReducedMotion.current
     val mirror = RailMath.mirror(rtl = LocalLayoutDirection.current == LayoutDirection.Rtl, atStart = atStart)
@@ -112,7 +114,7 @@ fun LetterRail(
         if (index < 0 || index == active) return false
         active = index
         bubbleLetter = currentLetters[index]
-        view.railTick(RailMath.tickFor(index, count, hasLock = currentLock != null))
+        haptics.railTick(RailMath.tickFor(index, count, hasLock = currentLock != null))
         currentOnSelect(index)
         return true
     }
@@ -125,7 +127,7 @@ fun LetterRail(
     val lockAction = rememberLockActions(lock)
     // Only a screen reader moves the rail through its semantics; it feels the same ticks.
     val spokenSelect: (Int) -> Unit = { index ->
-        if (view.screenReaderOn()) view.railTick(RailMath.tickFor(index, letters.size, hasLock = lock != null))
+        if (view.screenReaderOn()) haptics.railTick(RailMath.tickFor(index, letters.size, hasLock = lock != null))
         onSelect(index)
     }
     Box(
