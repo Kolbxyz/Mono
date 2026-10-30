@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 class SearchOpener @Inject constructor(
     private val actions: AppActions,
     private val clock: ClockActions,
-    private val sources: SearchSources,
+    private val sources: SourceOpener,
     private val handOffs: SearchHandOffs,
     private val memory: SearchMemory,
     private val messages: UserMessages,

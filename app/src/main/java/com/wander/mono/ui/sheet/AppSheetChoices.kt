@@ -19,7 +19,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
-import com.wander.mono.core.apps.AppKey
 import com.wander.mono.data.Routine
 import com.wander.mono.data.SwipeAction
 import com.wander.mono.data.UsageLimits
@@ -27,14 +26,6 @@ import com.wander.mono.ui.components.ActionButtonGroup
 import com.wander.mono.ui.components.ActionEmphasis
 import com.wander.mono.ui.components.MenuAction
 import com.wander.mono.ui.components.SheetDismiss
-
-/** What [AppSheetChoices] does with a choice; each slides the sheet away after. */
-internal class StructureChoices(
-    val onAddToFolder: (folderId: String, AppKey) -> Unit,
-    val onNewFolder: (AppKey) -> Unit,
-    val onSetSwipe: (AppKey, SwipeAction?) -> Unit,
-    val onSetLimit: (AppKey, Int?) -> Unit,
-)
 
 /**
  * One of the app sheet's choice pages, in place of its actions: a back button and title, then the

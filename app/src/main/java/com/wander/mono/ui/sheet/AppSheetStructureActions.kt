@@ -5,9 +5,6 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.ui.components.MenuAction
 import com.wander.mono.ui.components.SheetDismiss
 
-/** The choice pages some of the app sheet's actions open in place of the actions. */
-enum class AppSheetPage { Folder, SwipeLeft, DailyLimit }
-
 /**
  * The sheet's actions about home's structure, for a favourite only: its folder (add, or take out),
  * its swipe left, whether home shows its notifications and, while the nudge is on and the app is

@@ -131,7 +131,7 @@ internal fun DrawerAppList(
                     val current by remember(listState, sectionCount, lead) {
                         derivedStateOf {
                             val first = listState.firstVisibleItemIndex
-                            RailMath.railIndexFor(first, listState.firstVisibleItemScrollOffset, sectionCount, lead)
+                            RailEntries.railIndexFor(first, listState.firstVisibleItemScrollOffset, sectionCount, lead)
                         }
                     }
                     // The private space ends the rail: a lock to scrub to, or tap to lock and unlock.
@@ -149,7 +149,7 @@ internal fun DrawerAppList(
                             val item = if (lock != null && entry == sectionCount + 1) {
                                 privateItem
                             } else {
-                                RailMath.listItemFor(entry, lead)
+                                RailEntries.listItemFor(entry, lead)
                             }
                             scope.launch { listState.scrollToItem(item) }
                         },

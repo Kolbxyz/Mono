@@ -114,7 +114,7 @@ fun LetterRail(
         if (index < 0 || index == active) return false
         active = index
         bubbleLetter = currentLetters[index]
-        haptics.railTick(RailMath.tickFor(index, count, hasLock = currentLock != null))
+        haptics.railTick(RailEntries.tickFor(index, count, hasLock = currentLock != null))
         currentOnSelect(index)
         return true
     }
@@ -127,7 +127,7 @@ fun LetterRail(
     val lockAction = rememberLockActions(lock)
     // Only a screen reader moves the rail through its semantics; it feels the same ticks.
     val spokenSelect: (Int) -> Unit = { index ->
-        if (view.screenReaderOn()) haptics.railTick(RailMath.tickFor(index, letters.size, hasLock = lock != null))
+        if (view.screenReaderOn()) haptics.railTick(RailEntries.tickFor(index, letters.size, hasLock = lock != null))
         onSelect(index)
     }
     Box(

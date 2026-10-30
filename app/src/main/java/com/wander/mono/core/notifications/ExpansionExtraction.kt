@@ -56,18 +56,20 @@ private fun Notification.Action.isMarkRead(): Boolean =
 
 private fun messagesOf(notification: Notification): Pair<String?, List<PreviewMessage>> {
     val style = NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(notification)
-        ?: return plainMessagesOf(notification)
-    // A message without a sender is the user's own (a reply shown in the thread).
-    val messages = style.messages.mapNotNull { message ->
-        val text = message.text?.toString()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-        PreviewMessage((message.person ?: style.user).name?.toString(), text)
-    }.takeLast(MAX_MESSAGES)
-    if (messages.isEmpty()) return plainMessagesOf(notification)
+    val messages = style?.let(::lastMessagesOf).orEmpty()
+    if (style == null || messages.isEmpty()) return plainMessagesOf(notification)
     val title = style.conversationTitle?.toString()
         ?: notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()
         ?: messages.last().sender
     return title to messages
 }
+
+/** The last messages of [style]; a message without a sender is the user's own (a reply shown in the thread). */
+private fun lastMessagesOf(style: NotificationCompat.MessagingStyle): List<PreviewMessage> =
+    style.messages.mapNotNull { message ->
+        val text = message.text?.toString()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
+        PreviewMessage((message.person ?: style.user).name?.toString(), text)
+    }.takeLast(MAX_MESSAGES)
 
 private fun plainMessagesOf(notification: Notification): Pair<String?, List<PreviewMessage>> {
     val extras = notification.extras

@@ -2,9 +2,6 @@ package com.wander.mono.data.backup
 
 import com.wander.mono.core.apps.AppKey
 
-/** A field missing or of the wrong type; caught in [BackupFormat.decode] only. */
-internal class MalformedBackup : Exception()
-
 internal fun appKey(encoded: Any?): AppKey = AppKey.decode(string(encoded)) ?: throw MalformedBackup()
 
 internal fun string(value: Any?): String = value as? String ?: throw MalformedBackup()
