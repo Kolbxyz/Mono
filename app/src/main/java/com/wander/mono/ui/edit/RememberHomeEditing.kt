@@ -7,22 +7,29 @@ import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wander.mono.core.apps.AppKey
 
-/** Edit mode for home's [list]: on while [active], its edits going to [edit]. */
+/**
+ * Edit mode for home's [list]: on while [active], its edits going to [edit]. [onHoldCancelled]
+ * closes a favourite's options when its hold turns into a drag.
+ */
 @Composable
 fun rememberHomeEditing(
     active: Boolean,
     list: LazyListState,
     edit: EditHomeViewModel,
     onEnter: () -> Unit,
+    onHoldCancelled: () -> Unit,
     onRename: (AppKey) -> Unit,
 ): HomeEditing {
     val toggles by edit.toggles.collectAsStateWithLifecycle()
+    val nowPlaying by edit.nowPlaying.collectAsStateWithLifecycle()
     val reorder = remember(list) { ReorderState(list) }
     return HomeEditing(
         active = active,
         toggles = toggles,
+        nowPlaying = nowPlaying,
         reorder = reorder,
         onEnter = onEnter,
+        onHoldCancelled = onHoldCancelled,
         onArrange = edit::arrange,
         onMove = edit::move,
         onRemove = edit::remove,
@@ -30,5 +37,6 @@ fun rememberHomeEditing(
         onSetLiveRow = edit::setLiveRow,
         onResizeWidget = edit::resizeWidget,
         onRemoveWidget = edit::removeWidget,
+        onUnplaceNowPlaying = edit::unplaceNowPlaying,
     )
 }

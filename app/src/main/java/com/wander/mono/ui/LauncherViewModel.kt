@@ -12,8 +12,9 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * What is open over home (drawer, settings, home options; kept across rotation and process death)
- * and what a home press does. Settings opens over the drawer, so back from settings returns there.
+ * What is open over home (drawer, settings, home options, the clock and media sheets; kept across
+ * rotation and process death) and what a home press does. Settings opens over the drawer, so back
+ * from settings returns there.
  */
 @HiltViewModel
 class LauncherViewModel @Inject constructor(
@@ -26,6 +27,12 @@ class LauncherViewModel @Inject constructor(
     val focusSearch: StateFlow<Boolean> = savedState.getStateFlow(FOCUS_SEARCH, false)
     val settingsOpen: StateFlow<Boolean> = savedState.getStateFlow(SETTINGS_OPEN, false)
     val homeOptionsOpen: StateFlow<Boolean> = savedState.getStateFlow(HOME_OPTIONS_OPEN, false)
+
+    /** The clock's own sheet, from a long press on it: its face, live. */
+    val clockSheetOpen: StateFlow<Boolean> = savedState.getStateFlow(CLOCK_SHEET_OPEN, false)
+
+    /** The now-playing card's sheet, from a long press on it. */
+    val mediaSheetOpen: StateFlow<Boolean> = savedState.getStateFlow(MEDIA_SHEET_OPEN, false)
 
     /** Edit mode: favourites can be dragged, renamed, removed and their live rows switched. */
     val editing: StateFlow<Boolean> = savedState.getStateFlow(EDITING, false)
@@ -77,6 +84,14 @@ class LauncherViewModel @Inject constructor(
         savedState[HOME_OPTIONS_OPEN] = show
     }
 
+    fun showClockSheet(show: Boolean) {
+        savedState[CLOCK_SHEET_OPEN] = show
+    }
+
+    fun showMediaSheet(show: Boolean) {
+        savedState[MEDIA_SHEET_OPEN] = show
+    }
+
     /**
      * Mono left the screen: whatever brings it back (home, back from an app, recents) lands on home,
      * not on a drawer or settings left open. Closed without animation: Compose's frame clock is
@@ -101,6 +116,8 @@ class LauncherViewModel @Inject constructor(
         closeDrawer()
         closeSettings()
         showHomeOptions(false)
+        showClockSheet(false)
+        showMediaSheet(false)
         setEditing(false)
         if (alreadyOnHome && !wasOpen) mutableScrollToTop.tryEmit(Unit)
     }
@@ -115,6 +132,8 @@ class LauncherViewModel @Inject constructor(
         const val FOCUS_SEARCH = "focus_search"
         const val SETTINGS_OPEN = "settings_open"
         const val HOME_OPTIONS_OPEN = "home_options_open"
+        const val CLOCK_SHEET_OPEN = "clock_sheet_open"
+        const val MEDIA_SHEET_OPEN = "media_sheet_open"
         const val EDITING = "editing"
         const val PICKING_APP = "picking_app"
     }

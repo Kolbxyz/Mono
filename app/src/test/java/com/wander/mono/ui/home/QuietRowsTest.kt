@@ -27,7 +27,7 @@ class QuietRowsTest {
         progress = null,
         upNext = emptyList(),
         output = null,
-        collapseAtMs = null,
+        pausedAtMs = null,
     )
     private val timer = live(clock, LiveActivityKind.Timer)
     private val download = live(clock, LiveActivityKind.Progress)

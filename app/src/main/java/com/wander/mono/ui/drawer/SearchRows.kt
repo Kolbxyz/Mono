@@ -25,7 +25,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.core.apps.AppKey
 import com.wander.mono.data.settings.IconMode
+import com.wander.mono.ui.components.AppIcon
 import com.wander.mono.ui.components.AppIcons
 
 /** The calculator's answer, large; tapping copies it. */
@@ -43,18 +45,21 @@ fun CalculationRow(hit: SearchHit.Calculation, icons: AppIcons, onCopy: () -> Un
     )
 }
 
-/** A song in Wanda; the subtitle says so, with the artist when Wanda knows it. */
+/**
+ * A song in Wanda, under the Music heading: its artist underneath when Wanda knows it, and Wanda's
+ * own icon (Wanda's search gives no artwork), or a note when Wanda has no launcher entry.
+ */
 @Composable
 fun TrackRow(hit: SearchHit.Track, icons: AppIcons, onPlay: () -> Unit, modifier: Modifier = Modifier) {
-    val kind = stringResource(R.string.search_track)
     SymbolRow(
         symbol = R.drawable.sym_music_note,
         title = hit.label,
-        subtitle = hit.track.artist?.let { stringResource(R.string.search_track_by, kind, it) } ?: kind,
+        subtitle = hit.track.artist,
         clickLabel = R.string.media_play,
         icons = icons,
         onClick = onPlay,
         modifier = modifier,
+        app = hit.owner?.key,
     )
 }
 
@@ -116,21 +121,22 @@ fun ShareRow(hit: SearchHit.ShareText, icons: AppIcons, onShare: () -> Unit, mod
 }
 
 /**
- * A result that is not an app: a symbol where app rows have their icon (none in text-only mode,
- * like apps), a title with what the query [matched] highlighted, and what kind of result it is
- * underneath.
+ * A result that is not an app: a symbol where app rows have their icon, or the icon of the [app] it
+ * comes from (none in text-only mode, like apps), a title with what the query [matched] highlighted,
+ * and what kind of result it is underneath, when there is something to say.
  */
 @Composable
 internal fun SymbolRow(
     @DrawableRes symbol: Int,
     title: String,
-    subtitle: String,
+    subtitle: String?,
     @StringRes clickLabel: Int,
     icons: AppIcons,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
     matched: List<IntRange> = emptyList(),
+    app: AppKey? = null,
 ) {
     Row(
         modifier
@@ -141,7 +147,9 @@ internal fun SymbolRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        if (icons.mode != IconMode.TextOnly) {
+        if (app != null) {
+            AppIcon(app, icons)
+        } else if (icons.mode != IconMode.TextOnly) {
             Box(
                 Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainerHighest),
                 contentAlignment = Alignment.Center,
@@ -160,13 +168,15 @@ internal fun SymbolRow(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Text(
-                subtitle,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            subtitle?.let {
+                Text(
+                    it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

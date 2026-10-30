@@ -18,13 +18,15 @@ enum class ActionEmphasis {
     /** Reads from its icon alone. Grouped four to a short row. */
     Icon,
 
-    /** Removes something. Always last, full width, in the error colour. */
+    /** Removes something. Always last, full width, in the error colour; [IconActionRows] tints it. */
     Danger,
 }
 
 /**
  * One button of a context menu. [selected] is non-null for an on/off setting: drawn as a rounded
  * square, outlined while off and filled while on. [labelArg] fills a `%s` in [label].
+ * [IconActionRows] reads [group], the row the action sits in (rows in ascending order), and
+ * [shortLabel], the word under its icon, [label] then being what TalkBack says.
  */
 @Immutable
 class MenuAction(
@@ -33,5 +35,7 @@ class MenuAction(
     val emphasis: ActionEmphasis = ActionEmphasis.Tonal,
     val selected: Boolean? = null,
     val labelArg: String? = null,
+    val group: Int = 0,
+    @StringRes val shortLabel: Int? = null,
     val onClick: () -> Unit,
 )

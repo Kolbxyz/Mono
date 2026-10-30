@@ -10,6 +10,7 @@ import android.content.pm.ShortcutInfo
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.Process
 import android.os.UserHandle
 import androidx.core.content.ContextCompat
 import com.wander.mono.di.AppScope
@@ -17,16 +18,20 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.shareIn
 
 /**
  * The single `LauncherApps.Callback` and profile receiver of the process. Registered for as long as
  * the process lives: the system only calls it when something changes, so it costs nothing at rest,
- * and the catalog never goes stale while the launcher is in the background.
+ * and the catalog never goes stale while the launcher is in the background. [recheckProfiles] adds a
+ * profile change for what Android reports without an event.
  */
 @Singleton
 class CatalogEvents @Inject constructor(
@@ -34,8 +39,15 @@ class CatalogEvents @Inject constructor(
     @AppScope scope: CoroutineScope,
 ) {
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
+    private val main = Process.myUserHandle()
 
-    val changes: SharedFlow<CatalogChange> = callbackFlow {
+    /** Never suspends the caller: a recheck not yet handled already covers the next. */
+    private val rechecks = MutableSharedFlow<CatalogChange>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    private val reported = callbackFlow<CatalogChange> {
         val callback = object : LauncherApps.Callback() {
             override fun onPackageRemoved(packageName: String, user: UserHandle) {
                 trySend(CatalogChange.Packages(setOf(packageName)))
@@ -50,7 +62,9 @@ class CatalogEvents @Inject constructor(
             }
 
             override fun onPackagesAvailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) {
-                trySend(CatalogChange.Packages(packageNames.toSet()))
+                // Another profile's apps coming back is that profile unlocking: re-read it whole, as
+                // the profile broadcast may have come while its storage was still locked.
+                trySend(if (user == main) CatalogChange.Packages(packageNames.toSet()) else CatalogChange.Profiles)
             }
 
             override fun onPackagesUnavailable(packageNames: Array<out String>, user: UserHandle, replacing: Boolean) {
@@ -94,5 +108,12 @@ class CatalogEvents @Inject constructor(
             launcherApps.unregisterCallback(callback)
             context.unregisterReceiver(receiver)
         }
-    }.shareIn(scope, SharingStarted.Eagerly)
+    }
+
+    val changes: SharedFlow<CatalogChange> = merge(reported, rechecks).shareIn(scope, SharingStarted.Eagerly)
+
+    /** A profile changed without an event to say so: everything listening re-reads the profiles. */
+    fun recheckProfiles() {
+        rechecks.tryEmit(CatalogChange.Profiles)
+    }
 }

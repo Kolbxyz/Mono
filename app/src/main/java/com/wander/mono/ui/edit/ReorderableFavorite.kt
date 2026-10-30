@@ -84,6 +84,7 @@ fun ReorderableFavorite(
             },
             onHeld = { haptics.longPress() },
             onHold = onLongPress,
+            onHoldCancelled = editing.onHoldCancelled,
             onLift = {
                 if (!editing.active) editing.onEnter()
                 reorder.start(row.key, siblings)
