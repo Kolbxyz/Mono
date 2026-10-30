@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -61,16 +62,18 @@ internal fun CategoryChips(
                     modifier = schemeAnimateItem(),
                     leadingIcon = if (chosen) {
                         {
-                            Icon(painterResource(R.drawable.sym_check), null, Modifier.size(FilterChipDefaults.IconSize))
+                            val size = Modifier.size(FilterChipDefaults.IconSize)
+                            Icon(painterResource(R.drawable.sym_check), contentDescription = null, modifier = size)
                         }
                     } else {
                         null
                     },
+                    shape = CircleShape,
                     colors = FilterChipDefaults.filterChipColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                     ),
-                    // Tonal, like the cards under it: the fill tells chosen from not, no outline needed.
+                    // Tonal pills, like the search history's: the fill tells chosen from not, no outline needed.
                     border = null,
                 )
             }
