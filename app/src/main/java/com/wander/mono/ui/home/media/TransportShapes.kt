@@ -16,7 +16,8 @@ import androidx.compose.ui.unit.LayoutDirection
 
 /**
  * Play/pause's shape says the state, as in Wanda: a pill while paused, a rounded square while
- * playing, tighter under the finger. The corner is read at draw time, so the spring never recomposes.
+ * playing, tighter under the finger. Each animated corner value makes a new shape, so whatever
+ * clips or outlines with it (a `Surface`'s layer) sees the change.
  */
 @Composable
 internal fun rememberPlayPauseShape(isPlaying: Boolean, isPressed: Boolean): Shape {
@@ -27,7 +28,7 @@ internal fun rememberPlayPauseShape(isPlaying: Boolean, isPressed: Boolean): Sha
         else -> PAUSED
     }
     val corner by animateFloatAsState(target, MaterialTheme.motionScheme.fastSpatialSpec(), label = "play-corner")
-    return remember { SidedCornerShape(start = { corner }, end = { corner }) }
+    return remember(corner) { SidedCornerShape(start = corner, end = corner) }
 }
 
 /**
@@ -41,12 +42,8 @@ internal fun rememberConnectedShape(leading: Boolean, isPressed: Boolean): Shape
         MaterialTheme.motionScheme.fastSpatialSpec(),
         label = "connected-corner",
     )
-    return remember(leading) {
-        if (leading) {
-            SidedCornerShape(start = { PAUSED }, end = { inner })
-        } else {
-            SidedCornerShape(start = { inner }, end = { PAUSED })
-        }
+    return remember(leading, inner) {
+        if (leading) SidedCornerShape(start = PAUSED, end = inner) else SidedCornerShape(start = inner, end = PAUSED)
     }
 }
 
@@ -54,10 +51,10 @@ internal fun rememberConnectedShape(leading: Boolean, isPressed: Boolean): Shape
  * Rounded corners as fractions of the short side, one for the start side and one for the end, in
  * the layout direction.
  */
-private class SidedCornerShape(private val start: () -> Float, private val end: () -> Float) : Shape {
+private class SidedCornerShape(private val start: Float, private val end: Float) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val startRadius = CornerRadius(size.minDimension * start().coerceIn(0f, MAX_FRACTION))
-        val endRadius = CornerRadius(size.minDimension * end().coerceIn(0f, MAX_FRACTION))
+        val startRadius = CornerRadius(size.minDimension * start.coerceIn(0f, MAX_FRACTION))
+        val endRadius = CornerRadius(size.minDimension * end.coerceIn(0f, MAX_FRACTION))
         val ltr = layoutDirection == LayoutDirection.Ltr
         val left = if (ltr) startRadius else endRadius
         val right = if (ltr) endRadius else startRadius
