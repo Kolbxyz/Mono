@@ -100,6 +100,17 @@ class DrawerMotion internal constructor(
         }
     }
 
+    /**
+     * Opens on the fast spring instead of the default one, for a scrub from home's edge: the list has
+     * to be there under the finger as soon as it can. The view model's opening that follows ([follow])
+     * finds it already on its way.
+     */
+    fun openQuickly() {
+        dragging = false
+        target = true
+        animateTo(open = true, velocity = 0f, spec = closeSpec)
+    }
+
     /** Predictive back: the open drawer gives way a little as the back gesture grows. */
     fun back(backProgress: Float) {
         animation?.cancel()
@@ -112,9 +123,13 @@ class DrawerMotion internal constructor(
     private fun armed(value: Float): Boolean = if (target) value < 1f - THRESHOLD else value > THRESHOLD
 
     /** [onEnd] runs only if the animation finishes; a drag or another change cancels it first. */
-    private fun animateTo(open: Boolean, velocity: Float, onEnd: (() -> Unit)? = null) {
+    private fun animateTo(
+        open: Boolean,
+        velocity: Float,
+        onEnd: (() -> Unit)? = null,
+        spec: FiniteAnimationSpec<Float> = if (open) openSpec else closeSpec,
+    ) {
         animation?.cancel()
-        val spec = if (open) openSpec else closeSpec
         animation = scope.launch {
             animate(progress, if (open) 1f else 0f, velocity, spec) { value, _ -> progress = value }
             onEnd?.invoke()

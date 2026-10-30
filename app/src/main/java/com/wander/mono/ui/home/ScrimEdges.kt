@@ -10,11 +10,12 @@ import androidx.compose.ui.layout.LayoutCoordinates
 
 /**
  * Where the scrim eases out: the header's bottom and the list viewport's top, measured in home's
- * content [onFrame], inside any scale applied to the content, so the drawer shrinking home back does
- * not move the scrim's stops. The callbacks fire in no set order, so each one measures again.
+ * content [onFrame], inside any scale applied to the content or around it, so home shrinking back
+ * does not move the scrim's stops: [HomeScrimLayer], unscaled and the frame's size, draws at them.
+ * The callbacks fire in no set order, so each one measures again.
  */
 @Stable
-internal class ScrimEdges {
+class ScrimEdges {
     private var frame: LayoutCoordinates? = null
     private var header: LayoutCoordinates? = null
     private var list: LayoutCoordinates? = null

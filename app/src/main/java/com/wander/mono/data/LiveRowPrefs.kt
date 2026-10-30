@@ -2,7 +2,6 @@ package com.wander.mono.data
 
 import android.content.Context
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -16,8 +15,7 @@ private val Context.liveRowStore by preferencesDataStore(name = "live_rows")
 
 /**
  * Which live rows the user switched off, per app and row kind. Every live row shows by default,
- * so only the exceptions are stored. New row kinds plug in by adding a [LiveRowKind]. Also where
- * the user placed the now-playing card, once moved in edit mode.
+ * so only the exceptions are stored. New row kinds plug in by adding a [LiveRowKind].
  */
 @Singleton
 class LiveRowPrefs @Inject constructor(@ApplicationContext context: Context) {
@@ -39,24 +37,7 @@ class LiveRowPrefs @Inject constructor(@ApplicationContext context: Context) {
         store.edit { prefs -> prefs[HIDDEN] = hidden.map { it.encode() }.toSet() }
     }
 
-    /** Where the user placed the now-playing card; null while it follows the app that plays. */
-    val nowPlayingAnchor: Flow<NowPlayingAnchor?> = store.data
-        .map { prefs -> prefs[NOW_PLAYING]?.let(NowPlayingAnchor::decode) }
-        .distinctUntilChanged()
-
-    /** Places the now-playing card, or with null lets it follow its app again. */
-    suspend fun setNowPlayingAnchor(anchor: NowPlayingAnchor?) {
-        store.edit { prefs ->
-            if (anchor == null) {
-                prefs.remove(NOW_PLAYING)
-            } else {
-                prefs[NOW_PLAYING] = anchor.encode()
-            }
-        }
-    }
-
     private companion object {
         val HIDDEN = stringSetPreferencesKey("hidden")
-        val NOW_PLAYING = stringPreferencesKey("now_playing_anchor")
     }
 }

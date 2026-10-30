@@ -3,9 +3,14 @@ package com.wander.mono.core.media
 import android.media.session.MediaController
 import android.media.session.MediaSession
 import android.media.session.PlaybackState
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 
-/** One item of the session's queue, as the "up next" list shows it. [id] is the session's queue id. */
-data class QueueEntry(val id: Long, val title: String, val subtitle: String?)
+/**
+ * One item of the session's queue, as the "up next" list shows it. [id] is the session's queue id;
+ * [art] is the item's own icon when the session publishes one.
+ */
+data class QueueEntry(val id: Long, val title: String, val subtitle: String?, val art: ImageBitmap? = null)
 
 /**
  * The [max] entries right after [activeId] in [queue]. When the session does not say which item is
@@ -30,7 +35,12 @@ internal fun MediaController.upNext(): List<QueueEntry> {
     if (state == null || state.actions and PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM == 0L) return emptyList()
     val entries = queue.orEmpty().mapNotNull { item ->
         item.description.title?.toString()?.let { title ->
-            QueueEntry(item.queueId, title, item.description.subtitle?.toString())
+            QueueEntry(
+                item.queueId,
+                title,
+                item.description.subtitle?.toString(),
+                item.description.iconBitmap?.asImageBitmap(),
+            )
         }
     }
     return upNext(entries, state.activeQueueItemId)

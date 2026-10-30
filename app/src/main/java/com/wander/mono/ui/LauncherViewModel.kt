@@ -31,7 +31,7 @@ class LauncherViewModel @Inject constructor(
     /** The clock's own sheet, from a long press on it: its face, live. */
     val clockSheetOpen: StateFlow<Boolean> = savedState.getStateFlow(CLOCK_SHEET_OPEN, false)
 
-    /** The now-playing card's sheet, from a long press on it. */
+    /** The player's sheet, from a long press on it under the clock. */
     val mediaSheetOpen: StateFlow<Boolean> = savedState.getStateFlow(MEDIA_SHEET_OPEN, false)
 
     /** Edit mode: favourites can be dragged, renamed, removed and their live rows switched. */
