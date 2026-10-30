@@ -4,14 +4,16 @@ import androidx.compose.runtime.Composable
 import com.wander.mono.R
 import com.wander.mono.data.settings.ThemeMode
 import com.wander.mono.data.settings.ThemeSettings
+import com.wander.mono.ui.theme.isDark
 
 /**
- * Light, dark or following the system, and pure black for OLED screens; with pure black, the
- * wallpaper itself can go black too.
+ * Light, dark or following the system; the colours, from the wallpaper or a hand-made palette;
+ * and pure black for OLED screens. With pure black, the wallpaper itself can go black too.
  */
 @Composable
 fun ThemeSection(settings: SettingsViewModel) {
     val amoled = settings.collect(ThemeSettings.AmoledBlack)
+    val dark = settings.collect(ThemeSettings.Mode)?.isDark()
     SettingsGroup(R.string.settings_theme) {
         ChoiceSetting(settings, ThemeSettings.Mode, R.string.settings_theme_mode, R.drawable.sym_dark_mode) { mode ->
             when (mode) {
@@ -20,6 +22,7 @@ fun ThemeSection(settings: SettingsViewModel) {
                 ThemeMode.Dark -> R.string.settings_theme_dark
             }
         }
+        if (dark != null) PaletteRow(settings, dark)
         SwitchSetting(
             settings,
             ThemeSettings.AmoledBlack,

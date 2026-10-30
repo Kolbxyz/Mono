@@ -86,6 +86,7 @@ class MainActivity : ComponentActivity() {
             MonoTheme(
                 darkTheme = dark,
                 amoledBlack = theme.amoledBlack,
+                palette = theme.palette,
                 iconShape = theme.iconShape,
                 iconTheming = theme.iconTheming,
             ) {

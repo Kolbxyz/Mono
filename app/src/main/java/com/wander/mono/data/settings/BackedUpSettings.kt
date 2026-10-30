@@ -11,6 +11,7 @@ val backedUpSettings: List<Setting<*>> = listOf(
     ThemeSettings.Mode,
     ThemeSettings.AmoledBlack,
     ThemeSettings.BlackWallpaper,
+    ThemeSettings.Palette,
     HomeLookSettings.TextShadow,
     HomeLookSettings.Density,
     HomeLookSettings.LabelScale,
