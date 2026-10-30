@@ -71,6 +71,7 @@ private fun Field(
         singleLine = true,
         shape = CircleShape,
         // One line, as the field is: at large font sizes the hint ends in an ellipsis instead of wrapping.
+        textStyle = MaterialTheme.typography.bodyLarge,
         placeholder = {
             Text(stringResource(R.string.drawer_search_hint), maxLines = 1, overflow = TextOverflow.Ellipsis)
         },
@@ -86,11 +87,33 @@ private fun Field(
             imeAction = ImeAction.Go,
         ),
         keyboardActions = KeyboardActions(onGo = { onSubmit() }),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-        ),
+        colors = fieldColors(),
     )
 }
+
+/**
+ * A floating pill rather than a box: the container lets what is behind it (wallpaper, blur or
+ * surface) through at rest and firms up while typing, with no indicator line; the icons and hint
+ * sit back in onSurfaceVariant, the typed text in onSurface.
+ */
+@Composable
+private fun fieldColors() = with(MaterialTheme.colorScheme) {
+    TextFieldDefaults.colors(
+        focusedContainerColor = surfaceContainerHigh.copy(alpha = FOCUSED_ALPHA),
+        unfocusedContainerColor = surfaceContainerHigh.copy(alpha = RESTING_ALPHA),
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent,
+        focusedLeadingIconColor = primary,
+        unfocusedLeadingIconColor = onSurfaceVariant,
+        focusedTrailingIconColor = onSurfaceVariant,
+        unfocusedTrailingIconColor = onSurfaceVariant,
+        focusedPlaceholderColor = onSurfaceVariant,
+        unfocusedPlaceholderColor = onSurfaceVariant,
+    )
+}
+
+/** The pill at rest: translucent enough to float over the wallpaper, solid enough to read on any. */
+private const val RESTING_ALPHA = 0.82f
+
+/** While typing the pill is nearly opaque, so results never fight the field for attention. */
+private const val FOCUSED_ALPHA = 0.96f

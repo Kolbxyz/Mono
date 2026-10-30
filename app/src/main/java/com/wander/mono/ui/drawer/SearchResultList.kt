@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
@@ -141,7 +142,9 @@ private fun LazyItemScope.GroupedRow(
 private fun GroupLabel(@StringRes label: Int, modifier: Modifier = Modifier) {
     Text(
         stringResource(label),
-        style = MaterialTheme.typography.labelLarge.onWallpaper(),
+        // The drawer list's word headings, so browsing and searching speak the same type.
+        style = MaterialTheme.typography.titleSmall.onWallpaper(),
+        fontWeight = FontWeight.SemiBold,
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier
             .padding(start = 32.dp, end = 32.dp, top = 16.dp, bottom = 8.dp)

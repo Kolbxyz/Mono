@@ -22,16 +22,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppCategory
+import com.wander.mono.ui.home.onWallpaper
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
- * The categories with apps in the list, as one scrolling row of tonal filter chips, unfolding under
- * the search field while [visible]. Tapping the [selected] chip again shows every category.
+ * The categories with apps in the list, as one scrolling row of filter chips, unfolding under the
+ * search field while [visible]: plain words, the chosen one on a tonal pill. Tapping the [selected]
+ * chip again shows every category.
  */
 @Composable
 internal fun CategoryChips(
@@ -58,7 +61,12 @@ internal fun CategoryChips(
                 FilterChip(
                     selected = chosen,
                     onClick = { onSelect(if (chosen) null else category) },
-                    label = { Text(stringResource(categoryLabel(category))) },
+                    // Unchosen, the label sits on the wallpaper like the list's, so it takes its shadow.
+                    label = {
+                        val plain = MaterialTheme.typography.labelLarge
+                        val style = if (chosen) plain else plain.onWallpaper()
+                        Text(stringResource(categoryLabel(category)), style = style)
+                    },
                     modifier = schemeAnimateItem(),
                     leadingIcon = if (chosen) {
                         {
@@ -70,10 +78,12 @@ internal fun CategoryChips(
                     },
                     shape = CircleShape,
                     colors = FilterChipDefaults.filterChipColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        containerColor = Color.Transparent,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
                     ),
-                    // Tonal pills, like the search history's: the fill tells chosen from not, no outline needed.
+                    // Words on the drawer's background until chosen, when a tonal pill fills in behind:
+                    // the row reads as part of the list, not a bar of buttons over it.
                     border = null,
                 )
             }

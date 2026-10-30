@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.core.apps.LaunchableApp
@@ -63,14 +64,16 @@ internal fun ProfileCard(
     Column(modifier) {
         Text(
             stringResource(title),
-            style = MaterialTheme.typography.labelLarge.onWallpaper(),
+            // As the list's word headings ("New"), so the profiles read as more of the same list.
+            style = MaterialTheme.typography.titleSmall.onWallpaper(),
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
                 .semantics { heading() },
         )
         ProfileHeader(symbol, status, actions)
-        val labelStyle = MaterialTheme.typography.titleMedium.onWallpaper()
+        val labelStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium).onWallpaper()
         lastOpen.apps.forEach { entry ->
             key(entry.app.key) {
                 // Shown at once when the drawer opens on an open profile; unfolds when it opens here.
