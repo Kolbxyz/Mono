@@ -8,6 +8,8 @@ import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvents
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.media.MediaState
+import com.wander.mono.core.notifications.LiveActivities
+import com.wander.mono.core.notifications.LiveActivity
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.notifications.PackageUser
@@ -21,6 +23,7 @@ import com.wander.mono.data.settings.HomeLookSettings
 import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.RowDensity
 import com.wander.mono.data.settings.SettingsStore
+import com.wander.mono.data.settings.liveActivityKinds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -40,6 +43,7 @@ class EditHomeViewModel @Inject constructor(
     previews: NotificationPreviews,
     private val settings: SettingsStore,
     calendar: CalendarEvents,
+    liveActivities: LiveActivities,
     private val prefs: LauncherPrefs,
     private val liveRows: LiveRowPrefs,
     private val widgets: Widgets,
@@ -49,7 +53,7 @@ class EditHomeViewModel @Inject constructor(
     val toggles: StateFlow<Map<AppKey, List<LiveRowToggle>>> = combine(
         prefs.favorites,
         catalog.apps.filterNotNull(),
-        liveSources(media, previews, settings, calendar),
+        liveSources(media, previews, settings, calendar, liveActivities),
         liveRows.hidden,
     ) { favorites, apps, sources, hidden ->
         val installed = apps.associateBy { it.key }
@@ -58,6 +62,7 @@ class EditHomeViewModel @Inject constructor(
             nowPlayingAvailability(sources.media, shown),
             previewAvailability(sources.previews, shown),
             calendarAvailability(sources.agenda, shown),
+            liveActivityAvailability(sources.live, shown),
         )
         liveRowToggles(shown, available, hidden)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
@@ -103,16 +108,19 @@ private class LiveSources(
     val media: MediaState,
     val previews: Map<PackageUser, NotificationPreview>,
     val agenda: CalendarAgenda?,
+    val live: List<LiveActivity>,
 )
 
 private fun liveSources(
     media: MediaSessions,
     previews: NotificationPreviews,
-    private val settings: SettingsStore,
+    settings: SettingsStore,
     calendar: CalendarEvents,
+    live: LiveActivities,
 ): Flow<LiveSources> = combine(
     media.state,
     combine(previews.previews, settings[PreviewSettings.ShowPreviews]) { all, on -> if (on) all else emptyMap() },
     calendar.agenda,
+    combine(live.activities, settings.liveActivityKinds()) { all, on -> all.filter { it.kind in on } },
     ::LiveSources,
 )

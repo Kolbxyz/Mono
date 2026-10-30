@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility: one switch for bigger rows, larger labels, high contrast and fewer lines -->
+    <string name="settings_simple_mode">Large and simple</string>
+    <string name="settings_simple_mode_short">Bigger rows and text, only the clock and date</string>
+
+    <!-- Home look -->
+    <string name="settings_label_scale">Label size</string>
+    <!-- The label size slider's value, in percent: "120%". -->
+    <string name="settings_label_scale_value">%1$d%%</string>
+    <string name="settings_reachable_layout">Reachable layout</string>
+    <string name="settings_reachable_layout_short">Clock at the bottom, all in thumb reach</string>
+
+    <!-- Glance header: the next-alarm line's long press -->
+    <string name="glance_dismiss_alarm">Dismiss next alarm</string>
+    <string name="error_alarm_dismiss_missing">Your clock app can\'t dismiss alarms from here</string>
+</resources>

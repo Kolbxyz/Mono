@@ -18,6 +18,7 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.ui.edit.ReorderableWidget
+import com.wander.mono.ui.home.live.LiveActivityCard
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
@@ -112,6 +113,7 @@ internal fun HomeList(
                 HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
                 is NotificationRow -> NotificationPreviewRow(row, animated, previews)
                 is CalendarRow -> CalendarCard(row, onOpenEvent, animated)
+                is LiveActivityRow -> LiveActivityCard(row, animated)
                 is WidgetHomeRow -> if (editing.active) {
                     ReorderableWidget(row, movable, rows.orEmpty(), editing, animated)
                 } else {

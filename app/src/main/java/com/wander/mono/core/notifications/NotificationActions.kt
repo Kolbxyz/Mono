@@ -14,7 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Opening, dismissing and replying to a notification from its preview row. */
+/** Opening, dismissing and replying to a notification from its preview row, and opening a live row. */
 @Singleton
 class NotificationActions @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -35,6 +35,9 @@ class NotificationActions @Inject constructor(
         if (result == ActionResult.Done && conversation.autoCancel) previews.cancel(conversation.key)
         return result
     }
+
+    /** Sends a live row's tap intent; null when it has none (the caller opens the app). Ongoing, so never cancelled. */
+    fun open(activity: LiveActivity): ActionResult? = activity.contentIntent?.let { send(it, fillIn = null) }
 
     /** One of the notification's own buttons, fired as the shade would. */
     fun fire(action: PreviewAction): ActionResult = send(action.intent, fillIn = null)
