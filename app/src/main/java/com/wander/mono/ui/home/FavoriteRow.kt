@@ -16,7 +16,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.ui.components.AppBadge
 import com.wander.mono.ui.components.AppIcon
@@ -47,10 +46,10 @@ fun FavoriteRow(row: HomeRow.App, icons: AppIcons, modifier: Modifier = Modifier
         modifier
             .fillMaxWidth()
             .heightIn(min = metrics.minHeight)
-            .padding(horizontal = 4.dp, vertical = metrics.verticalPadding)
+            .padding(horizontal = FavoriteRowInset, vertical = metrics.verticalPadding)
             .graphicsLayer { this.alpha = alpha }
             .then(if (limitState != null) Modifier.semantics { stateDescription = limitState } else Modifier),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(FavoriteIconGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AppIcon(row.app.key, icons, size = metrics.iconSize)
