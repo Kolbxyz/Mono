@@ -15,6 +15,7 @@ internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = whe
         { GlanceLinesSection(it) },
         { CalendarSection() },
         { HomeLookSection(it) },
+        { MediaSection(it) },
     )
     SettingsCategory.Appearance -> listOf(
         { ThemeSection(it) },

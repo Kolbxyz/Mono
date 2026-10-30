@@ -27,8 +27,10 @@ import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.edit.ReorderableFavorite
+import com.wander.mono.ui.edit.ReorderableNowPlaying
 import com.wander.mono.ui.edit.ReorderableWidget
 import com.wander.mono.ui.edit.SwipeLeft
+import com.wander.mono.ui.edit.isMovable
 import com.wander.mono.ui.home.folders.FolderOverlays
 import com.wander.mono.ui.home.folders.FolderRow
 import com.wander.mono.ui.home.folders.FolderViewModel
@@ -43,7 +45,8 @@ import com.wander.mono.ui.theme.schemeAnimateItem
  * state until there is a favourite, then each row in shown order. The [lifted] favourites go first
  * while headphones are connected or a routine is on, outside edit mode only. The [pulse] favourite,
  * just added, pulses once. Open folders show their favourites under them, indented; edit mode
- * shows every favourite on its own, in the saved order, folders and all.
+ * shows every favourite on its own, in the saved order, folders and all, with the now-playing
+ * card as a spot to place.
  */
 @Composable
 internal fun HomeList(
@@ -65,6 +68,7 @@ internal fun HomeList(
     onSeek: (positionMs: Long) -> Unit,
     onPlayQueueItem: (id: Long) -> Unit,
     onOpenOutput: () -> Unit,
+    onMediaOptions: () -> Unit,
     onGrantAccess: () -> Unit,
     onOpenEvent: (CalendarEvent) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -101,7 +105,7 @@ internal fun HomeList(
             }
         }
         val ordered = editing.shownRows(if (editing.showsSavedOrder) flat else rows)
-        val movable = flattenFolders(ordered).filter { it is HomeRow.App || it is WidgetHomeRow }.map { it.key }
+        val movable = flattenFolders(ordered).filter(::isMovable).map { it.key }
         // Saved order while editing; outside it, favourites chosen for headphones or a routine go first.
         val shown = if (editing.showsSavedOrder) ordered else openFolders(liftedFirst(ordered, lifted), open)
         val inFolder = if (editing.showsSavedOrder) emptySet<String>() else folderMemberKeys(ordered, open)
@@ -155,6 +159,7 @@ internal fun HomeList(
                     onSeek = onSeek,
                     onPlayQueueItem = onPlayQueueItem,
                     onOpenOutput = onOpenOutput,
+                    onLongPress = onMediaOptions,
                     // No fade-out: a removed card leaves at once and its neighbours close the space.
                     modifier = Modifier.animateItem(
                         fadeInSpec = motion.defaultEffectsSpec(),
@@ -162,6 +167,7 @@ internal fun HomeList(
                         fadeOutSpec = null,
                     ),
                 )
+                HomeRow.NowPlayingSpot -> ReorderableNowPlaying(movable, flat.orEmpty(), editing, animated)
                 HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
                 is NotificationRow -> NotificationPreviewRow(row, animated.padding(start = previewStart), previews)
                 is CalendarRow -> CalendarCard(row, onOpenEvent, animated)

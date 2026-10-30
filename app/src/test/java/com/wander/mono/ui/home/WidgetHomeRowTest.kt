@@ -26,7 +26,7 @@ class WidgetHomeRowTest {
             progress = null,
             upNext = emptyList(),
             output = null,
-            collapseAtMs = null,
+            pausedAtMs = null,
         ),
     )
 

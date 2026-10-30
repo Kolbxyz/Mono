@@ -22,10 +22,10 @@ data class PlayingMedia(
     /** Where it is heard; null when the system output switcher cannot be opened from here. */
     val output: AudioOutput?,
     /**
-     * When the row gives way to the paused session, on the `SystemClock.elapsedRealtime` clock;
-     * null while it plays (see [collapseAt]).
+     * When the session stopped playing, on the `SystemClock.elapsedRealtime` clock; null while it
+     * plays (see [pausedAt]). The row gives way some time after, as the user chose.
      */
-    val collapseAtMs: Long?,
+    val pausedAtMs: Long?,
 )
 
 sealed interface MediaState {

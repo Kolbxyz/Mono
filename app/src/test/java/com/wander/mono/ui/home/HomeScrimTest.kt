@@ -47,6 +47,14 @@ class HomeScrimTest {
         assertEquals(listOf(0f to 1f, 1f to 1f), scrimStops(0f, HEADER, HEADER + 100f, REACH))
     }
 
+    @Test
+    fun `edge mask is clear at both ends and whole past the taper`() {
+        val stops = edgeStops(length = 1_000f, taper = 50f)
+        assertEquals(0f, stops.first().second, 0.001f)
+        assertEquals(0f, stops.last().second, 0.001f)
+        assertTrue(stops.filter { it.first in 0.05f..0.95f }.all { it.second == 1f })
+    }
+
     private companion object {
         const val HEIGHT = 2_400f
         const val HEADER = 600f

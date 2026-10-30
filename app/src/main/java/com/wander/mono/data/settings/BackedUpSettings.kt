@@ -62,6 +62,10 @@ val backedUpSettings: List<Setting<*>> = listOf(
     ClockSettings.ShowAlarm,
     ClockSettings.ShowEvent,
     ClockSettings.ShowBattery,
+    MediaSettings.ExpandedByDefault,
+    MediaSettings.SwipeToSkip,
+    MediaSettings.ArtTint,
+    MediaSettings.PausedHideAfter,
 )
 
 /** One setting with its value, typed together so it can be written back without a cast. */
