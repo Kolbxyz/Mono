@@ -3,6 +3,7 @@ package com.wander.mono.ui.home
 import android.icu.text.DateFormat
 import android.icu.text.SimpleDateFormat
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -13,10 +14,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wander.mono.data.settings.ClockAlignment
 import com.wander.mono.data.settings.ClockLook
@@ -29,7 +35,8 @@ import java.util.Locale
 
 /**
  * The time in the user's [look]: one line, hours over minutes, or one small line. Each character
- * rolls up on its own when it changes, on the theme's motion (instant with reduced motion).
+ * rolls up on its own when it changes, on the theme's motion (instant with reduced motion); glyphs
+ * keep their place by field, so a new hour digit does not roll every glyph after it.
  * [compact] (a phone in landscape) shrinks it so the list keeps room.
  */
 @Composable
@@ -48,8 +55,8 @@ fun ClockText(
         val hours = remember(now, is24Hour, locale) { pattern(now, if (is24Hour) "HH" else "hh", locale) }
         val minutes = remember(now, locale) { pattern(now, "mm", locale) }
         Column(modifier, horizontalAlignment = horizontal) {
-            RollingGlyphs(hours.map { ClockGlyph(it, marker = false) }, style)
-            RollingGlyphs(minutes.map { ClockGlyph(it, marker = false) }, style)
+            RollingGlyphs(remember(hours) { fieldGlyphs(hours, "hour") }, style)
+            RollingGlyphs(remember(minutes) { fieldGlyphs(minutes, "minute") }, style)
         }
     } else {
         val skeleton = if (is24Hour) "Hm" else "hm"
@@ -64,24 +71,42 @@ internal fun clockSize(look: ClockLook, compact: Boolean): Int {
     return (if (compact) size * COMPACT_FRACTION else size).toInt()
 }
 
+/**
+ * The glyphs in a row, each rolling in its [ClockGlyph.slot]. The roll is clipped above and below,
+ * with [ROLL_SLACK] for the text shadow, and never at the sides, where a glyph's shadow or halo
+ * reaches over its neighbours.
+ */
 @Composable
 private fun RollingGlyphs(glyphs: List<ClockGlyph>, style: TextStyle) {
     val motion = MaterialTheme.motionScheme
-    Row {
-        glyphs.forEachIndexed { index, glyph ->
-            AnimatedContent(
-                targetState = glyph,
-                modifier = Modifier.alignByBaseline(),
-                transitionSpec = {
-                    (slideInVertically(motion.defaultSpatialSpec()) { it } + fadeIn(motion.defaultEffectsSpec()))
-                        .togetherWith(
-                            slideOutVertically(motion.defaultSpatialSpec()) { -it } + fadeOut(motion.fastEffectsSpec()),
-                        )
-                },
-                label = "clockGlyph$index",
-            ) { shown ->
-                val glyphStyle = if (shown.marker) style.copy(fontSize = style.fontSize * MARKER_FRACTION) else style
-                Text(shown.char.toString(), style = glyphStyle, color = MaterialTheme.colorScheme.onSurface)
+    val slack = with(LocalDensity.current) { ROLL_SLACK.toPx() }
+    Row(
+        Modifier.drawWithContent {
+            clipRect(-size.width, -slack, size.width * 2, size.height + slack) { this@drawWithContent.drawContent() }
+        },
+    ) {
+        glyphs.forEach { glyph ->
+            key(glyph.slot) {
+                AnimatedContent(
+                    targetState = glyph,
+                    modifier = Modifier.alignByBaseline(),
+                    transitionSpec = {
+                        val enter = slideInVertically(motion.defaultSpatialSpec()) { it } +
+                            fadeIn(motion.defaultEffectsSpec())
+                        val exit = slideOutVertically(motion.defaultSpatialSpec()) { -it } +
+                            fadeOut(motion.fastEffectsSpec())
+                        (enter togetherWith exit)
+                            .using(SizeTransform(clip = false) { _, _ -> motion.defaultSpatialSpec() })
+                    },
+                    label = "clockGlyph",
+                ) { shown ->
+                    val glyphStyle = if (shown.marker) {
+                        style.copy(fontSize = style.fontSize * MARKER_FRACTION)
+                    } else {
+                        style
+                    }
+                    Text(shown.char.toString(), style = glyphStyle, color = MaterialTheme.colorScheme.onSurface)
+                }
             }
         }
     }
@@ -99,3 +124,6 @@ private const val MARKER_FRACTION = 0.4f
 
 private const val SMALL_FRACTION = 0.5f
 private const val COMPACT_FRACTION = 0.64f
+
+/** Room above and below the rolling glyphs for the text shadow or halo, which the roll's clip would cut. */
+private val ROLL_SLACK = 16.dp

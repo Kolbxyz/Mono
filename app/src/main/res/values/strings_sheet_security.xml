@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App sheet: the split button's menu half, its state, and the app lock. -->
+    <string name="sheet_shortcuts">Shortcuts</string>
+    <string name="sheet_shortcuts_shown">Shown</string>
+    <string name="sheet_shortcuts_hidden">Hidden</string>
+    <string name="sheet_lock">Lock with screen lock</string>
+    <!-- Spoken for the small lock after a locked app's name. -->
+    <string name="sheet_locked">Locked</string>
+
+    <!-- App lock: the system prompt's titles and its error. -->
+    <string name="app_lock_prompt_title">Unlock app</string>
+    <string name="app_lock_remove_title">Remove app lock</string>
+    <string name="app_lock_no_screen_lock">This app is locked. Set a screen lock, or remove the lock in its options.</string>
+
+    <!-- Encrypted backups: saving. -->
+    <string name="backup_seal_title">Protect with a passphrase?</string>
+    <string name="backup_seal_text">Only someone who knows the passphrase can read or restore this backup. Mono can\'t recover a forgotten one.</string>
+    <string name="backup_seal_passphrase">Passphrase</string>
+    <string name="backup_seal_repeat">Repeat passphrase</string>
+    <plurals name="backup_seal_short">
+        <item quantity="one">At least %1$d character</item>
+        <item quantity="other">At least %1$d characters</item>
+    </plurals>
+    <string name="backup_seal_mismatch">The passphrases don\'t match</string>
+    <string name="backup_seal_confirm">Encrypt and save</string>
+    <string name="backup_seal_skip">No passphrase</string>
+
+    <!-- Encrypted backups: restoring. -->
+    <string name="backup_open_title">Encrypted backup</string>
+    <string name="backup_open_text">Enter the passphrase this backup was saved with.</string>
+    <string name="backup_open_confirm">Unlock</string>
+    <string name="backup_error_passphrase">Wrong passphrase, or the file is damaged</string>
+    <string name="backup_error_passphrase_lost">Mono was closed while saving. Save the backup again.</string>
+    <string name="passphrase_show">Show passphrase</string>
+    <string name="passphrase_hide">Hide passphrase</string>
+
+    <!-- Quick Settings tiles. -->
+    <string name="search_tile_label">Search</string>
+    <string name="private_tile_label">Private space</string>
+    <string name="private_tile_locked">Locked</string>
+    <string name="private_tile_unlocked">Unlocked</string>
+</resources>

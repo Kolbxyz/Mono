@@ -46,7 +46,7 @@ fun WidgetRow(
     BoxWithConstraints(
         modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp)
+            .padding(vertical = HomeCardMargin)
             .height(row.widget.placement.heightDp.dp)
             .clip(shape)
             .background(MaterialTheme.colorScheme.surfaceContainer)
@@ -72,7 +72,7 @@ fun WidgetRow(
     }
 }
 
-/** The system's widget corner radius (Android 12+), so hosted widgets match their own design; else M3 large. */
+/** The system's widget corner radius (Android 12+), so hosted widgets match their own design; else 16 dp. */
 @Composable
 private fun widgetCornerRadius(): Dp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
     dimensionResource(android.R.dimen.system_app_widget_background_radius)

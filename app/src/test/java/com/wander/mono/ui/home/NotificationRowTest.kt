@@ -6,6 +6,7 @@ import com.wander.mono.core.media.MediaState
 import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.core.notifications.PreviewExpansion
 import com.wander.mono.core.notifications.Redaction
 import com.wander.mono.ui.components.AppBadge
 import org.junit.Assert.assertEquals
@@ -30,6 +31,7 @@ class NotificationRowTest {
         autoCancel = true,
         isClearable = true,
         reply = null,
+        expansion = PreviewExpansion(emptyList(), emptyList(), emptyList()),
     )
 
     private fun owner(app: LaunchableApp) = PackageUser(app.key.packageName, app.key.userSerial)
@@ -41,7 +43,9 @@ class NotificationRowTest {
             is HomeRow.NowPlaying -> "now"
             HomeRow.ListenerPrompt -> "prompt"
             is CalendarRow -> "calendar"
+            is LiveActivityRow -> "live"
             is WidgetHomeRow -> "widget"
+            is HomeRow.Folder -> "folder"
         }
     }
 
@@ -68,6 +72,7 @@ class NotificationRowTest {
                 progress = null,
                 upNext = emptyList(),
                 output = null,
+                collapseAtMs = null,
             ),
         )
         val base = assembleHomeRows(listOf(phalanx.key), listOf(phalanx), emptyMap(), media, showCounts = true)

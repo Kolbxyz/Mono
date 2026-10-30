@@ -61,4 +61,31 @@ class NotificationFactsTest {
         val unread = unreadPerConversation(listOf(fact("a", phalanx, silent = true, shortcut = "!quiet")))
         assertEquals(mapOf(ConversationKey(phalanx, "!quiet") to 1), unread)
     }
+
+    @Test
+    fun `news of an app leaves out its status and other apps`() {
+        val facts = listOf(
+            fact("a", phalanx),
+            fact("b", phalanx, ongoing = true),
+            fact("c", phalanx, summary = true),
+            fact("d", phalanx, silent = true),
+            fact("e", workPhalanx),
+        )
+        assertEquals(listOf("a", "d"), newsOf(facts, phalanx).map { it.key })
+    }
+
+    @Test
+    fun `conversations group by shortcut, newest first, latest notification each`() {
+        val keys = conversationKeys(
+            listOf(
+                fact("a", phalanx, time = 10, shortcut = "!room1"),
+                fact("b", phalanx, time = 40, shortcut = "!room1"),
+                fact("c", phalanx, time = 30, shortcut = "!room2"),
+                fact("d", phalanx, time = 20),
+                fact("e", phalanx, time = 5),
+            ),
+            limit = 3,
+        )
+        assertEquals(listOf("b", "c", "d"), keys)
+    }
 }

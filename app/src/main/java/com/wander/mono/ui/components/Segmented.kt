@@ -4,7 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -39,39 +42,37 @@ fun SegmentedColumn(
     color: Color = MaterialTheme.colorScheme.surfaceContainer,
     content: @Composable () -> Unit,
 ) {
-    val strips = remember { Strips() }
+    // Snapshot state: a re-layout that moves the strips at the same total height still redraws them.
+    var strips by remember { mutableStateOf(emptyList<Strip>()) }
     Layout(
         content = content,
         modifier = modifier
             .clip(RoundedCornerShape(SegmentOuter))
             .drawBehind {
-                val count = strips.tops.size
-                for (i in 0 until count) {
-                    val outline = segmentedShape(i, count)
-                        .createOutline(Size(size.width, strips.heights[i].toFloat()), layoutDirection, this)
-                    translate(top = strips.tops[i].toFloat()) { drawOutline(outline, color) }
+                strips.forEachIndexed { i, strip ->
+                    val outline = segmentedShape(i, strips.size)
+                        .createOutline(Size(size.width, strip.height.toFloat()), layoutDirection, this)
+                    translate(top = strip.top.toFloat()) { drawOutline(outline, color) }
                 }
             },
     ) { measurables, constraints ->
         val gap = SegmentGap.roundToPx()
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth else constraints.minWidth
         val placeables = measurables.map { it.measure(constraints.copy(minWidth = width, minHeight = 0)) }
-        var y = 0
-        val tops = IntArray(placeables.size)
-        placeables.forEachIndexed { i, placeable ->
-            tops[i] = y
-            y += placeable.height + if (i < placeables.lastIndex) gap else 0
-        }
-        strips.tops = tops
-        strips.heights = IntArray(placeables.size) { placeables[it].height }
-        layout(width, y) { placeables.forEachIndexed { i, placeable -> placeable.place(0, tops[i]) } }
+        val laidOut = stackStrips(placeables.map { it.height }, gap)
+        strips = laidOut
+        val height = laidOut.lastOrNull()?.let { it.top + it.height } ?: 0
+        layout(width, height) { placeables.forEachIndexed { i, placeable -> placeable.place(0, laidOut[i].top) } }
     }
 }
 
-/** Where the strips were laid out, read back when drawing their backgrounds. */
-private class Strips {
-    var tops = IntArray(0)
-    var heights = IntArray(0)
+/** Where one strip was laid out, read back when drawing its background. */
+internal data class Strip(val top: Int, val height: Int)
+
+/** Strips of these [heights] stacked top down with [gap] between them. */
+internal fun stackStrips(heights: List<Int>, gap: Int): List<Strip> {
+    var y = 0
+    return heights.map { height -> Strip(y, height).also { y += height + gap } }
 }
 
 /** Corner radius of a segmented group's outer edges. */

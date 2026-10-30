@@ -5,6 +5,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -18,7 +19,8 @@ import com.wander.mono.core.calendar.CalendarAccess
  */
 @Composable
 fun CalendarSection(calendar: CalendarSettingsViewModel = viewModel()) {
-    val shown = calendar.shown.collectAsStateWithLifecycle(null).value ?: return
+    val initial = remember { calendar.currentlyShown() }
+    val shown = calendar.shown.collectAsStateWithLifecycle(initial).value ?: return
     val granted by calendar.granted.collectAsStateWithLifecycle()
     var refused by rememberSaveable { mutableStateOf(false) }
     // Granted later in App info: the refusal no longer applies.

@@ -7,24 +7,43 @@ import org.junit.Test
 class RailMathTest {
     @Test
     fun `finger picks the slot it is in and clamps past either end`() {
-        assertEquals(0, RailMath.letterAt(y = 0f, height = 100f, count = 4))
-        assertEquals(0, RailMath.letterAt(y = 24.9f, height = 100f, count = 4))
-        assertEquals(1, RailMath.letterAt(y = 25f, height = 100f, count = 4))
-        assertEquals(3, RailMath.letterAt(y = 99f, height = 100f, count = 4))
-        assertEquals(0, RailMath.letterAt(y = -40f, height = 100f, count = 4))
-        assertEquals(3, RailMath.letterAt(y = 180f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = 0f, top = 0f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = 24.9f, top = 0f, height = 100f, count = 4))
+        assertEquals(1, RailMath.letterAt(y = 25f, top = 0f, height = 100f, count = 4))
+        assertEquals(3, RailMath.letterAt(y = 99f, top = 0f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = -40f, top = 0f, height = 100f, count = 4))
+        assertEquals(3, RailMath.letterAt(y = 180f, top = 0f, height = 100f, count = 4))
+    }
+
+    @Test
+    fun `slots start below the letters' top padding`() {
+        assertEquals(0, RailMath.letterAt(y = 30f, top = 8f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = 32.9f, top = 8f, height = 100f, count = 4))
+        assertEquals(1, RailMath.letterAt(y = 33f, top = 8f, height = 100f, count = 4))
+        assertEquals(3, RailMath.letterAt(y = 107f, top = 8f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = 2f, top = 8f, height = 100f, count = 4))
     }
 
     @Test
     fun `no letter on an empty or unmeasured rail`() {
-        assertEquals(-1, RailMath.letterAt(y = 10f, height = 100f, count = 0))
-        assertEquals(-1, RailMath.letterAt(y = 10f, height = 0f, count = 4))
+        assertEquals(-1, RailMath.letterAt(y = 10f, top = 0f, height = 100f, count = 0))
+        assertEquals(-1, RailMath.letterAt(y = 10f, top = 0f, height = 0f, count = 4))
     }
 
     @Test
     fun `finger slot is zero at the centre of the first letter`() {
-        assertEquals(0f, RailMath.fingerSlot(y = 12.5f, height = 100f, count = 4), DELTA)
-        assertEquals(2f, RailMath.fingerSlot(y = 62.5f, height = 100f, count = 4), DELTA)
+        assertEquals(0f, RailMath.fingerSlot(y = 12.5f, top = 0f, height = 100f, count = 4), DELTA)
+        assertEquals(2f, RailMath.fingerSlot(y = 62.5f, top = 0f, height = 100f, count = 4), DELTA)
+        assertEquals(0f, RailMath.fingerSlot(y = 20.5f, top = 8f, height = 100f, count = 4), DELTA)
+    }
+
+    @Test
+    fun `bubble centres on the finger but stays on the rail`() {
+        assertEquals(70f, RailMath.bubbleTop(y = 100f, size = 60f, railHeight = 400f), DELTA)
+        assertEquals(0f, RailMath.bubbleTop(y = 10f, size = 60f, railHeight = 400f), DELTA)
+        assertEquals(340f, RailMath.bubbleTop(y = 395f, size = 60f, railHeight = 400f), DELTA)
+        // A rail shorter than the bubble pins it to the top.
+        assertEquals(0f, RailMath.bubbleTop(y = 20f, size = 60f, railHeight = 40f), DELTA)
     }
 
     @Test
@@ -80,6 +99,62 @@ class RailMathTest {
         assertEquals(20f, RailMath.letterOffset(index = 5, slot = 3f, bow = 40f), DELTA)
         assertEquals(0f, RailMath.letterOffset(index = 9, slot = 3f, bow = 40f), DELTA)
         assertEquals(0f, RailMath.letterOffset(index = 3, slot = 3f, bow = 0f), DELTA)
+    }
+
+    @Test
+    fun `star and the first letter both jump to the top, later letters to their own item`() {
+        assertEquals(0, RailEntries.listItemFor(railIndex = 0))
+        assertEquals(0, RailEntries.listItemFor(railIndex = 1))
+        assertEquals(4, RailEntries.listItemFor(railIndex = 5))
+    }
+
+    @Test
+    fun `rail shows star only at the very top and clamps past the letters`() {
+        assertEquals(0, RailEntries.railIndexFor(firstItem = 0, firstOffset = 0, letters = 5))
+        assertEquals(1, RailEntries.railIndexFor(firstItem = 0, firstOffset = 12, letters = 5))
+        assertEquals(4, RailEntries.railIndexFor(firstItem = 3, firstOffset = 0, letters = 5))
+        // Work and private space cards after the last letter keep the last letter.
+        assertEquals(5, RailEntries.railIndexFor(firstItem = 6, firstOffset = 0, letters = 5))
+    }
+
+    @Test
+    fun `with a New group first, star goes to it and letters shift down one item`() {
+        assertEquals(0, RailEntries.listItemFor(railIndex = 0, lead = 1))
+        assertEquals(1, RailEntries.listItemFor(railIndex = 1, lead = 1))
+        assertEquals(5, RailEntries.listItemFor(railIndex = 5, lead = 1))
+        // Anywhere in the New group reads as star; past it, the letter on top.
+        assertEquals(0, RailEntries.railIndexFor(firstItem = 0, firstOffset = 40, letters = 5, lead = 1))
+        assertEquals(1, RailEntries.railIndexFor(firstItem = 1, firstOffset = 0, letters = 5, lead = 1))
+        assertEquals(5, RailEntries.railIndexFor(firstItem = 9, firstOffset = 0, letters = 5, lead = 1))
+    }
+
+    @Test
+    fun `star and the lock tick long, letters lightly`() {
+        assertEquals(RailTick.Edge, RailEntries.tickFor(index = 0, count = 6, hasLock = true))
+        assertEquals(RailTick.Edge, RailEntries.tickFor(index = 5, count = 6, hasLock = true))
+        assertEquals(RailTick.Letter, RailEntries.tickFor(index = 3, count = 6, hasLock = true))
+        // Without a lock the last entry is just a letter.
+        assertEquals(RailTick.Letter, RailEntries.tickFor(index = 5, count = 6, hasLock = false))
+    }
+
+    @Test
+    fun `TalkBack reads star in words and the lock as the private space`() {
+        assertEquals(listOf("Top", "A", "B"), railSpoken(listOf("★", "A", "B"), "Top", "Private", hasLock = false))
+        assertEquals(listOf("Top", "A", "Private"), railSpoken(listOf("★", "A", ""), "Top", "Private", hasLock = true))
+    }
+
+    @Test
+    fun `wave faces the list from whichever edge the rail is on`() {
+        assertEquals(1f, RailMath.mirror(rtl = false, atStart = false), DELTA)
+        assertEquals(-1f, RailMath.mirror(rtl = false, atStart = true), DELTA)
+        assertEquals(-1f, RailMath.mirror(rtl = true, atStart = false), DELTA)
+        assertEquals(1f, RailMath.mirror(rtl = true, atStart = true), DELTA)
+    }
+
+    @Test
+    fun `bubble sits on the list's side, clear of the bowed letter`() {
+        assertEquals(-100f, RailMath.bubbleX(mirror = 1f, gap = 16f, size = 72f, bow = 12f), DELTA)
+        assertEquals(100f, RailMath.bubbleX(mirror = -1f, gap = 16f, size = 72f, bow = 12f), DELTA)
     }
 
     private companion object {

@@ -44,22 +44,32 @@ fun rememberPullUpConnection(drag: FollowDrag, onPullDown: (() -> Unit)?): Neste
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 if (source != NestedScrollSource.UserInput) return Offset.Zero
-                if (available.y < 0f) drag.dragBy(available.y) else pullDownBy(available.y, consumed.y)
-                return Offset(0f, available.y.coerceAtMost(0f))
+                val taken = if (available.y < 0f) {
+                    drag.dragBy(available.y)
+                    available.y
+                } else {
+                    pullDownBy(available.y, consumed.y)
+                }
+                return Offset(0f, taken)
             }
 
-            /** Counts a downward pull past the list's top, firing the pull-down action once per gesture. */
-            private fun pullDownBy(leftover: Float, consumed: Float) {
+            /**
+             * Counts a downward pull past the list's top, firing the pull-down action once per gesture.
+             * Returns what it took: all of it while there is a pull-down action, so the list does not
+             * also stretch under the gesture.
+             */
+            private fun pullDownBy(leftover: Float, consumed: Float): Float {
                 val pullDown = currentOnPullDown.value
-                if (leftover > 0f && pullDown != null && !fired) {
+                if (leftover > 0f && pullDown != null) {
                     pulled += leftover
-                    if (pulled >= threshold) {
+                    if (pulled >= threshold && !fired) {
                         fired = true
                         pullDown()
                     }
-                } else if (consumed != 0f) {
-                    pulled = 0f
+                    return leftover
                 }
+                if (consumed != 0f) pulled = 0f
+                return 0f
             }
 
             override suspend fun onPreFling(available: Velocity): Velocity = releaseFling(available)

@@ -1,6 +1,6 @@
 package com.wander.mono.ui.home
 
-import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -14,10 +14,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import com.wander.mono.ui.components.rememberMonoHaptics
 import kotlin.math.abs
 
 /**
@@ -62,29 +61,33 @@ internal fun Modifier.skipSwipe(
     val density = LocalDensity.current
     val distance = with(density) { SKIP_DISTANCE.toPx() }
     val flingVelocity = with(density) { SKIP_FLING_VELOCITY.toPx() }
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val settle = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val currentOnSkip by rememberUpdatedState(onSkip)
     var drag by remember { mutableFloatStateOf(0f) }
     var armed by remember { mutableStateOf(false) }
+    // The settle back; a new drag stops it, so the two never write the offset at once.
+    val settling = remember { Animatable(0f) }
 
     val state = rememberDraggableState { delta ->
         drag += delta
         val past = skipDirectionFor(drag, 0f, distance, flingVelocity, canNext, canPrevious) != null
-        if (past && !armed) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+        if (past && !armed) haptics.threshold()
         armed = past
     }
     return draggable(
         state = state,
         orientation = Orientation.Horizontal,
         enabled = canNext || canPrevious,
+        onDragStarted = { settling.stop() },
         onDragStopped = { velocity ->
             skipDirectionFor(drag, velocity, distance, flingVelocity, canNext, canPrevious)?.let {
-                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                haptics.confirm()
                 currentOnSkip(it)
             }
             armed = false
-            animate(drag, 0f, animationSpec = settle) { value, _ -> drag = value }
+            settling.snapTo(drag)
+            settling.animateTo(0f, settle) { drag = value }
         },
     ).graphicsLayer { translationX = drag * DRAG_FOLLOW }
 }

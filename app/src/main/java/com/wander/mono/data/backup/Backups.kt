@@ -7,6 +7,9 @@ import com.wander.mono.R
 import com.wander.mono.core.apps.ActionResult
 import com.wander.mono.core.apps.Profiles
 import com.wander.mono.core.quiet.QuietMode
+import com.wander.mono.core.security.BackupCipher
+import com.wander.mono.core.security.LockedApps
+import com.wander.mono.core.security.Unsealed
 import com.wander.mono.data.CustomLabels
 import com.wander.mono.data.HeadphoneApps
 import com.wander.mono.data.LauncherPrefs
@@ -26,7 +29,8 @@ import kotlinx.coroutines.withContext
 /**
  * Saves the user's choices to a file they picked and reads them back, through the Storage Access
  * Framework: Mono never sees a path or needs a storage permission, and nothing leaves the phone
- * unless the user puts the file somewhere that syncs.
+ * unless the user puts the file somewhere that syncs. A passphrase seals the file with
+ * [BackupCipher]; without one it is plain JSON.
  */
 @Singleton
 class Backups @Inject constructor(
@@ -36,17 +40,21 @@ class Backups @Inject constructor(
     private val liveRows: LiveRowPrefs,
     private val quietApps: QuietApps,
     private val headphoneApps: HeadphoneApps,
+    private val lockedApps: LockedApps,
+    private val structure: StructureStores,
     private val settings: SettingsStore,
     private val quietMode: QuietMode,
     private val profiles: Profiles,
 ) {
     private val resolver: ContentResolver = context.contentResolver
 
-    suspend fun export(uri: Uri): ActionResult = withContext(Dispatchers.IO) {
-        val text = BackupJson.write(BackupFormat.encode(current()))
+    /** Sealed with [passphrase] when given; the caller wipes it after. */
+    suspend fun export(uri: Uri, passphrase: CharArray?): ActionResult = withContext(Dispatchers.IO) {
+        val plain = BackupJson.write(BackupFormat.encode(current())).toByteArray()
+        val bytes = passphrase?.let { withContext(Dispatchers.Default) { BackupCipher.seal(plain, it) } } ?: plain
         try {
             val stream = resolver.openOutputStream(uri, "wt") ?: return@withContext WRITE_FAILED
-            stream.use { it.write(text.toByteArray()) }
+            stream.use { it.write(bytes) }
             ActionResult.Done
         } catch (_: IOException) {
             WRITE_FAILED
@@ -55,13 +63,30 @@ class Backups @Inject constructor(
         }
     }
 
-    /** The backup in [uri], checked whole and moved to this phone's profiles; nothing is changed yet. */
-    suspend fun read(uri: Uri): BackupRead = withContext(Dispatchers.Default) {
-        val text = withContext(Dispatchers.IO) { readText(uri) } ?: return@withContext UNREADABLE
-        val tree = BackupJson.read(text) ?: return@withContext BackupRead.Failed(BackupError.NotABackup)
+    /**
+     * The backup in [uri], checked whole and moved to this phone's profiles; nothing is changed yet.
+     * A sealed file comes back as [BackupRead.Sealed], for [open] once the passphrase is given.
+     */
+    suspend fun read(uri: Uri): BackupRead {
+        val bytes = withContext(Dispatchers.IO) { readBytes(uri) } ?: return UNREADABLE
+        return if (BackupCipher.isSealed(bytes)) BackupRead.Sealed(bytes) else parse(bytes)
+    }
+
+    /** A sealed [file] opened with [passphrase] (wiped by the caller after), then read as [read] does. */
+    suspend fun open(file: ByteArray, passphrase: CharArray): BackupRead = withContext(Dispatchers.Default) {
+        when (val opened = BackupCipher.open(file, passphrase)) {
+            is Unsealed.Plain -> parse(opened.bytes).also { opened.bytes.fill(0) }
+            Unsealed.WrongPassphrase -> BackupRead.Failed(BackupError.WrongPassphrase)
+            Unsealed.Newer -> BackupRead.Failed(BackupError.Newer)
+            Unsealed.Damaged -> BackupRead.Failed(BackupError.Malformed)
+        }
+    }
+
+    private suspend fun parse(bytes: ByteArray): BackupRead = withContext(Dispatchers.Default) {
+        val tree = BackupJson.read(bytes.decodeToString()) ?: return@withContext NOT_A_BACKUP
         when (val read = BackupFormat.decode(tree, backedUpSettings)) {
-            is BackupRead.Failed -> read
             is BackupRead.Read -> BackupRead.Read(toThisPhone(read.backup))
+            else -> read
         }
     }
 
@@ -75,6 +100,8 @@ class Backups @Inject constructor(
         liveRows.replace(backup.liveRowsOff)
         quietApps.replace(backup.quietApps)
         headphoneApps.replace(backup.headphoneApps)
+        lockedApps.replace(backup.lockedApps)
+        structure.restore(backup.structure)
         settings.restore(backup.settings)
         quietMode.setLinksDoNotDisturb(quietMode.linksDoNotDisturb.first())
         ActionResult.Done
@@ -91,6 +118,8 @@ class Backups @Inject constructor(
         quietApps = quietApps.apps.first(),
         headphoneApps = headphoneApps.apps.first(),
         settings = settings.snapshot(backedUpSettings),
+        lockedApps = lockedApps.apps.first(),
+        structure = structure.current(),
     )
 
     private fun toThisPhone(backup: Backup): Backup {
@@ -99,8 +128,8 @@ class Backups @Inject constructor(
         return backup.remapped(main, remap)
     }
 
-    /** The file's text, or null when it cannot be opened or is far larger than any backup. */
-    private fun readText(uri: Uri): String? = try {
+    /** The file's bytes, or null when it cannot be opened or is far larger than any backup. */
+    private fun readBytes(uri: Uri): ByteArray? = try {
         resolver.openInputStream(uri)?.use(::readCapped)
     } catch (_: IOException) {
         null
@@ -108,9 +137,9 @@ class Backups @Inject constructor(
         null
     }
 
-    private fun readCapped(stream: InputStream): String? {
+    private fun readCapped(stream: InputStream): ByteArray? {
         val bytes = stream.readNBytesCompat(MAX_BYTES + 1)
-        return if (bytes.size > MAX_BYTES) null else bytes.decodeToString()
+        return if (bytes.size > MAX_BYTES) null else bytes
     }
 
     /** `InputStream.readNBytes` is Java 11 (API 33); this reads at most [limit] bytes on any API level. */
@@ -130,5 +159,6 @@ class Backups @Inject constructor(
         const val MAX_BYTES = 1 shl 20
         val WRITE_FAILED = ActionResult.Failed(R.string.backup_error_write)
         val UNREADABLE = BackupRead.Failed(BackupError.Unreadable)
+        val NOT_A_BACKUP = BackupRead.Failed(BackupError.NotABackup)
     }
 }

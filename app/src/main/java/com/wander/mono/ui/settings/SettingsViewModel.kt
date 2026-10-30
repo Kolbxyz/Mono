@@ -17,12 +17,21 @@ import kotlinx.coroutines.launch
 class SettingsViewModel @Inject constructor(private val store: SettingsStore) : ViewModel() {
     fun <T> observe(setting: Setting<T>): Flow<T> = store[setting]
 
+    /** [setting]'s value as last read, so a row has it on the page's first frame. */
+    fun <T> current(setting: Setting<T>): T? = store.current(setting)
+
     fun <T> set(setting: Setting<T>, value: T) {
         viewModelScope.launch { store.set(setting, value) }
     }
 }
 
-/** The stored value of [setting]; null until it has been read, so no row shows a guessed value. */
+/**
+ * The stored value of [setting], there from the first frame since the store keeps the file read;
+ * null only before that first read, so no row ever shows a guessed value.
+ */
 @Composable
-fun <T : Any> SettingsViewModel.collect(setting: Setting<T>): T? =
-    remember(setting) { observe(setting) }.collectAsStateWithLifecycle(null).value
+fun <T : Any> SettingsViewModel.collect(setting: Setting<T>): T? {
+    val flow = remember(setting) { observe(setting) }
+    val initial = remember(setting) { current(setting) }
+    return flow.collectAsStateWithLifecycle(initial).value
+}

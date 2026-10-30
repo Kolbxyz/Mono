@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,9 +17,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -33,6 +36,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.media.PlayingMedia
+import com.wander.mono.ui.components.PressMorph
+import com.wander.mono.ui.components.expressivePress
 import com.wander.mono.ui.home.media.NowPlayingCollapsed
 import com.wander.mono.ui.home.media.NowPlayingExpanded
 import kotlin.math.abs
@@ -64,34 +69,43 @@ fun NowPlayingCard(
     val tint = media.artColor?.let { lerp(scheme.surfaceContainerHigh, Color(it), ART_TINT) }
         ?: scheme.surfaceContainerHigh
     val container by animateColorAsState(tint, motion.defaultEffectsSpec(), label = "art-tint")
-    val content = mostContrasting(container, scheme.onSurface, scheme.inverseOnSurface)
+    // Chosen for the tint it goes to and eased alongside it, so the text never flips in one frame.
+    val content by animateColorAsState(
+        mostContrasting(tint, scheme.onSurface, scheme.inverseOnSurface),
+        motion.defaultEffectsSpec(),
+        label = "art-content",
+    )
     val corner by animateDpAsState(
         if (expanded) EXPANDED_CORNER else COLLAPSED_CORNER,
         motion.defaultSpatialSpec(),
         label = "card-corner",
     )
     val mediaActions = mediaActions(media, onTogglePlay, onSkipNext, onSkipPrevious)
+    val interaction = remember { MutableInteractionSource() }
 
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp)
+            .padding(vertical = HomeCardMargin)
             .skipSwipe(media.canSkipNext, media.canSkipPrevious) {
                 when (it) {
                     SkipDirection.Next -> onSkipNext()
                     SkipDirection.Previous -> onSkipPrevious()
                 }
-            },
+            }
+            .expressivePress(interaction, PressMorph.squarer(corner)),
         shape = RoundedCornerShape(corner),
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
         Column(
             Modifier
                 .clickable(
+                    interactionSource = interaction,
+                    indication = ripple(),
                     onClickLabel = stringResource(if (expanded) R.string.media_collapse else R.string.media_expand),
                 ) { expanded = !expanded }
                 .semantics { customActions = mediaActions }
-                .padding(CARD_INSET),
+                .padding(HomeCardInset),
         ) {
             CardState(visible = !expanded) { NowPlayingCollapsed(media, container, onTogglePlay) }
             CardState(visible = expanded) {
@@ -176,9 +190,6 @@ private fun mostContrasting(background: Color, first: Color, second: Color): Col
 /** How far the card moves from the surface colour towards the artwork's average colour. */
 private const val ART_TINT = 0.45f
 
-/** The card's inset on every edge, so both states sit symmetrically in it. */
-private val CARD_INSET = 16.dp
-
 /** The card's corners grow with it, `shapes.large` to `extraLarge` (spec 5.3). */
-private val COLLAPSED_CORNER = 26.dp
+private val COLLAPSED_CORNER = HomeCardCorner
 private val EXPANDED_CORNER = 36.dp

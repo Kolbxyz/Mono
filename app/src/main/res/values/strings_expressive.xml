@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Spoken by screen readers for the loading indicator. -->
+    <string name="loading">Loading</string>
+
+    <!-- Settings › Icons: the colour themed (monochrome) icons are drawn in. -->
+    <string name="settings_icon_tint">Themed icon colour</string>
+    <string name="settings_icon_tint_neutral">Neutral</string>
+    <string name="settings_icon_tint_app">App colour</string>
+    <string name="settings_icon_tint_primary">Accent</string>
+    <string name="settings_icon_tint_secondary">Soft</string>
+    <string name="settings_icon_tint_tertiary">Contrast</string>
+
+    <!-- Settings › Icons: rows take a touch of their app's colour. -->
+    <string name="settings_tint_rows">Tint rows with app colour</string>
+</resources>
