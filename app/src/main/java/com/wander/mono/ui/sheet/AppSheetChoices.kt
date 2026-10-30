@@ -53,7 +53,7 @@ internal fun AppSheetChoices(
     val key = state.app.key
     val actions = when (page) {
         AppSheetPage.Folder -> buildList<MenuAction> {
-            add(MenuAction(R.drawable.sym_add, R.string.sheet_new_folder, ActionEmphasis.Primary) {
+            add(MenuAction(R.drawable.sym_add, R.string.sheet_new_folder, ActionEmphasis.Secondary) {
                 choices.onNewFolder(key)
             }.afterDismiss(dismiss))
             structure.folders.forEach { folder ->

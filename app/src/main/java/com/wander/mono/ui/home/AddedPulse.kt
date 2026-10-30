@@ -11,7 +11,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.dp
 import com.wander.mono.core.apps.AppKey
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -28,7 +27,8 @@ internal fun addedFavorite(before: List<AppKey>, after: List<AppKey>): AppKey? {
 
 /**
  * A newly added favourite pulses once (spec 7.2): it swells and settles on the fast spatial spec
- * while a tonal highlight comes and goes behind it. [onDone] runs after, so it plays only once.
+ * while a tonal highlight with home's card corners comes and goes behind it. [onDone] runs
+ * after, so it plays only once.
  */
 @Composable
 internal fun Modifier.addedPulse(active: Boolean, onDone: () -> Unit): Modifier {
@@ -65,7 +65,7 @@ internal fun Modifier.addedPulse(active: Boolean, onDone: () -> Unit): Modifier 
             if (highlight.value > 0f) {
                 drawRoundRect(
                     highlightColor.copy(alpha = highlight.value * HIGHLIGHT_ALPHA),
-                    cornerRadius = CornerRadius(HIGHLIGHT_CORNER.toPx()),
+                    cornerRadius = CornerRadius(HomeCardCorner.toPx()),
                 )
             }
         }
@@ -73,4 +73,3 @@ internal fun Modifier.addedPulse(active: Boolean, onDone: () -> Unit): Modifier 
 
 private const val PULSE_SCALE = 1.04f
 private const val HIGHLIGHT_ALPHA = 0.7f
-private val HIGHLIGHT_CORNER = 16.dp

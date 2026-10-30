@@ -27,12 +27,12 @@ import com.wander.mono.ui.theme.secondaryTextColor
  * reduced motion, where it would only be motion.
  */
 @Composable
-internal fun LiveProgressContent(activity: LiveActivity) {
+internal fun LiveProgressContent(activity: LiveActivity, tone: LiveTone) {
     val scheme = MaterialTheme.colorScheme
     val progress = activity.progress
     Column(Modifier.fillMaxWidth()) {
         Row(horizontalArrangement = Arrangement.spacedBy(GAP), verticalAlignment = Alignment.CenterVertically) {
-            LiveBadge(R.drawable.sym_hourglass_bottom)
+            LiveBadge(R.drawable.sym_hourglass_bottom, tone)
             LiveTitle(activity, Modifier.weight(1f))
             if (progress is LiveProgress.Determinate) {
                 Text(

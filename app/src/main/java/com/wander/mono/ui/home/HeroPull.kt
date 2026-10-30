@@ -12,13 +12,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import com.wander.mono.ui.components.rememberMonoHaptics
 import com.wander.mono.ui.theme.LocalReducedMotion
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -76,7 +75,7 @@ class HeroPull internal constructor(private val scope: CoroutineScope) {
 @Composable
 fun rememberHeroPull(pullDownActive: Boolean): HeroPull {
     val scope = rememberCoroutineScope()
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val reduced = LocalReducedMotion.current
     val spec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
     val distance = with(LocalDensity.current) { (if (pullDownActive) HANDOFF_TRAVEL else FREE_TRAVEL).toPx() }
@@ -88,7 +87,7 @@ fun rememberHeroPull(pullDownActive: Boolean): HeroPull {
         hero.onFull = if (pullDownActive) {
             {}
         } else {
-            { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) }
+            { haptics.threshold() }
         }
     }
     return hero

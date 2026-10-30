@@ -4,13 +4,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import com.wander.mono.ui.components.rememberMonoHaptics
 
 /**
  * Counts one gesture's upward drag that the list could not take (it has no more to scroll), and
@@ -51,14 +50,14 @@ internal class SearchPull(private val threshold: Float) {
 @Composable
 internal fun rememberSearchPullConnection(onPull: () -> Unit): NestedScrollConnection {
     val threshold = with(LocalDensity.current) { PULL_DISTANCE.toPx() }
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val currentOnPull = rememberUpdatedState(onPull)
     return remember(threshold, haptics) {
         val pull = SearchPull(threshold)
         object : NestedScrollConnection {
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 if (source == NestedScrollSource.UserInput && pull.drag(consumed.y, available.y)) {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                    haptics.threshold()
                     currentOnPull.value()
                 }
                 return Offset.Zero
