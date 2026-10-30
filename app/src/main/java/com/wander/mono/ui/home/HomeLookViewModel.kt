@@ -7,6 +7,7 @@ import com.wander.mono.core.system.Wallpaper
 import com.wander.mono.core.system.WallpaperTone
 import com.wander.mono.data.settings.AccessibilitySettings
 import com.wander.mono.data.settings.HomeLookSettings
+import com.wander.mono.data.settings.RowDensity
 import com.wander.mono.data.settings.SettingsStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -17,9 +18,14 @@ import kotlinx.coroutines.flow.stateIn
 
 /**
  * What home needs to stay legible: the wallpaper's tone, whether the user wants a text shadow over
- * no scrim, and whether high-contrast text is on (Mono's setting or Android's).
+ * no scrim, whether high-contrast text is on (Mono's setting or Android's), and how roomy the rows are.
  */
-data class HomeLook(val tone: WallpaperTone?, val textShadow: Boolean, val highContrast: Boolean = false)
+data class HomeLook(
+    val tone: WallpaperTone?,
+    val textShadow: Boolean,
+    val highContrast: Boolean = false,
+    val density: RowDensity = RowDensity.Default,
+)
 
 @HiltViewModel
 class HomeLookViewModel @Inject constructor(
@@ -32,9 +38,13 @@ class HomeLookViewModel @Inject constructor(
         systemContrast.raised,
     ) { own, system -> own || system }
 
-    val look: StateFlow<HomeLook> =
-        combine(wallpaper.tone, settings[HomeLookSettings.TextShadow], highContrast, ::HomeLook)
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeLook(null, textShadow = false))
+    val look: StateFlow<HomeLook> = combine(
+        wallpaper.tone,
+        settings[HomeLookSettings.TextShadow],
+        highContrast,
+        settings[HomeLookSettings.Density],
+        ::HomeLook,
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeLook(null, textShadow = false))
 
     private companion object {
         const val STOP_TIMEOUT_MS = 5_000L
