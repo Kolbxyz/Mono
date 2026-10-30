@@ -2,7 +2,6 @@ package com.wander.mono.ui.home
 
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
-import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.core.widgets.PlacedWidget
 import com.wander.mono.core.widgets.WidgetPlacement
 import com.wander.mono.ui.components.AppBadge
@@ -14,23 +13,7 @@ class LiftedRowsTest {
     private val clock = app("com.clock")
     private val wanda = app("com.wander.android")
     private val podcasts = app("org.podcasts")
-    private val playing = HomeRow.NowPlaying(
-        PlayingMedia(
-            "com.wander.android",
-            "Song",
-            "Artist",
-            art = null,
-            artColor = null,
-            isPlaying = true,
-            canSkipNext = true,
-            canSkipPrevious = true,
-            canSeek = true,
-            progress = null,
-            upNext = emptyList(),
-            output = null,
-            pausedAtMs = null,
-        ),
-    )
+    private val calendar = CalendarRow(emptyList(), at = 0)
 
     private fun app(pkg: String) = HomeRow.App(LaunchableApp(AppKey(pkg, "$pkg.Main", 0), pkg, true), AppBadge.None)
 
@@ -48,9 +31,9 @@ class LiftedRowsTest {
     @Test
     fun liftedAppsGoFirstWithTheirLiveRows() {
         val wandaWidget = widget(1)
-        val rows = listOf(phalanx, clock, wanda, playing, wandaWidget, podcasts)
+        val rows = listOf(phalanx, clock, wanda, calendar, wandaWidget, podcasts)
         val result = liftedFirst(rows, setOf(wanda.app.key))
-        assertEquals(keys(listOf(wanda, playing, wandaWidget, phalanx, clock, podcasts)), keys(result))
+        assertEquals(keys(listOf(wanda, calendar, wandaWidget, phalanx, clock, podcasts)), keys(result))
     }
 
     @Test
@@ -63,9 +46,9 @@ class LiftedRowsTest {
     @Test
     fun rowsAboveTheFirstFavouriteStayFirstAndThePromptStaysLast() {
         val topWidget = widget(2)
-        val rows = listOf(topWidget, playing, phalanx, wanda, HomeRow.ListenerPrompt)
+        val rows = listOf(topWidget, calendar, phalanx, wanda, HomeRow.ListenerPrompt)
         val result = liftedFirst(rows, setOf(wanda.app.key))
-        assertEquals(keys(listOf(topWidget, playing, wanda, phalanx, HomeRow.ListenerPrompt)), keys(result))
+        assertEquals(keys(listOf(topWidget, calendar, wanda, phalanx, HomeRow.ListenerPrompt)), keys(result))
     }
 
     @Test

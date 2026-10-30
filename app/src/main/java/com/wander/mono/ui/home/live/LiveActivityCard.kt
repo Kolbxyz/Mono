@@ -39,8 +39,8 @@ import com.wander.mono.ui.home.LocalRowDensity
 import com.wander.mono.ui.home.favoriteRowMetrics
 
 /**
- * An ongoing notification inline under its app, on the same tonal card as the collapsed now-playing
- * row: a progress with its wavy line, a timer in large digits, or the next turn of a route. Tapping
+ * An ongoing notification inline under its app, on the same tonal card home's other rows use: a
+ * progress with its wavy line, a timer in large digits, or the next turn of a route. Tapping
  * it opens what the notification opens; only a timer offers buttons, its own. With "Tint rows with
  * app colour" its badge and press take the app's colour, softly.
  */

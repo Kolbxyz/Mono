@@ -4,6 +4,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Rect
@@ -22,8 +23,9 @@ import androidx.compose.ui.unit.dp
  * edge. Positions and [strength] (0..1, the fade while the window is not focused) are read at draw
  * time, so scrolling and the fade only redraw.
  *
- * The outermost [taper] px on every side ease to nothing: when the system scales Mono's window
- * (the recents gesture) but not the wallpaper behind it, no opaque band shows a hard edge.
+ * The outermost [taper] px on every side (read at draw time too) ease to nothing: the caller grows
+ * it as the window loses focus, so when the system scales Mono's window (the recents gesture) but not
+ * the wallpaper behind it, no opaque band shows a hard edge. At 0 the scrim reaches every edge.
  */
 fun Modifier.homeScrim(
     color: Color,
@@ -31,7 +33,7 @@ fun Modifier.homeScrim(
     headerBottom: () -> Float,
     listTop: () -> Float,
     reach: Float,
-    taper: Float,
+    taper: () -> Float,
 ): Modifier =
     if (color.alpha == 0f) {
         this
@@ -41,23 +43,37 @@ fun Modifier.homeScrim(
             if (alpha <= 0f) return@drawBehind
             val stops = scrimStops(size.height, headerBottom(), listTop(), reach)
                 .map { (position, share) -> position to color.copy(alpha = alpha * share) }
-            drawIntoCanvas { canvas ->
-                canvas.saveLayer(Rect(0f, 0f, size.width, size.height), Paint())
-                drawRect(Brush.verticalGradient(*stops.toTypedArray()))
-                drawRect(Brush.horizontalGradient(*edgeMask(size.width, taper)), blendMode = BlendMode.DstIn)
-                drawRect(Brush.verticalGradient(*edgeMask(size.height, taper)), blendMode = BlendMode.DstIn)
-                canvas.restore()
+            val gradient = Brush.verticalGradient(*stops.toTypedArray())
+            val edge = taper()
+            // Focused, nothing to taper: no offscreen layer for the mask.
+            if (edge < 1f) {
+                drawRect(gradient)
+            } else {
+                drawIntoCanvas { canvas ->
+                    canvas.saveLayer(Rect(0f, 0f, size.width, size.height), Paint())
+                    drawRect(gradient)
+                    drawRect(Brush.horizontalGradient(*edgeMask(size.width, edge)), blendMode = BlendMode.DstIn)
+                    drawRect(Brush.verticalGradient(*edgeMask(size.height, edge)), blendMode = BlendMode.DstIn)
+                    canvas.restore()
+                }
             }
         }
     }
 
 /**
- * The scrim's strength: 1 while the window has focus, easing to 0 without it. The recents gesture
- * scales the window but not the wallpaper behind it, so the scrim and the text halo step aside.
+ * Whether Mono's activity is the top resumed one. It stops being as soon as another activity takes
+ * over (an app opening, the recents gesture), a little before the window loses focus.
+ */
+internal val LocalTopResumed = compositionLocalOf { true }
+
+/**
+ * The scrim's strength: 1 while the window has focus and Mono is the top resumed activity, easing
+ * to 0 as soon as either goes. The recents gesture scales the window but not the wallpaper behind
+ * it, so the scrim and the text halo step aside, starting at the earlier of the two.
  */
 @Composable
 internal fun windowFocusStrength(): State<Float> = animateFloatAsState(
-    if (LocalWindowInfo.current.isWindowFocused) 1f else 0f,
+    if (LocalWindowInfo.current.isWindowFocused && LocalTopResumed.current) 1f else 0f,
     MaterialTheme.motionScheme.defaultEffectsSpec(),
     label = "scrim-focus",
 )
@@ -114,7 +130,10 @@ private fun smoothstep(from: Float, to: Float, x: Float): Float {
 /** How far the scrim eases out into the empty space past the header and before the list. */
 internal val ScrimReach = 120.dp
 
-/** How far in from each window edge the scrim eases from nothing, so no opaque band meets the border. */
+/**
+ * How far in from each window edge the scrim eases from nothing once the window is unfocused, so no
+ * opaque band meets the border as the system scales the window.
+ */
 internal val ScrimTaper = 24.dp
 
 /** How far down the header the top scrim holds full strength before easing out. */

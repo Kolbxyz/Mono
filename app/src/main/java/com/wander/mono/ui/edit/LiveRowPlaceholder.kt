@@ -34,7 +34,7 @@ import com.wander.mono.ui.components.expressivePress
 import com.wander.mono.ui.home.HomeCardCorner
 
 /**
- * A live row (now playing, notification preview, calendar) as edit mode shows it: a compact card
+ * A live row (notification preview, calendar, live activity) as edit mode shows it: a compact card
  * with its symbol, name and state in place of the live content, the whole card one switch. A
  * hidden row stays here, dimmed, so it can be switched back on.
  */

@@ -6,6 +6,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.setValue
+import com.wander.mono.ui.BACK_GIVE
 import com.wander.mono.ui.components.backResistance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -38,8 +39,13 @@ internal class PageBack(open: Boolean, private val scope: CoroutineScope) {
             return given + (1f - given) * (1f - presence.coerceIn(0f, 1f))
         }
 
-    /** How far behind the page the hub is: it comes forward as the swipe or the page's leaving goes. */
-    val depth: Float get() = presence.coerceIn(0f, 1f) * (1f - backResistance(progress))
+    /**
+     * How far behind the page the hub is, apart from how far the page is in: fully behind early in
+     * the page's coming ([DEPTH_LEAD] of it), so its blur shows while the page grows; a swipe hands
+     * back only up to [BACK_GIVE], the hub staying out of focus until the page really leaves.
+     */
+    val depth: Float
+        get() = (presence / DEPTH_LEAD).coerceIn(0f, 1f) * (1f - backResistance(progress) * BACK_GIVE)
 
     /** The page is whole and opaque over the hub, which then need not be drawn at all. */
     val covers: Boolean get() = presence >= 1f && progress == 0f
@@ -69,3 +75,6 @@ internal class PageBack(open: Boolean, private val scope: CoroutineScope) {
         animate(presence, if (open) 1f else 0f, animationSpec = spec) { value, _ -> presence = value }
     }
 }
+
+/** Share of the page's coming by which the hub is fully behind it. */
+private const val DEPTH_LEAD = 0.35f

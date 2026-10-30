@@ -2,10 +2,7 @@ package com.wander.mono.ui.home
 
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
-import com.wander.mono.core.media.MediaState
-import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.core.notifications.PackageUser
-import com.wander.mono.data.NowPlayingAnchor
 import com.wander.mono.ui.components.AppBadge
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -20,37 +17,16 @@ class HomeRowsTest {
     private fun app(pkg: String, label: String, serial: Long = 0, main: Boolean = true) =
         LaunchableApp(AppKey(pkg, "$pkg.Main", serial), label, main)
 
-    private fun playing(pkg: String) = MediaState.Active(
-        PlayingMedia(
-            pkg,
-            "Song",
-            "Artist",
-            art = null,
-            artColor = null,
-            isPlaying = true,
-            canSkipNext = true,
-            canSkipPrevious = true,
-            canSeek = true,
-            progress = null,
-            upNext = emptyList(),
-            output = null,
-            pausedAtMs = null,
-        ),
-    )
-
     private fun rows(
         favorites: List<AppKey>,
-        media: MediaState = MediaState.Idle,
+        listenerMissing: Boolean = false,
         badges: Map<PackageUser, Int> = emptyMap(),
         showCounts: Boolean = true,
-        anchor: NowPlayingAnchor? = null,
-    ) = assembleHomeRows(favorites, catalog, badges, media, showCounts, anchor)
+    ) = assembleHomeRows(favorites, catalog, badges, listenerMissing, showCounts)
 
     private fun shape(rows: List<HomeRow>) = rows.map {
         when (it) {
             is HomeRow.App -> it.app.label + if (it.app.isMainProfile) "" else " (work)"
-            is HomeRow.NowPlaying -> "now:" + it.media.packageName
-            HomeRow.NowPlayingSpot -> "spot"
             HomeRow.ListenerPrompt -> "prompt"
             is NotificationRow -> "notification:" + it.app.label
             is CalendarRow -> "calendar"
@@ -67,39 +43,14 @@ class HomeRowsTest {
     }
 
     @Test
-    fun `now playing sits right under the main-profile favourite that owns the session`() {
-        val favorites = listOf(workWanda.key, phalanx.key, wanda.key, clock.key)
-        assertEquals(
-            listOf("Wanda (work)", "Phalanx", "Wanda", "now:com.wander.android", "Clock"),
-            shape(rows(favorites, playing("com.wander.android"))),
-        )
-    }
-
-    @Test
-    fun `now playing goes first when its app is not a favourite`() {
-        val result = rows(listOf(phalanx.key), playing("com.wander.android"))
-        assertEquals(listOf("now:com.wander.android", "Phalanx"), shape(result))
-    }
-
-    @Test
-    fun `now playing stays where the user placed it`() {
-        val favorites = listOf(phalanx.key, wanda.key, clock.key)
-        val under = rows(favorites, playing("com.wander.android"), anchor = NowPlayingAnchor.Under(clock.key))
-        assertEquals(listOf("Phalanx", "Wanda", "Clock", "now:com.wander.android"), shape(under))
-        val top = rows(favorites, playing("com.wander.android"), anchor = NowPlayingAnchor.Top)
-        assertEquals(listOf("now:com.wander.android", "Phalanx", "Wanda", "Clock"), shape(top))
-    }
-
-    @Test
-    fun `now playing follows its app again when the favourite it was placed under is gone`() {
-        val gone = NowPlayingAnchor.Under(clock.key)
-        val result = rows(listOf(phalanx.key, wanda.key), playing("com.wander.android"), anchor = gone)
-        assertEquals(listOf("Phalanx", "Wanda", "now:com.wander.android"), shape(result))
+    fun `work profile favourites keep their own row and duplicates show once`() {
+        val favorites = listOf(workWanda.key, phalanx.key, wanda.key, phalanx.key)
+        assertEquals(listOf("Wanda (work)", "Phalanx", "Wanda"), shape(rows(favorites)))
     }
 
     @Test
     fun `missing notification access adds one prompt row at the end`() {
-        val result = rows(listOf(phalanx.key, clock.key), MediaState.NoAccess)
+        val result = rows(listOf(phalanx.key, clock.key), listenerMissing = true)
         assertEquals(listOf("Phalanx", "Clock", "prompt"), shape(result))
     }
 

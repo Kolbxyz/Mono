@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalView
  * What each word is for, and who does it today (the sweep moves them here):
  * - [tick]: scrubbing through many values, e.g. letters on the drawer rail (`LetterRail`).
  * - [segment]: a discrete step, e.g. a reorder slot crossed (`ui/edit`), seek bar intervals.
- * - [threshold]: a gesture armed past its point of no return (`DrawerMotion`, `SearchPull`,
+ * - [threshold]: a gesture armed past its point of no return (`DrawerMotion`,
  *   `SkipSwipe`, reorder lift).
  * - [confirm]: an action done, e.g. a media skip or an up-next pick (`MediaTransport`, `UpNextList`).
  * - [reject]: an action failed (`LauncherSnackbar` errors).

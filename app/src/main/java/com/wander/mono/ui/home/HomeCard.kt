@@ -3,7 +3,7 @@ package com.wander.mono.ui.home
 import androidx.compose.ui.unit.dp
 
 /**
- * The one look home's cards share, so now playing, live activities, the calendar and widgets read
+ * The one look home's cards share, so live activities, the calendar and widgets read
  * as siblings: `shapes.large` corners ([HomeCardCorner], the radius a press morphs from), content
  * [HomeCardInset] in from every edge, and [HomeCardMargin] above and below between rows.
  */

@@ -2,8 +2,6 @@ package com.wander.mono.ui.home
 
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
-import com.wander.mono.core.media.MediaState
-import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.core.notifications.PreviewExpansion
@@ -40,8 +38,6 @@ class NotificationRowTest {
         when (it) {
             is HomeRow.App -> it.app.label + if (it.app.isMainProfile) "" else " (work)"
             is NotificationRow -> "preview:" + it.preview.text
-            is HomeRow.NowPlaying -> "now"
-            HomeRow.NowPlayingSpot -> "spot"
             HomeRow.ListenerPrompt -> "prompt"
             is CalendarRow -> "calendar"
             is LiveActivityRow -> "live"
@@ -58,27 +54,16 @@ class NotificationRowTest {
     }
 
     @Test
-    fun `the preview comes before the favourite's now-playing row`() {
-        val media = MediaState.Active(
-            PlayingMedia(
-                "org.phalanx.android",
-                "Voice note",
-                "Léa",
-                art = null,
-                artColor = null,
-                isPlaying = true,
-                canSkipNext = false,
-                canSkipPrevious = false,
-                canSeek = false,
-                progress = null,
-                upNext = emptyList(),
-                output = null,
-                pausedAtMs = null,
-            ),
+    fun `the preview sits under its favourite, before the access prompt`() {
+        val base = assembleHomeRows(
+            listOf(phalanx.key),
+            listOf(phalanx),
+            emptyMap(),
+            listenerMissing = true,
+            showCounts = true,
         )
-        val base = assembleHomeRows(listOf(phalanx.key), listOf(phalanx), emptyMap(), media, showCounts = true)
         val rows = withPreviews(base, mapOf(owner(phalanx) to preview(owner(phalanx), "hi")))
-        assertEquals(listOf("Phalanx", "preview:hi", "now"), shape(rows))
+        assertEquals(listOf("Phalanx", "preview:hi", "prompt"), shape(rows))
     }
 
     @Test

@@ -19,6 +19,8 @@
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Normal permission: applies a bundled wallpaper when the user picks one in Settings. -->
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
     <!-- Upcoming events on home. Opt-in: asked for only when the Calendar setting is switched on. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
 
@@ -201,7 +203,7 @@
         </activity>
 
         <!--
-          Notification counts (dots) and the media sessions behind the now-playing row. Only reads
+          Notification counts (dots) and the media sessions behind the now-playing player. Only reads
           what the system hands it; nothing leaves the process.
         -->
         <service

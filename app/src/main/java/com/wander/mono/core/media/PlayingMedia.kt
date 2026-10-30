@@ -2,7 +2,7 @@ package com.wander.mono.core.media
 
 import androidx.compose.ui.graphics.ImageBitmap
 
-/** The session the system ranks first, as the now-playing row shows it. */
+/** The session the system ranks first, as the player under the clock shows it. */
 data class PlayingMedia(
     val packageName: String,
     val title: String,

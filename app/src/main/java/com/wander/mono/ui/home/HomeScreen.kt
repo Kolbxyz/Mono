@@ -3,7 +3,6 @@ package com.wander.mono.ui.home
 import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -28,17 +27,13 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,18 +53,19 @@ import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
  * The home screen over the wallpaper: the glance header at the top (or, [shell] reachable, just
- * over the dock), the rows anchored to the bottom so favourites sit in the thumb zone, and the
- * search dock under them. [hero] is how far the hero pull has grown the clock. Drags anywhere
- * (past the end of the list when it scrolls) go to [gestureScroll]: up pulls the drawer, down
- * opens the notification shade. Long-pressing an empty spot opens the home options and
- * double-tapping one runs [onDoubleTap]; rows consume their own presses, so they never reach them.
- * Long-pressing the clock opens its own sheet ([onClockOptions]), the now-playing card its own
- * ([onMediaOptions]).
+ * over the dock) with the player under the clock ([nowPlaying], told whether the header is
+ * compact), the rows where the user placed them ([HomeLook.listPosition], by default the bottom so
+ * favourites sit in the thumb zone), and the search dock under them. [hero] is how far the hero
+ * pull has grown the clock. Drags anywhere (past the end of the list when it scrolls) go to
+ * [gestureScroll]: up pulls the drawer, down opens the notification shade. Long-pressing an empty
+ * spot opens the home options and double-tapping one runs [onDoubleTap]; rows consume their own
+ * presses, so they never reach them.
+ * Long-pressing the clock opens its own sheet ([onClockOptions]); the player handles its own.
  * The favourite [pulse] keys, just added, pulses once, then [onPulsed] clears it.
  * The [lifted] favourites go first while headphones are connected, outside edit mode only.
  *
- * The scrim and the edit dim are drawn by the outer layer ([modifier]); [contentModifier] applies
- * to the header, list and dock alone, so scaling them (behind the drawer) leaves the scrim whole.
+ * The scrim and the edit dim are not drawn here but by [HomeScrimLayer] under home, at the
+ * [scrimEdges] measured here; [contentModifier] applies to the header, list and dock alone.
  */
 @Composable
 fun HomeScreen(
@@ -85,12 +81,6 @@ fun HomeScreen(
     onLaunch: (LaunchableApp, LaunchSource?) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     onAppInfo: (LaunchableApp) -> Unit,
-    onTogglePlay: () -> Unit,
-    onSkipNext: () -> Unit,
-    onSkipPrevious: () -> Unit,
-    onSeek: (positionMs: Long) -> Unit,
-    onPlayQueueItem: (id: Long) -> Unit,
-    onOpenOutput: () -> Unit,
     onGrantAccess: () -> Unit,
     onOpenEvent: (CalendarEvent) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -99,34 +89,25 @@ fun HomeScreen(
     onDoubleTap: (() -> Unit)?,
     onHomeOptions: () -> Unit,
     onClockOptions: () -> Unit,
-    onMediaOptions: () -> Unit,
     createWidgetView: (Context, Int) -> MonoWidgetHostView,
     onWidgetLongPress: (WidgetHomeRow) -> Unit,
+    scrimEdges: ScrimEdges,
     modifier: Modifier = Modifier,
     contentModifier: Modifier = Modifier,
     shell: HomeShell = HomeShell(),
     hero: () -> Float = { 0f },
+    nowPlaying: @Composable (compact: Boolean) -> Unit = {},
     previews: NotificationPreviewViewModel = viewModel(),
 ) {
     // The header and search dock are not scrollable; this lets drags on them reach gestureScroll too.
     val stillDrag = rememberScrollableState { 0f }
     val motion = MaterialTheme.motionScheme
     val scheme = MaterialTheme.colorScheme
-    val density = LocalDensity.current
     val haptics = LocalHapticFeedback.current
-    val scrimEdges = remember { ScrimEdges() }
     val replyOpen = previews.replying.collectAsStateWithLifecycle().value != null
-    val legibleAlpha = remember(look.tone, scheme.surface, scheme.onSurface) {
-        scrimAlpha(look.tone, scheme.surface.toArgb(), scheme.onSurface.toArgb())
-    }
-    // Edit mode dims the wallpaper (spec 4.6).
-    val editDim = animateFloatAsState(if (editing.active) EDIT_DIM else 0f, motion.defaultEffectsSpec())
     val editPadding = animateDpAsState(if (editing.active) EditToolbarClearance else 16.dp, motion.defaultSpatialSpec())
-    val scrimAlpha = homeScrimAlpha(legibleAlpha, look.textShadow, look.highContrast)
-    val scrimStrength = windowFocusStrength()
-    val shadow = wallpaperTextShadow(look.textShadow, halo = scrimStrength.value)
-    val reach = with(density) { ScrimReach.toPx() }
-    val taper = with(density) { ScrimTaper.toPx() }
+    // The halo steps aside with the scrim while the window is unfocused.
+    val shadow = wallpaperTextShadow(look.textShadow, halo = windowFocusStrength().value)
 
     // Without onSurface as the content colour, the clock and favourites would fall back to black.
     CompositionLocalProvider(
@@ -138,16 +119,6 @@ fun HomeScreen(
         BoxWithConstraints(
             modifier
                 .fillMaxSize()
-                .homeScrim(
-                    color = scheme.surface.copy(alpha = scrimAlpha),
-                    strength = { scrimStrength.value },
-                    // Reachable, the header is under the list: one scrim rising from the rows covers both.
-                    headerBottom = { if (shell.reachable) -reach else scrimEdges.headerBottom },
-                    listTop = { scrimEdges.listTop + listState.contentTop() },
-                    reach = reach,
-                    taper = taper,
-                )
-                .drawBehind { drawRect(scheme.surface.copy(alpha = editDim.value)) }
                 .pointerInput(onHomeOptions, onDoubleTap) {
                     detectTapGestures(
                         onDoubleTap = if (onDoubleTap != null) { _ -> onDoubleTap() } else null,
@@ -184,7 +155,7 @@ fun HomeScreen(
                         scrimEdges::onHeader,
                         onHomeOptions,
                         onClockOptions,
-                    )
+                    ) { nowPlaying(compactHeader) }
                 }
                 if (!shell.reachable) header()
                 val listModifier = Modifier
@@ -203,16 +174,10 @@ fun HomeScreen(
                         onPulsed = onPulsed,
                         // In edit mode the floating toolbar covers the list's foot: keep the last row clear of it.
                         contentPadding = PaddingValues(bottom = editPadding.value.coerceAtLeast(0.dp)),
+                        position = look.listPosition,
                         onLaunch = onLaunch,
                         onLongPress = onLongPress,
                         onAppInfo = onAppInfo,
-                        onTogglePlay = onTogglePlay,
-                        onSkipNext = onSkipNext,
-                        onSkipPrevious = onSkipPrevious,
-                        onSeek = onSeek,
-                        onPlayQueueItem = onPlayQueueItem,
-                        onOpenOutput = onOpenOutput,
-                        onMediaOptions = onMediaOptions,
                         onGrantAccess = onGrantAccess,
                         onOpenEvent = onOpenEvent,
                         onOpenDrawer = onOpenDrawer,
@@ -240,6 +205,3 @@ fun HomeScreen(
         }
     }
 }
-
-/** How much edit mode dims the wallpaper, with the surface colour (spec 4.6). */
-private const val EDIT_DIM = 0.6f

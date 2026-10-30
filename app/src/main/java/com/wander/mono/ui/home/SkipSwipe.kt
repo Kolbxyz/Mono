@@ -20,7 +20,7 @@ import com.wander.mono.ui.components.rememberMonoHaptics
 import kotlin.math.abs
 
 /**
- * What a released horizontal drag on the now-playing card means. Dragging left brings in the next
+ * What a released horizontal drag on the player under the clock means. Dragging left brings in the next
  * track, as in a carousel. A fling decides on its own, unless it flicks back against a drag that
  * had passed [distance], which reads as changing one's mind. Directions the session does not
  * support resolve to null, so the card just springs back.

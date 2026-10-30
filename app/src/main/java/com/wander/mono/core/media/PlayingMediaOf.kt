@@ -6,10 +6,10 @@ import android.media.session.PlaybackState
 import android.os.SystemClock
 import androidx.compose.ui.graphics.asImageBitmap
 
-/** Whether the session has something to show at all: a session without a title gets no row. */
+/** Whether the session has something to show at all: a session without a title gets no player. */
 internal fun MediaController.hasTitle() = metadata?.title() != null
 
-/** What the now-playing row shows for [controller], or null when it has no titled metadata. */
+/** What the player under the clock shows for [controller], or null when it has no titled metadata. */
 internal fun playingMedia(controller: MediaController, art: ArtMemo, output: AudioOutput?): PlayingMedia? {
     val metadata = controller.metadata
     val title = metadata?.title() ?: return null

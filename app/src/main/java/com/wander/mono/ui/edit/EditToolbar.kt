@@ -44,7 +44,7 @@ import com.wander.mono.ui.theme.secondaryTextColor
 
 /**
  * Edit mode's floating toolbar, in the thumb zone: add an app or a widget, the row density (named,
- * each press the next one), settings, and Done.
+ * each press the next one), where a short list sits (a slider), settings, and Done.
  * Slides up while [visible]. It floats over home's list, which keeps [EditToolbarClearance] free.
  */
 @Composable
@@ -58,6 +58,7 @@ fun EditToolbar(
     edit: EditHomeViewModel = viewModel(),
 ) {
     val density by edit.density.collectAsStateWithLifecycle()
+    val position by edit.listPosition.collectAsStateWithLifecycle()
     val motion = MaterialTheme.motionScheme
     AnimatedVisibility(
         visible = visible,
@@ -65,7 +66,9 @@ fun EditToolbar(
         enter = slideInVertically(motion.defaultSpatialSpec()) { it } + fadeIn(motion.defaultEffectsSpec()),
         exit = slideOutVertically(motion.fastSpatialSpec()) { it } + fadeOut(motion.fastEffectsSpec()),
     ) {
-        Toolbar(onDone, onAddApp, onAddWidget, onOpenSettings, density, edit::cycleDensity)
+        Toolbar(onDone, onAddApp, onAddWidget, onOpenSettings, density, edit::cycleDensity) {
+            ListPositionButton(position, edit::setListPosition)
+        }
     }
 }
 
@@ -78,6 +81,7 @@ private fun Toolbar(
     onOpenSettings: () -> Unit,
     density: RowDensity,
     onCycleDensity: () -> Unit,
+    position: @Composable () -> Unit,
 ) {
     val editingLabel = stringResource(R.string.state_editing)
     HorizontalFloatingToolbar(
@@ -101,6 +105,7 @@ private fun Toolbar(
             Icon(painterResource(R.drawable.sym_widgets), contentDescription = stringResource(R.string.edit_add_widget))
         }
         DensityButton(density, onCycleDensity)
+        position()
         IconButton(onClick = onOpenSettings) {
             Icon(painterResource(R.drawable.sym_settings), contentDescription = stringResource(R.string.edit_settings))
         }

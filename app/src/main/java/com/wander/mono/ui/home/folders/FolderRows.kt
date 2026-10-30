@@ -7,7 +7,7 @@ import com.wander.mono.ui.home.HomeRow
 /**
  * Groups the assembled home [rows] into [folders]: each folder takes the place of its first shown
  * favourite and holds its shown favourites in the folder's own order. The live rows of those
- * favourites (now playing, preview, calendar, widgets) follow the folder, so a closed folder
+ * favourites (preview, calendar, live activities, widgets) follow the folder, so a closed folder
  * never hides them. A folder with no favourite shown (quiet mode, all uninstalled) is left out.
  */
 internal fun withFolders(rows: List<HomeRow>, folders: List<HomeFolder>): List<HomeRow> {
