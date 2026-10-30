@@ -22,8 +22,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -55,7 +53,7 @@ fun WavySeekBar(
     color: Color,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val currentPosition by rememberUpdatedState(positionMs)
     var scrub by remember { mutableFloatStateOf(NONE) }
     var pending by remember { mutableFloatStateOf(NONE) }
@@ -94,13 +92,13 @@ fun WavySeekBar(
                 val interval = (value * durationMs / TICK_EVERY_MS).toInt()
                 if (interval != lastTick) {
                     lastTick = interval
-                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                    haptics.segment()
                 }
             },
             onValueChangeFinished = {
                 val released = scrub
                 if (released >= 0f && onSeek != null) {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                    haptics.gestureEnd()
                     pending = released
                     onSeek((released * durationMs).toLong())
                 }
