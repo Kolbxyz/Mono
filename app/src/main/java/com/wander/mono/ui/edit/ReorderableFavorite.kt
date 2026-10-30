@@ -9,10 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -22,9 +20,15 @@ import androidx.compose.ui.semantics.semantics
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchSource
 import com.wander.mono.ui.components.AppIcons
-import com.wander.mono.ui.components.pressShrink
+import com.wander.mono.ui.components.PressMorph
+import com.wander.mono.ui.components.expressivePress
+import com.wander.mono.ui.components.rememberMonoHaptics
+import com.wander.mono.ui.components.rememberRowAccent
 import com.wander.mono.ui.home.FavoriteRow
+import com.wander.mono.ui.home.HomeCardCorner
 import com.wander.mono.ui.home.HomeRow
+import com.wander.mono.ui.home.LocalRowDensity
+import com.wander.mono.ui.home.favoriteRowMetrics
 import com.wander.mono.ui.home.rememberLaunchOrigin
 
 /**
@@ -50,8 +54,10 @@ fun ReorderableFavorite(
     swipeLeft: SwipeLeft? = null,
     overLimit: Boolean = false,
 ) {
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val interactions = remember { MutableInteractionSource() }
+    // With "Tint rows with app colour", the press ripples in the app's colour; else the theme's.
+    val accent = rememberRowAccent(row.app.key, icons, favoriteRowMetrics(LocalRowDensity.current).iconSize)
     val reorder = editing.reorder
     val lifted = reorder.dragging == row.key
     val settle = rememberDropSettle()
@@ -66,41 +72,46 @@ fun ReorderableFavorite(
             onTap = launch,
             onSwipeRight = onShowPreview?.let { show ->
                 {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                    haptics.threshold()
                     show()
                 }
             },
             onSwipeLeft = swipeLeft?.let { swipe ->
                 {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                    haptics.threshold()
                     swipe.run()
                 }
             },
-            onHeld = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
+            onHeld = { haptics.longPress() },
             onHold = onLongPress,
             onLift = {
                 if (!editing.active) editing.onEnter()
                 reorder.start(row.key, siblings)
             },
-            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) },
+            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.segment() },
             onDrop = {
                 if (reorder.dragging == row.key) {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                    haptics.gestureEnd()
                     settle.release(reorder.displacement, settleSpec)
                     editing.drop(rows)
                 }
             },
         ),
     )
+    // The edit form draws its own container and lift shadow, which the press's clip would cut off.
+    val press = if (editing.active) {
+        Modifier
+    } else {
+        Modifier.expressivePress(interactions, PressMorph.squarer(HomeCardCorner))
+    }
     Box(
         Modifier
             .reorderLift(lifted, reorder, settle)
             .then(modifier)
             .then(origin.modifier)
             .favoriteSemantics(row, siblings, rows, editing, actions)
-            // The edit form draws its own container and lift shadow, which a clip would cut off.
-            .then(if (editing.active) Modifier else Modifier.pressShrink(interactions).clip(MaterialTheme.shapes.large))
-            .indication(interactions, if (editing.active) null else ripple())
+            .then(press)
+            .indication(interactions, if (editing.active) null else ripple(color = accent ?: Color.Unspecified))
             .pointerInput(row.key) { detectFavoriteGestures(interactions, callbacks) },
     ) {
         if (editing.active) {
