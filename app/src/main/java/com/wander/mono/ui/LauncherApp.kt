@@ -200,4 +200,5 @@ fun LauncherApp(
         )
     }
     LauncherSheets(launcher, sheet, rename, quiet, widgets, homeIcons)
+    AppLockGate()
 }
