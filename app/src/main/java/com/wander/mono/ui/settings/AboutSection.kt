@@ -5,10 +5,13 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.annotation.RawRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,8 +25,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -45,7 +50,7 @@ fun AboutSection() {
     val context = LocalContext.current
     val version = remember(context) { versionName(context) }
     var open by rememberSaveable { mutableStateOf<Int?>(null) }
-    SettingsGroup(R.string.settings_about) {
+    SettingsGroup(R.string.app_name) {
         ListItem(
             colors = settingRowColors(),
             leadingContent = leadingBadge(R.drawable.sym_info),
@@ -79,9 +84,16 @@ private fun versionName(context: Context): String {
     return info.versionName.orEmpty()
 }
 
+/**
+ * One licence in full, scrolling within a share of the window's height. The text is read off the
+ * main thread; until it is in, the dialog already takes the height a licence fills, so it opens
+ * at its final size instead of growing from empty.
+ */
 @Composable
 private fun LicenceDialog(licence: FontLicence, onDismiss: () -> Unit) {
     val resources = LocalContext.current.resources
+    val windowHeight = LocalWindowInfo.current.containerSize.height
+    val maxHeight = with(LocalDensity.current) { (windowHeight * LICENCE_HEIGHT_FRACTION).toDp() }
     val text by produceState<String?>(null, licence) {
         value = withContext(Dispatchers.IO) {
             resources.openRawResource(licence.text).bufferedReader().use { it.readText() }
@@ -90,13 +102,22 @@ private fun LicenceDialog(licence: FontLicence, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.about_licence_close)) } },
+        icon = { Icon(painterResource(R.drawable.sym_license), contentDescription = null) },
         title = { Text(stringResource(licence.name)) },
         text = {
-            Text(
-                text.orEmpty(),
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
-            )
+            val loaded = text
+            if (loaded == null) {
+                Spacer(Modifier.height(maxHeight))
+            } else {
+                Text(
+                    loaded,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.heightIn(max = maxHeight).verticalScroll(rememberScrollState()),
+                )
+            }
         },
     )
 }
+
+/** The share of the window's height a licence's text may take before it scrolls. */
+private const val LICENCE_HEIGHT_FRACTION = 0.6f

@@ -46,9 +46,10 @@ import kotlinx.coroutines.launch
 
 /**
  * The latest notification under its favourite: "title · text" on at most two quiet lines. Tap
- * opens it, a sideways swipe dismisses it (when the shade would let it), and Reply opens an inline
- * field when the notification takes text. Hidden content only says there is something new. For
- * TalkBack the swipe is a Dismiss action on the text, which is the row's focusable node.
+ * expands it to its conversations and actions (swiping its favourite right does too), a sideways
+ * swipe dismisses it (when the shade would let it), and Reply opens an inline field when the
+ * notification takes text. Hidden content only says there is something new. For TalkBack the
+ * swipe is a Dismiss action and opening an Open action on the text, the row's focusable node.
  */
 @Composable
 fun NotificationPreviewRow(
@@ -57,18 +58,22 @@ fun NotificationPreviewRow(
     previews: NotificationPreviewViewModel = viewModel(),
 ) {
     val replying by previews.replying.collectAsStateWithLifecycle()
+    val expandedKey by previews.expanded.collectAsStateWithLifecycle()
     val expanded = replying == row.key && row.preview.reply != null
+    val showsMore = expandedKey == row.key
     val scope = rememberCoroutineScope()
+    // Back closes the reply first, then the expansion (spec 8).
     BackHandler(enabled = expanded) { previews.setReplying(row, open = false) }
+    BackHandler(enabled = showsMore && !expanded) { previews.setExpanded(row, open = false) }
 
     // A newer notification starts with a fresh swipe state, even when the last one was swiped away.
     // Only the state is keyed: the content stays, so a reply being typed keeps its text and focus.
     val swipe = key(row.preview.key) { rememberSwipeToDismissBoxState() }
     val dismissLabel = stringResource(R.string.preview_dismiss)
-    val actions = if (row.preview.isClearable) {
-        listOf(CustomAccessibilityAction(dismissLabel) { previews.dismiss(row) })
-    } else {
-        emptyList()
+    val openLabel = stringResource(R.string.preview_open)
+    val actions = buildList {
+        add(CustomAccessibilityAction(openLabel) { previews.open(row).let { true } })
+        if (row.preview.isClearable) add(CustomAccessibilityAction(dismissLabel) { previews.dismiss(row) })
     }
     SwipeToDismissBox(
         state = swipe,
@@ -80,11 +85,21 @@ fun NotificationPreviewRow(
         PreviewContent(
             preview = row.preview,
             expanded = expanded,
+            showsMore = showsMore,
             actions = actions,
-            onOpen = { previews.open(row) },
+            onToggleMore = { previews.setExpanded(row, open = !showsMore) },
             onReplyToggle = { previews.setReplying(row, open = true) },
             onSend = { previews.reply(row, it) },
-        )
+        ) {
+            PreviewExpanded(
+                expansion = row.preview.expansion,
+                onOpen = { previews.open(row, it) },
+                onAction = previews::fire,
+                onMarkRead = { previews.markRead(row) },
+                onMute = { previews.mute(row) },
+                modifier = Modifier.padding(top = 4.dp),
+            )
+        }
     }
 }
 
@@ -92,21 +107,24 @@ fun NotificationPreviewRow(
 private fun PreviewContent(
     preview: NotificationPreview,
     expanded: Boolean,
+    showsMore: Boolean,
     actions: List<CustomAccessibilityAction>,
-    onOpen: () -> Unit,
+    onToggleMore: () -> Unit,
     onReplyToggle: () -> Unit,
     onSend: (String) -> Boolean,
+    more: @Composable () -> Unit,
 ) {
     val motion = MaterialTheme.motionScheme
     val stacked = isLargeFontScale()
-    Column(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
+    val toggleLabel = stringResource(if (showsMore) R.string.preview_collapse else R.string.preview_expand)
+    Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 previewText(preview),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.onWallpaper(),
                 color = secondaryTextColor(),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -114,7 +132,7 @@ private fun PreviewContent(
                     .weight(1f)
                     .heightIn(min = MIN_TOUCH)
                     .clip(MaterialTheme.shapes.small)
-                    .clickable(onClickLabel = stringResource(R.string.preview_open), onClick = onOpen)
+                    .clickable(onClickLabel = toggleLabel, onClick = onToggleMore)
                     .semantics { customActions = actions }
                     .wrapContentHeight(Alignment.CenterVertically)
                     .padding(vertical = 4.dp),
@@ -122,6 +140,13 @@ private fun PreviewContent(
             if (!stacked) ReplyButton(preview, expanded, onReplyToggle)
         }
         if (stacked) ReplyButton(preview, expanded, onReplyToggle, Modifier.align(Alignment.End))
+        AnimatedVisibility(
+            visible = showsMore,
+            enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.fastEffectsSpec()),
+            exit = shrinkVertically(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+        ) {
+            more()
+        }
         AnimatedVisibility(
             visible = expanded,
             enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),

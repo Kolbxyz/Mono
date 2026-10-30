@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Expanded notification preview -->
+    <string name="preview_expand">Show more</string>
+    <string name="preview_collapse">Show less</string>
+    <string name="preview_open_conversation">Open conversation</string>
+    <string name="preview_content_hidden">Content hidden</string>
+    <!-- One message of a conversation: "Léa: See you at 8". -->
+    <string name="preview_message_line">%1$s: %2$s</string>
+    <string name="preview_mark_read">Mark read</string>
+    <!-- Mono has no mute of its own: this snoozes the app's notifications for an hour. -->
+    <string name="preview_mute_hour">Mute for 1 hour</string>
+    <string name="preview_muted">Notifications snoozed for 1 hour</string>
+    <string name="preview_error_mark_read">This app can\'t be marked read from here</string>
+    <!-- TalkBack action for swiping right on a favourite with notifications. -->
+    <string name="favorite_show_notifications">Show notifications</string>
+
+    <!-- Row density -->
+    <string name="settings_row_density">Row density</string>
+    <string name="density_compact">Compact</string>
+    <string name="density_default">Default</string>
+    <string name="density_comfortable">Comfortable</string>
+    <!-- Edit toolbar button: "Row density: Compact". -->
+    <string name="edit_density">Row density: %1$s</string>
+
+    <!-- Hiding an app -->
+    <string name="app_hidden">App hidden</string>
+    <string name="action_undo">Undo</string>
+</resources>

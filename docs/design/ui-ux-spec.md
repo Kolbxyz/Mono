@@ -1,6 +1,6 @@
 # Mono — UI/UX spec
 
-Status: draft v1 (2026-10-29). Scope: home, drawer/search, inline widget rows, settings, onboarding.
+Status: v1, aligned with the shipped app (2026-10-30). Scope: home, drawer/search, inline widget rows, settings, onboarding.
 Reference screenshots live in `docs/design/references/<launcher>/` (local only, gitignored; sources in `references/SOURCES.md`). Cited below as `ref:<launcher>/<NN>`.
 
 Hard constraints from `AGENTS.md` that shape every decision here: no `INTERNET` permission, no polling, `LauncherApps` as the app source, rows not screens (`HomeRow`), strict Material 3 Expressive with `MaterialTheme.motionScheme`, no Google services, strings in `strings.xml`, never placeholder data.
@@ -197,13 +197,13 @@ Clock styles (setting): Default (above), Stacked (hours over minutes, like `ref:
 | Element | Shape |
 | --- | --- |
 | Scale | 8 / 12 / 18 / 26 / 36 dp (`ui/theme/Shape.kt`), rounder than baseline, shared with Wanda and Phalanx |
-| Grouped lists (drawer letters, search results, settings, sheets) | Segmented: 24 dp outer corners, 6 dp at the seams, 2 dp gaps (`SegmentedColumn`) |
+| Grouped lists (drawer letters, search results, settings, sheets) | Segmented: 26 dp outer corners, 8 dp at the seams, 2 dp gaps (`SegmentedColumn`) |
 | Live row card | `shapes.large` (26 dp) → `extraLarge` (36 dp) when expanded (morph) |
 | Play/pause | Round → squircle on press (`ToggleButton`/`IconButton` shape morph) |
-| Rail bubble | `MaterialShapes.Cookie9Sided` morphing from `Circle` on scrub start |
+| Rail bubble | `MaterialShapes.Cookie12Sided`, scaling up from 60 % on scrub start and turning with the finger |
 | Sheets | `extraLarge` top corners on `surfaceContainerLow`; main actions as tall tonal tiles whose corners tighten on press |
 | Edit toolbar | `FloatingToolbar` (fully rounded) |
-| Icon mask (when no themed icon) | Circle default; user choice from a short list of `MaterialShapes` |
+| Icon mask (full-colour adaptive icons) | System mask by default; setting: Circle, Squircle, Cookie (`Cookie9Sided`), Clover (`Clover4Leaf`). Work icons keep the system mask under their badge |
 
 ### 5.4 Colour over arbitrary wallpapers
 
@@ -231,7 +231,7 @@ Clock styles (setting): Default (above), Stacked (hours over minutes, like `ref:
 | --- | --- |
 | System | Follows dark/light |
 | Light / Dark | Forced |
-| **AMOLED** | Dark scheme with `surface*` roles mapped to `#000000` and container roles lifted by 4–8 % lightness; also offers "Solid black wallpaper" toggle that hides the wallpaper entirely |
+| **AMOLED** | Dark scheme with `surface*` roles mapped to `#000000` and container roles lifted by 4–8 % lightness; with it on, a "Solid black wallpaper" toggle makes the window opaque black instead of showing the wallpaper |
 
 ---
 
@@ -247,7 +247,7 @@ All specs from `MaterialTheme.motionScheme` (Expressive scheme via `MaterialExpr
 | Widget row appear (media starts) | `slowSpatialSpec()` height from 0 + `defaultEffectsSpec()` alpha | Row below slides down; never jumps |
 | Widget row disappear | `fastSpatialSpec()` | Leave quickly |
 | Badge count change | `fastSpatialSpec()` scale 0.8→1 | No bounce for decrements |
-| Letter rail scrub | Wave offset per letter driven by finger y, `fastSpatialSpec()` to follow; bubble shape morph Circle→Cookie9Sided `defaultSpatialSpec()` | Wave amplitude 24 dp, falloff over ±4 letters (`ref:niagara/03`) |
+| Letter rail scrub | Wave offset per letter driven by finger y, `fastSpatialSpec()` to follow; bubble scale `defaultSpatialSpec()` and rotation following the finger | Wave amplitude 72 dp, raised-cosine falloff over ±4 letters (`ref:niagara/03`) |
 | Press feedback | `fastSpatialSpec()` shape/scale | |
 | Edit mode enter | `defaultEffectsSpec()` scrim + `defaultSpatialSpec()` handles slide in | |
 | Sheets | M3 `ModalBottomSheet` defaults | |
@@ -268,16 +268,18 @@ Haptics (`View.performHapticFeedback`, respects system setting):
 
 ### 7.1 First run / onboarding
 
-Each step is a full-screen pane with one primary action and a "Skip" text button. Never blocks: Mono works with zero permissions.
+Shipped (`ui/onboarding`). Each step is a full-screen pane with one primary action and a "Skip" text button. Never blocks: Mono works with zero permissions. Steps the system already reports done are passed over, also on the way back from a system screen.
 
 1. **Welcome** — "A calm home for your phone." Primary: *Continue*.
 2. **Set as home** — `RoleManager.createRequestRoleIntent(ROLE_HOME)`. If already holder, auto-skip. If declined, show how to change later (Settings → Apps → Default apps).
-3. **Pick favourites** — Searchable checklist of apps (`LauncherApps`), pre-sorted A–Z; suggests 5 (dialer, messages, camera, browser, and Wanda/Phalanx if installed). Limit hint at 9: "Fewer is calmer". Order = selection order; reorder later.
+3. **Pick favourites** — checklist of launchable apps (`LauncherApps`, no private space). With usage access, ordered by today's foreground time and the top 5 used for at least a minute pre-ticked; otherwise A–Z with nothing ticked. Past 9 ticks: "Fewer is calmer". Order = tick order; *Add to home* writes them, Skip writes nothing.
 4. **Live rows (optional)** — Explains now-playing, unread previews, badges. Primary: *Allow notification access*.
-   - 4a. **Restricted settings check (Android 13+ / GrapheneOS):** if the app was not installed by a session-based store, the access toggle is greyed. Detect by trying `ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS` and checking grant on return. If still not granted, show a 3-step card: ① *Open App info* (deep link `ACTION_APPLICATION_DETAILS_SETTINGS`) ② tap ⋮ → *Allow restricted settings* and confirm with PIN ③ come back and *Try again*. Copy explains this is an Android safety step, not a Mono requirement.
+   - 4a. **Restricted settings check (Android 13+ / GrapheneOS):** if access is still off after asking, a 3-step card: ① *Open App info* ② tap ⋮ → *Allow restricted settings* and confirm ③ come back and *Try again*. Copy explains this is an Android safety step, not a Mono requirement.
    - 4b. Open `ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS` with Mono's component.
-5. **Calendar (optional)** — `READ_CALENDAR` runtime request with rationale "Shows your next events. Nothing leaves your phone."
-6. **Done** — lands on home with a one-time hint chip "Swipe up for all apps" that dismisses on first swipe.
+5. **Calendar (optional)** — `READ_CALENDAR` request with rationale "Nothing leaves your phone"; granted turns the Calendar setting on, Skip leaves it off.
+6. **Done** — lands on home with a one-time "Swipe up for all apps" chip, shown until the drawer is first opened.
+
+Until it is known whether setup was done (a few ms on a cold start) nothing is drawn over home, so normal starts never flash a surface; setup then appears without a fade.
 
 ### 7.2 Adding a favourite
 
@@ -341,7 +343,7 @@ Each step is a full-screen pane with one primary action and a "Skip" text button
 ### 7.9 Focus / quiet mode
 
 1. Toggle from: long-press clock → *Quiet mode*, or Settings, or a Quick Settings tile (`TileService`).
-2. Effects (user-configurable): badges hidden, previews hidden, live rows except now-playing hidden, non-essential favourites dimmed to 38 % and require long-press to open ("are you sure" sheet with a 3 s delay — Before-style friction, `ref:before-launcher/01`).
+2. Effects (shipped): home shows only the favourites chosen as quiet apps, without badges or previews, plus the playing media and a quiet app's running timer or directions (progress rows stay out); every other row is hidden rather than dimmed. Opening the drawer meets a gate ("Quiet mode is on") with *Show all apps* and *Back to home*, the friction Before-style launchers add (`ref:before-launcher/01`).
 3. Optional: link to an Android **Mode** via `NotificationManager.addAutomaticZenRule` (needs `ACCESS_NOTIFICATION_POLICY`), so DND and Mono's quiet mode switch together.
 4. Header shows a small "Quiet" chip; tap → end now / for 1 h.
 
@@ -385,15 +387,16 @@ Each step is a full-screen pane with one primary action and a "Skip" text button
 
 ## 10. Settings structure
 
-| Section | Contents |
+A hub of categories (`ui/settings/SettingsCategory.kt`), each a page of sections (`SettingsSections.kt`):
+
+| Category | Contents |
 | --- | --- |
-| Appearance | Theme (System/Light/Dark/AMOLED), icons (themed/colour/none), clock style, density, text shadow, increase contrast |
-| Home | Favourites (reorder list), live rows per app, header slots (alarm, event, battery) |
-| Drawer & search | Rail side, search keyboard on open, search sources (shortcuts, settings, calculator) |
-| Gestures | Swipe up/down, double-tap |
-| Privacy & access | Notification access status + grant flow, calendar access, hidden apps lock, "What Mono can see" plain-language summary |
-| Quiet mode | What it hides, linked Android Mode |
-| About | Version, licence (EUPL-1.2), source link (text only; no network) |
+| Home & clock | Clock preview and face, glance lines, home look (text shadow), headphone apps, calendar |
+| Drawer & search | Drawer background, search sources (contacts) |
+| Appearance & icons | Theme (System/Light/Dark, AMOLED black, solid black wallpaper), icons (colour/themed/text only, shape, pack), accessibility (high contrast) |
+| Notifications | Badges, previews, quiet mode (linked Do Not Disturb mode, quiet apps) |
+| Gestures | Swipe down, double tap to lock (accessibility service) |
+| Privacy & about | "What Mono can see" (no internet permission; each access with its live state and a link to Android's page), hidden apps lock, usage access, backup, version and font licences |
 
 Plain M3 list settings (`ref:lawnchair/03`): `ListItem` with leading icon, headline + supporting text; toggles as trailing `Switch`.
 
@@ -401,7 +404,7 @@ Plain M3 list settings (`ref:lawnchair/03`): `ListItem` with leading icon, headl
 
 ## 11. Roadmap
 
-Effort: **S** ≤ 1 day, **M** 2–4 days, **L** ≥ 1 week.
+Effort: **S** ≤ 1 day, **M** 2–4 days, **L** ≥ 1 week. Status (2026-10-30): every item below has shipped; where the code deliberately differs from earlier sections, those sections now describe the code.
 
 ### v0.2 — "Calm list, done right"
 | Item | Effort |
@@ -412,9 +415,9 @@ Effort: **S** ≤ 1 day, **M** 2–4 days, **L** ≥ 1 week.
 | Now-playing row v2: wavy progress, expand to controls, swipe next/prev | M |
 | Badge counts (not just dots) | S |
 | Wave alphabet rail with bubble, haptic ticks, TalkBack adjustable | M |
-| Onboarding flow incl. restricted-settings helper | M |
+| Onboarding flow incl. restricted-settings helper, favourites and calendar steps | M |
 | Empty state | S |
-| AMOLED theme | S |
+| AMOLED theme + solid black wallpaper | S |
 
 ### v0.3 — "Hub"
 | Item | Effort |
@@ -436,3 +439,14 @@ Effort: **S** ≤ 1 day, **M** 2–4 days, **L** ≥ 1 week.
 | Contacts in search (`READ_CONTACTS`, opt-in) | M |
 | Tablet/foldable centred column & landscape | M |
 | Usage-aware long-press sheet (`UsageStatsManager`, opt-in, `ref:ratio/01`) | M |
+
+### Next — "Home, shaped"
+| Item | Effort |
+| --- | --- |
+| Folders on home: grouped favourites that open in place | M |
+| Live updates: ongoing timers, navigation and progress as rows under their app | L |
+| Routines: a daily window that brings chosen apps first | M |
+| App lock: launches and notifications of a locked app wait for the screen lock | M |
+| Wide layout: home and the drawer side by side, two-pane settings | M |
+| Reachable layout: clock low, everything in thumb reach | S |
+| Simple mode ("Large and simple"): bigger rows and text, only the clock and date | S |

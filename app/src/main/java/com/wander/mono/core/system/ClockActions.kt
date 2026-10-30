@@ -65,3 +65,12 @@ class ClockActions @Inject constructor(@ApplicationContext private val context: 
         ActionResult.Failed(R.string.error_not_allowed)
     }
 }
+
+/**
+ * Whether Dismiss is worth offering for the next alarm at [alarm] (null: none): it is still ahead
+ * and at most a day away, as AOSP's clock app refuses to dismiss an alarm further out.
+ */
+fun canOfferAlarmDismiss(alarm: Long?, now: Long): Boolean =
+    alarm != null && alarm >= now && alarm - now <= DISMISS_HORIZON_MS
+
+private const val DISMISS_HORIZON_MS = 24 * 60 * 60 * 1_000L

@@ -5,17 +5,15 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -42,21 +40,23 @@ fun SettingsScreen(
     settings: SettingsViewModel = viewModel(),
 ) {
     var page by rememberSaveable { mutableStateOf<SettingsCategory?>(null) }
-    var backProgress by remember { mutableFloatStateOf(0f) }
+    val scope = rememberCoroutineScope()
+    val back = remember(scope) { PageBack(scope) }
     // Opened from the drawer's search field, the keyboard would otherwise stay up over the list.
     val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(keyboard) { keyboard?.hide() }
+    val motion = MaterialTheme.motionScheme
+    val cancelSpec = motion.fastSpatialSpec<Float>()
     PredictiveBackHandler(enabled = page != null) { progress ->
         try {
-            progress.collect { backProgress = it.progress }
+            progress.collect { back.swipe(it.progress) }
             page = null
         } catch (_: CancellationException) {
-            // The swipe was abandoned: the page stays.
-        } finally {
-            backProgress = 0f
+            // The swipe was abandoned: the page stays and grows back. A commit leaves the
+            // progress alone, so the outgoing page fades out at its shrunk size.
+            back.cancelled(cancelSpec)
         }
     }
-    val motion = MaterialTheme.motionScheme
     AnimatedContent(
         targetState = page,
         modifier = modifier,
@@ -73,7 +73,10 @@ fun SettingsScreen(
                 item(key = "hub") {
                     SegmentedColumn(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                         SettingsCategory.entries.forEach { category ->
-                            SettingsCategoryRow(category, onClick = { page = category })
+                            SettingsCategoryRow(category, onClick = {
+                                back.reset()
+                                page = category
+                            })
                         }
                     }
                 }
@@ -83,13 +86,15 @@ fun SettingsScreen(
                 shown.title,
                 onBack = { page = null },
                 modifier = Modifier.graphicsLayer {
-                    val scale = lerp(1f, BACK_MIN_SCALE, backResistance(backProgress))
+                    val scale = lerp(1f, BACK_MIN_SCALE, backResistance(back.progress))
                     scaleX = scale
                     scaleY = scale
                     transformOrigin = TransformOrigin(pivotFractionX = 1f, pivotFractionY = 0.5f)
                 },
             ) {
-                items(sectionsOf(shown)) { section -> section(settings) }
+                val sections = sectionsOf(shown)
+                // A section's place on its page is its identity: the list is fixed per category.
+                items(sections.size, key = { "${shown.name}:$it" }) { sections[it](settings) }
             }
         }
     }

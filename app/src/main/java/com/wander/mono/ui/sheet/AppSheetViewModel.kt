@@ -3,18 +3,21 @@ package com.wander.mono.ui.sheet
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wander.mono.R
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.ActionResult
 import com.wander.mono.core.apps.ShortcutRepository
+import com.wander.mono.core.security.AppLock
 import com.wander.mono.core.usage.AppUsage
 import com.wander.mono.data.HeadphoneApps
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.HeadphoneSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.UsageSettings
+import com.wander.mono.ui.MessageAction
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -40,6 +43,7 @@ class AppSheetViewModel @Inject constructor(
     settings: SettingsStore,
     private val usage: AppUsage,
     private val headphoneApps: HeadphoneApps,
+    private val lock: AppLock,
 ) : ViewModel() {
     private val target: StateFlow<String?> = savedState.getStateFlow(TARGET, null)
 
@@ -48,9 +52,9 @@ class AppSheetViewModel @Inject constructor(
         target,
         catalog.apps,
         prefs.favorites,
-        combine(prefs.hidden, headphoneChoices(settings, headphoneApps), ::Pair),
+        combine(prefs.hidden, headphoneChoices(settings, headphoneApps), lock.apps, ::Triple),
         shortcuts.all,
-    ) { encoded, apps, favorites, (hidden, lifting), allShortcuts ->
+    ) { encoded, apps, favorites, (hidden, lifting, locked), allShortcuts ->
         val key = encoded?.let(AppKey::decode) ?: return@combine null
         val app = apps?.firstOrNull { it.key == key } ?: return@combine null
         AppSheetState(
@@ -60,20 +64,22 @@ class AppSheetViewModel @Inject constructor(
             isHidden = key in hidden,
             shortcuts = allShortcuts.filter { it.packageName == key.packageName && it.userSerial == key.userSerial },
             liftsWithHeadphones = lifting?.takeIf { key in favorites }?.contains(key),
+            isLocked = key in locked,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    /** Today's time in the sheet's app, read once as it opens; null when off, not granted or elsewhere. */
-    val usageToday: StateFlow<Long?> = combine(
+    /** Today's time in the sheet's app, read once as it opens. */
+    val usageToday: StateFlow<SheetUsage> = combine(
         state.map { it?.app }.distinctUntilChanged(),
         settings[UsageSettings.ShowInSheet],
     ) { app, show -> app.takeIf { show } }
         .transformLatest { app ->
-            // Nothing while reading, so one app's time never shows on another's sheet.
-            emit(null)
-            if (app != null) emit(usage.todayMillis(app))
+            // Reading first, so one app's time never shows on another's sheet.
+            val readable = app != null && app.isMainProfile && usage.isGranted()
+            emit(usageBeforeReading(show = app != null, readable = readable))
+            if (app != null && readable) emit(usageRead(usage.todayMillis(app)))
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), SheetUsage.Hidden)
 
     fun show(key: AppKey) {
         savedState[TARGET] = key.encode()
@@ -97,7 +103,21 @@ class AppSheetViewModel @Inject constructor(
         viewModelScope.launch { headphoneApps.setLifted(key, lifts) }
     }
 
-    fun setHidden(key: AppKey, hidden: Boolean) = edit { prefs.setHidden(key, hidden) }
+    /** Hiding offers Undo (spec 7.8): the app is gone from the drawer before the user sees where it went. */
+    fun setHidden(key: AppKey, hidden: Boolean) = edit {
+        prefs.setHidden(key, hidden)
+        if (hidden) {
+            messages.show(R.string.app_hidden, MessageAction(R.string.action_undo) { setHidden(key, hidden = false) })
+        }
+    }
+
+    /** Keeps the sheet open, so the lock is seen to change. The sheet asks for the screen lock before removing it. */
+    fun setLocked(key: AppKey, locked: Boolean) {
+        viewModelScope.launch { messages.report(lock.setLocked(key, locked)) }
+    }
+
+    /** Goes through the app lock like any other launch. */
+    fun open(key: AppKey) = finish(actions.launch(key))
 
     fun openAppInfo(key: AppKey) = finish(actions.openAppInfo(key))
 
@@ -105,13 +125,12 @@ class AppSheetViewModel @Inject constructor(
 
     fun launchShortcut(shortcut: AppShortcut) = finish(actions.launchShortcut(shortcut))
 
+    // No dismiss() in the actions: the sheet slides itself away, then calls it.
     private fun edit(change: suspend () -> Unit) {
-        dismiss()
         viewModelScope.launch { change() }
     }
 
     private fun finish(result: ActionResult) {
-        dismiss()
         messages.report(result)
     }
 

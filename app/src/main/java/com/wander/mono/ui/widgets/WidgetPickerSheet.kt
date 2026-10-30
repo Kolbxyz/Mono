@@ -5,6 +5,7 @@ import android.content.Context
 import android.view.View
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,19 +14,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.widgets.WidgetApp
 import com.wander.mono.core.widgets.WidgetChoice
+import com.wander.mono.ui.components.MonoLoadingIndicator
 import com.wander.mono.ui.components.MonoSheet
+import com.wander.mono.ui.components.PressMorph
+import com.wander.mono.ui.components.expressivePress
+import com.wander.mono.ui.components.instantPress
+import com.wander.mono.ui.home.HomeCardCorner
 import com.wander.mono.ui.sheet.SheetHeader
 
 /**
@@ -44,7 +51,7 @@ fun WidgetPickerSheet(
         SheetHeader(stringResource(R.string.widget_picker_title))
         when {
             apps == null -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-                LoadingIndicator()
+                MonoLoadingIndicator()
             }
             apps.isEmpty() -> Text(
                 stringResource(R.string.widget_picker_empty),
@@ -76,6 +83,8 @@ private fun AppHeader(app: WidgetApp) {
         if (app.isMainProfile) app.label else stringResource(R.string.widget_picker_work_app, app.label, work),
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 8.dp),
     )
 }
@@ -87,17 +96,29 @@ private fun WidgetEntry(
     createPreview: (Context, AppWidgetProviderInfo) -> View,
     onClick: () -> Unit,
 ) {
+    val interaction = remember { MutableInteractionSource() }
     Column(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
-            .clip(MaterialTheme.shapes.large)
-            .clickable(onClickLabel = stringResource(R.string.action_add_widget), onClick = onClick)
+            .expressivePress(interaction, PressMorph.squarer(HomeCardCorner))
+            .instantPress(interaction)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .padding(12.dp),
+            .clickable(
+                interactionSource = interaction,
+                indication = ripple(),
+                onClickLabel = stringResource(R.string.action_add_widget),
+                onClick = onClick,
+            )
+            .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         WidgetPreview(choice.info, isMainProfile, createPreview)
-        Text(choice.label, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            choice.label,
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }

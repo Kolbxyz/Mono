@@ -1,8 +1,12 @@
 package com.wander.mono.ui.drawer
 
 import com.wander.mono.R
+import com.wander.mono.core.apps.AppShortcut
+import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.contacts.ContactSearch
+import com.wander.mono.core.notifications.NotificationPreview
+import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.siblings.WandaSearch
 import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.ClockActions
@@ -19,17 +23,22 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
 /**
- * Search results beyond apps and shortcuts (sums, conversions, timers and alarms, contacts, settings
- * pages, the web) and what tapping most of them does; timers and alarms go to [ClockActions].
+ * Search results beyond apps (shortcuts, sums, conversions, timers and alarms, links, contacts,
+ * notifications, settings pages, the web) and what tapping most of them does; timers and alarms go
+ * to [ClockActions], hand-offs to [SearchHandOffs]. A source the user switched off in
+ * [SearchSettings] is not asked at all.
  */
 class SearchSources @Inject constructor(
     private val settings: SettingsStore,
+    private val shortcutRepository: ShortcutRepository,
     private val contactSearch: ContactSearch,
     private val wandaSearch: WandaSearch,
     private val settingsPages: SettingsPages,
@@ -37,6 +46,8 @@ class SearchSources @Inject constructor(
     private val clock: ClockActions,
     private val clipboard: Clipboard,
     private val messages: UserMessages,
+    private val previews: NotificationPreviews,
+    private val handOffApps: SearchHandOffs,
 ) {
     /**
      * Contacts for each [query], asked of the provider only while the setting is on; a newer query
@@ -55,20 +66,56 @@ class SearchSources @Inject constructor(
         .distinctUntilChanged()
         .mapLatest { text -> QueryResults(text, wandaSearch.find(text, PROVIDER_LIMIT)) }
 
+    /** Every app's shortcuts while the setting is on; none, and the repository unwatched, while off. */
+    fun shortcuts(): Flow<List<AppShortcut>> = settings[SearchSettings.Shortcuts]
+        .flatMapLatest { enabled -> if (enabled) shortcutRepository.all else flowOf(emptyList<AppShortcut>()) }
+
+    /** Whether quick answers (sums, conversions, timers and alarms) are on; [actions] is then asked. */
+    fun quickAnswers(): Flow<Boolean> = settings[SearchSettings.QuickAnswers]
+
     /**
-     * What [query] asks for ([SearchActions]); a timer or an alarm only when a clock app takes it.
-     * Resolves intents for those, so not on the main thread.
+     * What [query] asks for ([SearchActions]) when quick answers are [enabled]; a timer or an alarm
+     * only when a clock app takes it. Resolves intents for those, so not on the main thread.
      */
-    fun actions(query: String): List<SearchHit> = SearchActions.of(query).filter { hit ->
-        when (hit) {
-            is SearchHit.Timer -> clock.canSetTimer()
-            is SearchHit.Alarm -> clock.canSetAlarm()
-            else -> true
+    fun actions(query: String, enabled: Boolean): List<SearchHit> {
+        if (!enabled) return emptyList()
+        return SearchActions.of(query).filter { hit ->
+            when (hit) {
+                is SearchHit.Timer -> clock.canSetTimer()
+                is SearchHit.Alarm -> clock.canSetAlarm()
+                else -> true
+            }
         }
     }
 
-    /** The settings pages this phone can open, resolved afresh each time search starts being watched. */
-    fun pages(): Flow<List<SettingsPage>> = flow { emit(settingsPages.available()) }.flowOn(Dispatchers.Default)
+    /**
+     * The query as a link to open and as text to share ([SearchLinks]) when quick answers are
+     * [enabled]; a link only when an app opens it, so this resolves an intent: not on the main thread.
+     */
+    fun handOffs(query: String, enabled: Boolean): List<SearchHit> {
+        if (!enabled) return emptyList()
+        return SearchLinks.of(query).filter { it !is SearchHit.Link || handOffApps.canOpen(it) }
+    }
+
+    /**
+     * The posted notifications search looks in while the setting is on: each app's latest, with the
+     * conversations of its expanded preview, already redacted as home shows them. None while off.
+     */
+    fun notices(): Flow<List<NotificationPreview>> = settings[SearchSettings.Notifications].flatMapLatest { on ->
+        if (on) previews.previews.map { it.values.toList() } else flowOf(emptyList<NotificationPreview>())
+    }
+
+    /**
+     * The settings pages this phone can open while the setting is on, resolved afresh each time
+     * search starts being watched or the setting comes on.
+     */
+    fun pages(): Flow<List<SettingsPage>> = settings[SearchSettings.SettingsPages].flatMapLatest { enabled ->
+        if (enabled) {
+            flow { emit(settingsPages.available()) }.flowOn(Dispatchers.Default)
+        } else {
+            flowOf(emptyList<SettingsPage>())
+        }
+    }
 
     fun webTarget(): WebSearchTarget? = webSearch.target()
 

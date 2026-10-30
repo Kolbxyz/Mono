@@ -7,14 +7,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import com.wander.mono.R
+import com.wander.mono.ui.components.rememberMonoHaptics
 import com.wander.mono.ui.home.HomeRow
 import com.wander.mono.ui.home.WidgetHomeRow
 
@@ -31,7 +30,7 @@ fun ReorderableWidget(
     editing: HomeEditing,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val interactions = remember { MutableInteractionSource() }
     val reorder = editing.reorder
     val lifted = reorder.dragging == row.key
@@ -42,13 +41,14 @@ fun ReorderableWidget(
         FavoriteGestureCallbacks(
             editing = true,
             onTap = {},
-            onHeld = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
+            onSwipeRight = null,
+            onHeld = { haptics.longPress() },
             onHold = {},
             onLift = { reorder.start(row.key, siblings) },
-            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) },
+            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.segment() },
             onDrop = {
                 if (reorder.dragging == row.key) {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                    haptics.gestureEnd()
                     settle.release(reorder.displacement, settleSpec)
                     editing.drop(rows)
                 }

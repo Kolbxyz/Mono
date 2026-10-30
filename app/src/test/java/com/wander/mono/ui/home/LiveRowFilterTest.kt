@@ -5,6 +5,7 @@ import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.core.notifications.PreviewExpansion
 import com.wander.mono.core.notifications.Redaction
 import com.wander.mono.data.LiveRowKind
 import com.wander.mono.data.LiveRowRef
@@ -28,6 +29,7 @@ class LiveRowFilterTest {
         autoCancel = true,
         isClearable = true,
         reply = null,
+        expansion = PreviewExpansion(emptyList(), emptyList(), emptyList()),
     )
 
     private val previews = listOf(PackageUser("org.signal", 0), PackageUser("org.signal", 10))

@@ -2,17 +2,17 @@
 <resources>
     <!-- Settings hub -->
     <string name="settings_category_home">Home &amp; clock</string>
-    <string name="settings_category_home_sub">Clock face, lines under it, calendar</string>
+    <string name="settings_category_home_sub">Clock, lines under it, layout</string>
     <string name="settings_category_drawer">Drawer &amp; search</string>
-    <string name="settings_category_drawer_sub">Background, contacts in search</string>
-    <string name="settings_category_appearance">Appearance &amp; icons</string>
-    <string name="settings_category_appearance_sub">Theme, icon pack, contrast</string>
+    <string name="settings_category_drawer_sub">Background, order, what search finds</string>
+    <string name="settings_category_appearance">Appearance</string>
+    <string name="settings_category_appearance_sub">Theme, icons, large text</string>
     <string name="settings_category_notifications">Notifications</string>
-    <string name="settings_category_notifications_sub">Badges, previews, quiet mode</string>
+    <string name="settings_category_notifications_sub">Badges, previews, live rows</string>
     <string name="settings_category_gestures">Gestures</string>
-    <string name="settings_category_gestures_sub">Swipe down, double tap</string>
-    <string name="settings_category_privacy">Privacy &amp; about</string>
-    <string name="settings_category_privacy_sub">Hidden apps, usage, licences</string>
+    <string name="settings_category_gestures_sub">Swipes and double tap</string>
+    <string name="settings_category_privacy">Privacy &amp; backup</string>
+    <string name="settings_category_privacy_sub">What Mono can see, hidden apps, backup</string>
 
     <!-- Short summaries: one line, only where the title needs it -->
     <string name="settings_text_shadow_short">Instead of dimming the wallpaper</string>
