@@ -33,11 +33,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
@@ -46,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppKey
+import com.wander.mono.core.apps.LaunchSource
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
@@ -62,6 +65,7 @@ import com.wander.mono.ui.theme.LocalHighContrast
  * (past the end of the list when it scrolls) go to [gestureScroll]: up pulls the drawer, down
  * opens the notification shade. Long-pressing the clock or an empty spot opens the home options and
  * double-tapping one runs [onDoubleTap]; rows consume their own presses, so they never reach them.
+ * The favourite [pulse] keys, just added, pulses once, then [onPulsed] clears it.
  * The [lifted] favourites go first while headphones are connected, outside edit mode only.
  *
  * The scrim and the edit dim are drawn by the outer layer ([modifier]); [contentModifier] applies
@@ -76,7 +80,9 @@ fun HomeScreen(
     listState: LazyListState,
     icons: AppIcons,
     editing: HomeEditing,
-    onLaunch: (LaunchableApp) -> Unit,
+    pulse: AppKey?,
+    onPulsed: (AppKey) -> Unit,
+    onLaunch: (LaunchableApp, LaunchSource?) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     onAppInfo: (LaunchableApp) -> Unit,
     onTogglePlay: () -> Unit,
@@ -103,6 +109,7 @@ fun HomeScreen(
     val motion = MaterialTheme.motionScheme
     val scheme = MaterialTheme.colorScheme
     val density = LocalDensity.current
+    val haptics = LocalHapticFeedback.current
     val scrimEdges = remember { ScrimEdges() }
     val replyOpen = previews.replying.collectAsStateWithLifecycle().value != null
     val legibleAlpha = remember(look.tone, scheme.surface, scheme.onSurface) {
@@ -119,6 +126,7 @@ fun HomeScreen(
         LocalContentColor provides scheme.onSurface,
         LocalWallpaperTextShadow provides shadow,
         LocalHighContrast provides look.highContrast,
+        LocalRowDensity provides look.density,
     ) {
         BoxWithConstraints(
             modifier
@@ -133,7 +141,10 @@ fun HomeScreen(
                 .pointerInput(onHomeOptions, onDoubleTap) {
                     detectTapGestures(
                         onDoubleTap = if (onDoubleTap != null) { _ -> onDoubleTap() } else null,
-                        onLongPress = { onHomeOptions() },
+                        onLongPress = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onHomeOptions()
+                        },
                     )
                 }
                 .nestedScroll(gestureScroll)
@@ -173,6 +184,9 @@ fun HomeScreen(
                     listState = listState,
                     icons = icons,
                     editing = editing,
+                    previews = previews,
+                    pulse = pulse,
+                    onPulsed = onPulsed,
                     // In edit mode the floating toolbar covers the list's foot: keep the last row clear of it.
                     contentPadding = PaddingValues(bottom = editPadding.value),
                     onLaunch = onLaunch,
