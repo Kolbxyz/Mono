@@ -46,8 +46,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
@@ -121,11 +123,12 @@ class DrawerViewModel @Inject constructor(
                 sources.actions(q),
                 hidden.searchableApps(searchableApps(all, work)),
                 hidden.searchableShortcuts(searchableShortcuts(extra.shortcuts, work)),
-                extra.contacts,
-                extra.tracks,
+                extra.contacts.itemsFor(q),
+                extra.tracks.itemsFor(q),
                 extra.pages,
                 sources::webTarget,
             ),
+            resultsQuery = builtFor(q, extra.contacts, extra.tracks),
             iconMode = mode,
             iconPack = pack,
             hiddenLocked = hidden.locked,
@@ -182,15 +185,25 @@ class DrawerViewModel @Inject constructor(
         is SearchHit.Web -> sources.open(hit)
     }
 
-    /** The keyboard's action key does what tapping the top (highlighted) result does. */
-    fun launchTopResult(): HitOutcome = state.value.results.firstOrNull()?.let(::launch) ?: HitOutcome.Stayed
+    /**
+     * The keyboard's action key does what tapping the top (highlighted) result does, once the results
+     * for what is typed are in, never the previous query's; typing on before then cancels it.
+     */
+    fun launchTopResult(onOutcome: (HitOutcome) -> Unit) {
+        val typed = query.value
+        viewModelScope.launch {
+            val built = state.first { it.resultsQuery == typed || query.value != typed }
+            val top = built.results.firstOrNull().takeIf { built.resultsQuery == typed && query.value == typed }
+            onOutcome(top?.let(::launch) ?: HitOutcome.Stayed)
+        }
+    }
 
     private fun opened(done: Boolean) = if (done) HitOutcome.Opened else HitOutcome.Stayed
 
     private data class Searchable(
         val shortcuts: List<AppShortcut>,
-        val contacts: List<Contact>,
-        val tracks: List<WandaTrack>,
+        val contacts: QueryResults<Contact>,
+        val tracks: QueryResults<WandaTrack>,
         val pages: List<SettingsPage>,
     )
 

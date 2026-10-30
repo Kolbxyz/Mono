@@ -7,25 +7,33 @@ import kotlin.math.ceil
 import kotlin.math.cos
 
 /**
- * Geometry of the letter rail. The rail splits its height into one equal slot per letter, a letter
- * drawn at the centre of its slot; a finger at [y] is over the slot it falls in.
+ * Geometry of the letter rail. The letters' column, [top] down the rail and [height] tall, is split
+ * into one equal slot per letter, a letter drawn at the centre of its slot; a finger at [y] (from the
+ * rail's top) is over the slot it falls in.
  */
 internal object RailMath {
     /** How many letters on each side of the finger the wave reaches before it is flat again. */
     const val WAVE_REACH = 4f
 
     /**
-     * The letter under a finger at [y] on a rail [height] tall; clamped, so sliding past an end
-     * keeps the end letter.
+     * The letter under a finger at [y] over letters from [top] down, [height] tall; clamped, so
+     * sliding past an end keeps the end letter.
      */
-    fun letterAt(y: Float, height: Float, count: Int): Int {
+    fun letterAt(y: Float, top: Float, height: Float, count: Int): Int {
         if (count <= 0 || height <= 0f) return -1
-        return (y / height * count).toInt().coerceIn(0, count - 1)
+        return ((y - top) / height * count).toInt().coerceIn(0, count - 1)
     }
 
     /** The finger's position in letter units: 0f is the centre of the first letter, 1f of the second. */
-    fun fingerSlot(y: Float, height: Float, count: Int): Float =
-        if (count <= 0 || height <= 0f) 0f else y / height * count - HALF
+    fun fingerSlot(y: Float, top: Float, height: Float, count: Int): Float =
+        if (count <= 0 || height <= 0f) 0f else (y - top) / height * count - HALF
+
+    /**
+     * Where a bubble [size] tall beside a finger at [y] has its top: centred on the finger, but kept
+     * on a rail [railHeight] tall, so it never slides off either end of the screen.
+     */
+    fun bubbleTop(y: Float, size: Float, railHeight: Float): Float =
+        (y - size / 2).coerceAtMost(railHeight - size).coerceAtLeast(0f)
 
     /**
      * How far a letter [distance] slots from the finger bows out, from 1 under the finger to 0 at

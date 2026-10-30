@@ -7,24 +7,43 @@ import org.junit.Test
 class RailMathTest {
     @Test
     fun `finger picks the slot it is in and clamps past either end`() {
-        assertEquals(0, RailMath.letterAt(y = 0f, height = 100f, count = 4))
-        assertEquals(0, RailMath.letterAt(y = 24.9f, height = 100f, count = 4))
-        assertEquals(1, RailMath.letterAt(y = 25f, height = 100f, count = 4))
-        assertEquals(3, RailMath.letterAt(y = 99f, height = 100f, count = 4))
-        assertEquals(0, RailMath.letterAt(y = -40f, height = 100f, count = 4))
-        assertEquals(3, RailMath.letterAt(y = 180f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = 0f, top = 0f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = 24.9f, top = 0f, height = 100f, count = 4))
+        assertEquals(1, RailMath.letterAt(y = 25f, top = 0f, height = 100f, count = 4))
+        assertEquals(3, RailMath.letterAt(y = 99f, top = 0f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = -40f, top = 0f, height = 100f, count = 4))
+        assertEquals(3, RailMath.letterAt(y = 180f, top = 0f, height = 100f, count = 4))
+    }
+
+    @Test
+    fun `slots start below the letters' top padding`() {
+        assertEquals(0, RailMath.letterAt(y = 30f, top = 8f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = 32.9f, top = 8f, height = 100f, count = 4))
+        assertEquals(1, RailMath.letterAt(y = 33f, top = 8f, height = 100f, count = 4))
+        assertEquals(3, RailMath.letterAt(y = 107f, top = 8f, height = 100f, count = 4))
+        assertEquals(0, RailMath.letterAt(y = 2f, top = 8f, height = 100f, count = 4))
     }
 
     @Test
     fun `no letter on an empty or unmeasured rail`() {
-        assertEquals(-1, RailMath.letterAt(y = 10f, height = 100f, count = 0))
-        assertEquals(-1, RailMath.letterAt(y = 10f, height = 0f, count = 4))
+        assertEquals(-1, RailMath.letterAt(y = 10f, top = 0f, height = 100f, count = 0))
+        assertEquals(-1, RailMath.letterAt(y = 10f, top = 0f, height = 0f, count = 4))
     }
 
     @Test
     fun `finger slot is zero at the centre of the first letter`() {
-        assertEquals(0f, RailMath.fingerSlot(y = 12.5f, height = 100f, count = 4), DELTA)
-        assertEquals(2f, RailMath.fingerSlot(y = 62.5f, height = 100f, count = 4), DELTA)
+        assertEquals(0f, RailMath.fingerSlot(y = 12.5f, top = 0f, height = 100f, count = 4), DELTA)
+        assertEquals(2f, RailMath.fingerSlot(y = 62.5f, top = 0f, height = 100f, count = 4), DELTA)
+        assertEquals(0f, RailMath.fingerSlot(y = 20.5f, top = 8f, height = 100f, count = 4), DELTA)
+    }
+
+    @Test
+    fun `bubble centres on the finger but stays on the rail`() {
+        assertEquals(70f, RailMath.bubbleTop(y = 100f, size = 60f, railHeight = 400f), DELTA)
+        assertEquals(0f, RailMath.bubbleTop(y = 10f, size = 60f, railHeight = 400f), DELTA)
+        assertEquals(340f, RailMath.bubbleTop(y = 395f, size = 60f, railHeight = 400f), DELTA)
+        // A rail shorter than the bubble pins it to the top.
+        assertEquals(0f, RailMath.bubbleTop(y = 20f, size = 60f, railHeight = 40f), DELTA)
     }
 
     @Test
