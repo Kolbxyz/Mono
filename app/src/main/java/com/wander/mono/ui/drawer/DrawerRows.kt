@@ -1,20 +1,29 @@
 package com.wander.mono.ui.drawer
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.clickable
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -24,7 +33,11 @@ import com.wander.mono.ui.components.AppIcon
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.AppLabel
 
-/** An app in the drawer or in search results: icon and name. Tap opens, long-press shows options. */
+/**
+ * An app in the drawer or in search results: icon and name. Tap opens, long-press shows options.
+ * A new app ends in a small tertiary dot; an archived one is greyed with a cloud, and opening it
+ * has the system restore it first.
+ */
 @Composable
 fun DrawerAppRow(
     entry: DrawerEntry,
@@ -49,9 +62,32 @@ fun DrawerAppRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(entry.app.key, icons, size = iconSize)
-        AppLabel(entry.app, entry.badge, style = labelStyle)
+        val archived = entry.app.archived
+        val dim = Modifier.alpha(if (archived) ARCHIVED_ALPHA else 1f)
+        AppIcon(entry.app.key, icons, dim, size = iconSize)
+        AppLabel(entry.app, entry.badge, style = labelStyle, modifier = dim.weight(1f, fill = false))
+        if (archived) {
+            Icon(
+                painterResource(R.drawable.sym_archive),
+                contentDescription = stringResource(R.string.state_archived),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp),
+            )
+        }
+        if (entry.fresh) FreshDot()
     }
+}
+
+/** The dot after a new app's name: tertiary, so it never reads as the notification dot. */
+@Composable
+private fun FreshDot() {
+    val spoken = stringResource(R.string.state_new_app)
+    Box(
+        Modifier
+            .size(8.dp)
+            .background(MaterialTheme.colorScheme.tertiary, CircleShape)
+            .semantics { contentDescription = spoken },
+    )
 }
 
 /**
@@ -103,6 +139,9 @@ fun ShortcutRow(
         }
     }
 }
+
+/** How much of an archived app's icon and name shows: greyed, but still legible. */
+private const val ARCHIVED_ALPHA = 0.5f
 
 /** A full touch target even in text-only mode, where no icon props the row up (spec 9). */
 internal val MIN_ROW_HEIGHT = 48.dp
