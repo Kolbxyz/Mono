@@ -14,10 +14,31 @@ import androidx.lifecycle.compose.currentStateAsState
 import com.wander.mono.R
 import com.wander.mono.data.settings.SearchSettings
 
-/** What search looks in besides apps and shortcuts. */
+/** What search looks in besides apps; a source switched off is not even asked. */
 @Composable
 fun SearchSection(settings: SettingsViewModel) {
     SettingsGroup(R.string.settings_search) {
+        SwitchSetting(
+            settings,
+            SearchSettings.QuickAnswers,
+            title = R.string.search_source_quick_answers,
+            summary = R.string.search_source_quick_answers_summary,
+            icon = R.drawable.sym_calculate,
+        )
+        SwitchSetting(
+            settings,
+            SearchSettings.Shortcuts,
+            title = R.string.search_source_shortcuts,
+            summary = R.string.search_source_shortcuts_summary,
+            icon = R.drawable.sym_arrow_outward,
+        )
+        SwitchSetting(
+            settings,
+            SearchSettings.SettingsPages,
+            title = R.string.search_source_settings_pages,
+            summary = R.string.search_source_settings_pages_summary,
+            icon = R.drawable.sym_settings,
+        )
         ContactsSwitch(settings)
     }
 }
