@@ -20,4 +20,15 @@ class IconSettingsTest {
         assertEquals(IconMode.Colour, IconSettings.Mode.decode("TextOnly"))
         assertEquals(IconMode.TextOnly, IconSettings.Mode.decode("text_only"))
     }
+
+    @Test
+    fun `every icon shape survives a write and read and the system shape is the default`() {
+        IconShape.entries.forEach { shape ->
+            val prefs = mutablePreferencesOf()
+            IconSettings.Shape.write(prefs, shape)
+            assertEquals(shape, IconSettings.Shape.read(prefs))
+        }
+        assertEquals(IconShape.System, IconSettings.Shape.decode(null))
+        assertEquals(IconShape.System, IconSettings.Shape.decode("blob"))
+    }
 }
