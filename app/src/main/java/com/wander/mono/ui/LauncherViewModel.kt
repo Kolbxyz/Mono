@@ -32,7 +32,7 @@ class LauncherViewModel @Inject constructor(
 
     /** The drawer was opened from edit mode to pick an app to add to home. */
     val pickingApp: StateFlow<Boolean> = savedState.getStateFlow(PICKING_APP, false)
-    val messages: SharedFlow<Int> = messages.messages
+    val messages: SharedFlow<UserMessage> = messages.messages
 
     private val mutableOverlaysAnimate = MutableStateFlow(true)
 

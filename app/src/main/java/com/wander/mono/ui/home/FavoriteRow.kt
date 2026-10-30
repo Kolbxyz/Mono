@@ -15,26 +15,26 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.AppLabel
 
 /**
- * A favourite: its icon (none in text-only mode) and its name in large rounded type, at least
- * 56 dp tall (spec 4.3). Its taps, holds and drags are handled around it, by `ReorderableFavorite`.
+ * A favourite: its icon (none in text-only mode) and its name in large rounded type, as tall and
+ * as large as the user's row density makes it (spec 4.3). Its taps, holds and drags are handled
+ * around it, by `ReorderableFavorite`.
  */
 @Composable
 fun FavoriteRow(row: HomeRow.App, icons: AppIcons, modifier: Modifier = Modifier) {
+    val metrics = favoriteRowMetrics(LocalRowDensity.current)
     Row(
         modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .padding(horizontal = 4.dp, vertical = 6.dp),
+            .heightIn(min = metrics.minHeight)
+            .padding(horizontal = 4.dp, vertical = metrics.verticalPadding),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AppIcon(row.app.key, icons, size = ICON_SIZE)
+        AppIcon(row.app.key, icons, size = metrics.iconSize)
         AppLabel(
             app = row.app,
             badge = row.badge,
-            style = MaterialTheme.typography.headlineSmall.onWallpaper(),
+            style = metrics.label(MaterialTheme.typography).onWallpaper(),
         )
     }
 }
-
-private val ICON_SIZE = 36.dp

@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.wander.mono.core.apps.AppKey
+import com.wander.mono.core.apps.LaunchSource
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
@@ -17,12 +18,13 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.ui.edit.ReorderableWidget
+import com.wander.mono.ui.home.live.LiveActivityCard
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
  * Home's rows, anchored to the bottom of the list so favourites sit in the thumb zone: the empty
  * state until there is a favourite, then each row in shown order. The [lifted] favourites go first
- * while headphones are connected, outside edit mode only.
+ * while headphones are connected, outside edit mode only. The [pulse] favourite, just added, pulses once.
  */
 @Composable
 internal fun HomeList(
@@ -31,8 +33,11 @@ internal fun HomeList(
     listState: LazyListState,
     icons: AppIcons,
     editing: HomeEditing,
+    previews: NotificationPreviewViewModel,
+    pulse: AppKey?,
+    onPulsed: (AppKey) -> Unit,
     contentPadding: PaddingValues,
-    onLaunch: (LaunchableApp) -> Unit,
+    onLaunch: (LaunchableApp, LaunchSource?) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     onAppInfo: (LaunchableApp) -> Unit,
     onTogglePlay: () -> Unit,
@@ -83,10 +88,12 @@ internal fun HomeList(
                     siblings = movable,
                     rows = rows.orEmpty(),
                     editing = editing,
-                    onLaunch = { onLaunch(row.app) },
+                    onLaunch = { source -> onLaunch(row.app, source) },
                     onLongPress = { onLongPress(row.app) },
                     onAppInfo = { onAppInfo(row.app) },
-                    modifier = animated,
+                    // Swiping right on a favourite with notifications expands its preview (spec 8).
+                    onShowPreview = previewOf(rows, row)?.let { preview -> { previews.setExpanded(preview, true) } },
+                    modifier = animated.addedPulse(pulse == row.app.key) { onPulsed(row.app.key) },
                 )
                 is HomeRow.NowPlaying -> NowPlayingCard(
                     media = row.media,
@@ -104,8 +111,9 @@ internal fun HomeList(
                     ),
                 )
                 HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
-                is NotificationRow -> NotificationPreviewRow(row, animated)
+                is NotificationRow -> NotificationPreviewRow(row, animated, previews)
                 is CalendarRow -> CalendarCard(row, onOpenEvent, animated)
+                is LiveActivityRow -> LiveActivityCard(row, animated)
                 is WidgetHomeRow -> if (editing.active) {
                     ReorderableWidget(row, movable, rows.orEmpty(), editing, animated)
                 } else {
@@ -120,3 +128,7 @@ internal fun HomeList(
         }
     }
 }
+
+/** The preview row under [favorite], if it has one. */
+private fun previewOf(rows: List<HomeRow>?, favorite: HomeRow.App): NotificationRow? =
+    rows?.firstOrNull { it is NotificationRow && it.app.key == favorite.app.key } as NotificationRow?
