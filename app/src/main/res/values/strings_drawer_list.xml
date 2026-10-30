@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Drawer list: group headings -->
+    <string name="drawer_group_new">New</string>
+    <string name="drawer_group_day">Past day</string>
+    <string name="drawer_group_week">Past week</string>
+    <string name="drawer_group_month">Past month</string>
+    <string name="drawer_group_earlier">Earlier</string>
+
+    <!-- Drawer list: row states, read by TalkBack -->
+    <string name="state_new_app">New</string>
+    <string name="state_archived">Archived, opening it restores it</string>
+
+    <!-- Drawer list: floating toolbar -->
+    <string name="drawer_toolbar">List options</string>
+    <string name="drawer_profile_all">All apps</string>
+    <string name="drawer_profile_personal">Personal apps</string>
+    <string name="drawer_profile_work">Work apps</string>
+    <string name="drawer_show_categories">Filter by category</string>
+    <string name="drawer_sort_by_recent">Newest installs first</string>
+
+    <!-- Drawer list: category chips -->
+    <string name="category_games">Games</string>
+    <string name="category_audio">Audio</string>
+    <string name="category_video">Video</string>
+    <string name="category_image">Image</string>
+    <string name="category_social">Social</string>
+    <string name="category_news">News</string>
+    <string name="category_maps">Maps</string>
+    <string name="category_productivity">Productivity</string>
+    <string name="category_accessibility">Accessibility</string>
+    <string name="category_other">Other</string>
+
+    <!-- Letter rail: the private space entry at its bottom -->
+    <string name="drawer_rail_private">Private space</string>
+
+    <!-- Drawer settings -->
+    <string name="drawer_sort">Order</string>
+    <string name="drawer_sort_alphabetical">A–Z</string>
+    <string name="drawer_sort_recent">Newest</string>
+    <string name="drawer_new_apps">New apps at the top</string>
+    <string name="drawer_new_apps_summary">Apps installed in the last 3 days, until you open them</string>
+</resources>

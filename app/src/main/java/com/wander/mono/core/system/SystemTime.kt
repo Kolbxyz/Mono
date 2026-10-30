@@ -29,6 +29,11 @@ class SystemTime @Inject constructor(@ApplicationContext private val context: Co
         Intent.ACTION_DATE_CHANGED,
     ) { System.currentTimeMillis() }
 
+    /** The wall clock set or moved to another zone (not its ticking): times computed ahead are stale. */
+    val changed: Flow<Long> = broadcasts(Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED) {
+        System.currentTimeMillis()
+    }
+
     /** Trigger time of the next alarm-clock alarm, null when none is set. */
     val nextAlarm: Flow<Long?> = broadcasts(AlarmManager.ACTION_NEXT_ALARM_CLOCK_CHANGED) {
         alarmManager.nextAlarmClock?.triggerTime

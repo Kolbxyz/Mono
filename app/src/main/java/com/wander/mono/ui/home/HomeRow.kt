@@ -16,6 +16,14 @@ sealed interface HomeRow {
         override val key: String get() = "app:${app.key.encode()}"
     }
 
+    /**
+     * Favourites the user grouped, where the first of them is in the saved order; tapping it shows
+     * its [apps] under it. Its [badge] adds theirs up.
+     */
+    data class Folder(val id: String, val name: String, val apps: List<App>, val badge: AppBadge) : HomeRow {
+        override val key: String get() = "folder:$id"
+    }
+
     data class NowPlaying(val media: PlayingMedia) : HomeRow {
         override val key: String get() = "now-playing"
     }

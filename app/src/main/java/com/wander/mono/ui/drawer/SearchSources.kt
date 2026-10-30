@@ -5,6 +5,8 @@ import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.contacts.ContactSearch
+import com.wander.mono.core.notifications.NotificationPreview
+import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.siblings.WandaSearch
 import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.ClockActions
@@ -29,9 +31,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
 /**
- * Search results beyond apps (shortcuts, sums, conversions, timers and alarms, contacts, settings
- * pages, the web) and what tapping most of them does; timers and alarms go to [ClockActions]. A
- * source the user switched off in [SearchSettings] is not asked at all.
+ * Search results beyond apps (shortcuts, sums, conversions, timers and alarms, links, contacts,
+ * notifications, settings pages, the web) and what tapping most of them does; timers and alarms go
+ * to [ClockActions], hand-offs to [SearchHandOffs]. A source the user switched off in
+ * [SearchSettings] is not asked at all.
  */
 class SearchSources @Inject constructor(
     private val settings: SettingsStore,
@@ -43,6 +46,8 @@ class SearchSources @Inject constructor(
     private val clock: ClockActions,
     private val clipboard: Clipboard,
     private val messages: UserMessages,
+    private val previews: NotificationPreviews,
+    private val handOffApps: SearchHandOffs,
 ) {
     /**
      * Contacts for each [query], asked of the provider only while the setting is on; a newer query
@@ -81,6 +86,23 @@ class SearchSources @Inject constructor(
                 else -> true
             }
         }
+    }
+
+    /**
+     * The query as a link to open and as text to share ([SearchLinks]) when quick answers are
+     * [enabled]; a link only when an app opens it, so this resolves an intent: not on the main thread.
+     */
+    fun handOffs(query: String, enabled: Boolean): List<SearchHit> {
+        if (!enabled) return emptyList()
+        return SearchLinks.of(query).filter { it !is SearchHit.Link || handOffApps.canOpen(it) }
+    }
+
+    /**
+     * The posted notifications search looks in while the setting is on: each app's latest, with the
+     * conversations of its expanded preview, already redacted as home shows them. None while off.
+     */
+    fun notices(): Flow<List<NotificationPreview>> = settings[SearchSettings.Notifications].flatMapLatest { on ->
+        if (on) previews.previews.map { it.values.toList() } else flowOf(emptyList<NotificationPreview>())
     }
 
     /**
