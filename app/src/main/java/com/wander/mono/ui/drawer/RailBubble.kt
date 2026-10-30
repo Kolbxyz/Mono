@@ -3,7 +3,7 @@ package com.wander.mono.ui.drawer
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +23,9 @@ import kotlin.math.roundToInt
  * The letter being scrubbed, shown large beside the finger, just clear of the bowed letters. It sits
  * on an even twelve-sided cookie that grows in as the scrub starts, turns slowly as the finger moves
  * along the rail, and shrinks back and fades on release. It stays on the rail, [railHeight] tall,
- * at either end.
+ * at either end, and on the list's side of it: left of a rail on the right ([mirror] 1f), right of
+ * one on the left (-1f), in screen terms whatever the layout direction. [modifier] places it at
+ * the rail's top corner on that side.
  */
 @Composable
 internal fun RailBubble(
@@ -32,6 +34,7 @@ internal fun RailBubble(
     fingerY: () -> Float,
     railHeight: () -> Float,
     bow: () -> Float,
+    mirror: Float,
     modifier: Modifier = Modifier,
 ) {
     val motion = MaterialTheme.motionScheme
@@ -42,10 +45,10 @@ internal fun RailBubble(
     val cookie = MaterialShapes.Cookie12Sided.toShape()
     Box(
         modifier
-            .offset {
+            .absoluteOffset {
                 val size = BUBBLE_SIZE.toPx()
                 IntOffset(
-                    x = -(BUBBLE_GAP.toPx() + size + bow()).roundToInt(),
+                    x = RailMath.bubbleX(mirror, BUBBLE_GAP.toPx(), size, bow()).roundToInt(),
                     y = RailMath.bubbleTop(fingerY(), size, railHeight()).roundToInt(),
                 )
             }
