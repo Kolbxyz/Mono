@@ -62,7 +62,8 @@ fun LauncherSnackbar(
         snackbar,
         modifier
             .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom))
-            .padding(bottom = clearance),
+            // The expressive spring overshoots: on its way to 0 it would dip below, which padding refuses.
+            .padding(bottom = clearance.coerceAtLeast(0.dp)),
     )
 }
 
