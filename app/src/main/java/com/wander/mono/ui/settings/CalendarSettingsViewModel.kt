@@ -38,6 +38,9 @@ class CalendarSettingsViewModel @Inject constructor(
 
     val granted: StateFlow<Boolean> = access.granted
 
+    /** [shown] as last read, for the switch's first frame; null only before settings are first read. */
+    fun currentlyShown(): Boolean? = store.current(CalendarSettings.Enabled)?.let { it && access.granted.value }
+
     fun setShown(shown: Boolean) {
         viewModelScope.launch { store.set(CalendarSettings.Enabled, shown) }
     }
