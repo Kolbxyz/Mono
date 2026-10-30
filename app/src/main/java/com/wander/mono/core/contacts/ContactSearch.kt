@@ -16,8 +16,17 @@ import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** A contact found by name: just enough to show it and open it. */
-data class Contact(val id: Long, val lookupKey: String, val name: String)
+/**
+ * A contact found by name: just enough to show it, open it and reach it, with its default (else
+ * first) [phone] number and [email] address, null when it has none.
+ */
+data class Contact(
+    val id: Long,
+    val lookupKey: String,
+    val name: String,
+    val phone: String? = null,
+    val email: String? = null,
+)
 
 /**
  * Looks contacts up by name while the user types. Opt-in (`READ_CONTACTS`), queried fresh for each
@@ -29,8 +38,9 @@ class ContactSearch @Inject constructor(@ApplicationContext private val context:
         PackageManager.PERMISSION_GRANTED
 
     /**
-     * Contacts the provider matches for [query], at most [limit]; empty without the permission, so
-     * revoking it in Android's settings simply hides contacts from search.
+     * Contacts the provider matches for [query], at most [limit], with the number and address their
+     * Call, Message and Email actions use; empty without the permission, so revoking it in Android's
+     * settings simply hides contacts from search.
      */
     suspend fun find(query: String, limit: Int): List<Contact> = withContext(Dispatchers.IO) {
         if (!hasPermission() || query.isBlank()) return@withContext emptyList()
@@ -39,7 +49,7 @@ class ContactSearch @Inject constructor(@ApplicationContext private val context:
             .appendQueryParameter(ContactsContract.LIMIT_PARAM_KEY, limit.toString())
             .build()
         val projection = arrayOf(Contacts._ID, Contacts.LOOKUP_KEY, Contacts.DISPLAY_NAME_PRIMARY)
-        context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
+        val found = context.contentResolver.query(uri, projection, null, null, null)?.use { cursor ->
             buildList {
                 while (cursor.moveToNext()) {
                     val name = cursor.getString(NAME) ?: continue
@@ -47,6 +57,10 @@ class ContactSearch @Inject constructor(@ApplicationContext private val context:
                 }
             }
         }.orEmpty()
+        val details = context.contentResolver.detailsOf(found.map { it.id })
+        found.map { contact ->
+            details[contact.id]?.let { contact.copy(phone = it.phone, email = it.email) } ?: contact
+        }
     }
 
     fun open(contact: Contact): ActionResult = try {
