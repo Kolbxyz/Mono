@@ -20,6 +20,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
+import com.wander.mono.data.settings.DrawerSort
 import com.wander.mono.data.settings.SwipeUpAction
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.SheetBack
@@ -28,6 +29,8 @@ import com.wander.mono.ui.components.outOfFocus
 import com.wander.mono.ui.components.rememberCredentialPrompt
 import com.wander.mono.ui.components.rememberPullUpConnection
 import com.wander.mono.ui.drawer.DrawerViewModel
+import com.wander.mono.ui.drawer.RailScrub
+import com.wander.mono.ui.drawer.RailScrubStrip
 import com.wander.mono.ui.edit.EditEffects
 import com.wander.mono.ui.edit.EditHomeViewModel
 import com.wander.mono.ui.edit.EditToolbar
@@ -98,6 +101,10 @@ fun LauncherApp(
     val drawerMotion = rememberDrawerMotion(drawerOpen) { open ->
         if (open) launcher.openDrawer(focusSearch = swipeUp == SwipeUpAction.Search) else launcher.closeDrawer()
     }
+    // A scrub of the rail from home's edge; the rising drawer is drawn this far below where it comes to rest.
+    val railScrub = remember(drawerMotion) { RailScrub { (1f - drawerMotion.shown) * drawerMotion.travel } }
+    // Only while the drawer's list has its rail to scrub: A–Z, with letters.
+    val railOnList = drawerState.controls.choices.sort == DrawerSort.Alphabetical && drawerState.sections.isNotEmpty()
     // Wide, the drawer has nowhere to rise: swiping up brings up the side panel, with its keyboard
     // only when the swipe up is set to search.
     val panelPull = rememberPanelSearchPull { launcher.openDrawer(focusSearch = swipeUp == SwipeUpAction.Search) }
@@ -187,6 +194,14 @@ fun LauncherApp(
                     }
                 } else {
                     homeLayer(Modifier.fadeBehindDrawer(drawerMotion), Modifier.shrinkBehindDrawer(drawerMotion))
+                    RailScrubStrip(
+                        railScrub,
+                        enabled = !drawerOpen && !editingOn && !quietOn && railOnList,
+                        atStart = drawerState.railAtStart,
+                    ) {
+                        drawerMotion.openQuickly()
+                        launcher.openDrawer()
+                    }
                     DrawerLayer(
                         motion = drawerMotion,
                         open = drawerOpen,
@@ -199,12 +214,14 @@ fun LauncherApp(
                             drawer.setQuery("")
                             drawer.clearListFilters()
                             launcher.drawerClosed()
+                            railScrub.drawerClosed()
                         },
                     ) {
                         // Hidden apps unlocked for this opening only.
                         DisposableEffect(Unit) { onDispose(drawer::relockHidden) }
                         LauncherDrawer(
                             drawerOpen, { drawerMotion.shown }, quietOn, launcher, drawer, sheet, edit, unlockHidden,
+                            railScrub = railScrub,
                         )
                     }
                 }

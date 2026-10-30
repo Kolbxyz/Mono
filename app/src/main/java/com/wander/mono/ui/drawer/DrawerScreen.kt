@@ -50,6 +50,7 @@ import com.wander.mono.ui.theme.LocalHighContrast
  * [focusSearch] (opened from home's search bar or a search gesture), or on every opening when the
  * user asked for the keyboard on open, the search field takes focus and the keyboard opens; a swipe
  * never does. Once no longer [open], the keyboard goes. Dragging it closed is handled by its container.
+ * [railScrub] lets a scrub begun on home's edge drive the letter rail.
  */
 @Composable
 fun DrawerScreen(
@@ -75,6 +76,7 @@ fun DrawerScreen(
     modifier: Modifier = Modifier,
     pickingApp: Boolean = false,
     focusSearch: Boolean = false,
+    railScrub: RailScrub? = null,
 ) {
     val icons = remember(state.iconMode, state.iconPack, loadIcon) {
         AppIcons(state.iconMode, loadIcon, state.iconPack)
@@ -84,7 +86,8 @@ fun DrawerScreen(
     val searchFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    val focusOnOpen = focusSearch || state.keyboardOnOpen
+    // A scrub from home's edge opens on the list under the finger, never on the keyboard.
+    val focusOnOpen = focusSearch || (state.keyboardOnOpen && railScrub?.openedDrawer != true)
     LaunchedEffect(open, focusOnOpen) {
         if (!open) {
             // Closing: the keyboard leaves with the drawer instead of staying up over home.
@@ -151,6 +154,7 @@ fun DrawerScreen(
                         onLongPress,
                         bottom,
                         appListState,
+                        railScrub = railScrub,
                     )
                 } else {
                     SearchResultList(

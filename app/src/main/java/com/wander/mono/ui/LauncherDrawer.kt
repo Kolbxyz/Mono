@@ -10,6 +10,7 @@ import com.wander.mono.ui.drawer.DrawerScreen
 import com.wander.mono.ui.drawer.DrawerViewModel
 import com.wander.mono.ui.drawer.HitOutcome
 import com.wander.mono.ui.drawer.PrivateSpaceActions
+import com.wander.mono.ui.drawer.RailScrub
 import com.wander.mono.ui.drawer.SearchHit
 import com.wander.mono.ui.edit.EditHomeViewModel
 import com.wander.mono.ui.quiet.QuietDrawerGate
@@ -20,6 +21,7 @@ import com.wander.mono.ui.sheet.AppSheetViewModel
  * it as the wide layout's side panel: launching closes it, picking for home adds the app, Mono's
  * own settings open over it. [open] and [revealed] are the drawer's. [unlockHidden] is hoisted
  * by the caller, so the screen lock's answer still has somewhere to arrive if the drawer has left.
+ * [railScrub] is a scrub of the letter rail begun on home's edge, when the drawer rises over home.
  */
 @Composable
 fun LauncherDrawer(
@@ -32,6 +34,7 @@ fun LauncherDrawer(
     edit: EditHomeViewModel,
     unlockHidden: () -> Unit,
     modifier: Modifier = Modifier,
+    railScrub: RailScrub? = null,
 ) {
     val query by drawer.query.collectAsStateWithLifecycle()
     val state by drawer.state.collectAsStateWithLifecycle()
@@ -76,6 +79,7 @@ fun LauncherDrawer(
             modifier = modifier,
             pickingApp = pickingApp,
             focusSearch = focusSearch,
+            railScrub = railScrub,
         )
     }
 }

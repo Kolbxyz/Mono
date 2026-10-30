@@ -1,6 +1,5 @@
 package com.wander.mono.ui.drawer
 
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -14,11 +13,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
@@ -26,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -38,8 +36,6 @@ import com.wander.mono.R
 import com.wander.mono.ui.components.rememberMonoHaptics
 import com.wander.mono.ui.home.onWallpaper
 import com.wander.mono.ui.theme.LocalReducedMotion
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 
 /**
  * The fast-scroll rail, on the end edge or, [atStart], the start edge: ★ for the top of the list,
@@ -54,7 +50,8 @@ import kotlinx.coroutines.launch
  * jumps to the space like a letter, tapping it alone locks or unlocks it. Letters tick lightly, ★
  * and the lock with a long buzz.
  * TalkBack sees one adjustable control: swiping up or down moves to the next or previous entry,
- * with the same ticks, and the lock is a custom action.
+ * with the same ticks, and the lock is a custom action. A [scrub] begun on home's edge drives the
+ * same finger ([RailFinger]) as the rail's own touch: bubble, wave, ticks and jumps alike.
  */
 @Composable
 fun LetterRail(
@@ -64,6 +61,7 @@ fun LetterRail(
     modifier: Modifier = Modifier,
     atStart: Boolean = false,
     lock: RailLock? = null,
+    scrub: RailScrub? = null,
 ) {
     val view = LocalView.current
     val haptics = rememberMonoHaptics()
@@ -77,48 +75,29 @@ fun LetterRail(
         listOf(top) + sections.map { it.letter } + listOfNotNull("".takeIf { lock != null })
     }
     val lockIndex = if (lock != null) letters.lastIndex else -1
-    val bowLimit = with(LocalDensity.current) { WAVE_AMPLITUDE.toPx() }
-    val pressBow = with(LocalDensity.current) { PRESS_BOW.toPx() }
-    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val pressBow = with(density) { PRESS_BOW.toPx() }
     // A drawn letter needs one labelMedium line, at the user's font scale.
-    val minSlot = with(LocalDensity.current) { MaterialTheme.typography.labelMedium.lineHeight.toPx() }
-    val currentLetters by rememberUpdatedState(letters)
-    val currentOnSelect by rememberUpdatedState(onSelect)
-    // Read by the long-lived pointer handler, so it sees a changed setting or layout direction.
-    val currentMirror by rememberUpdatedState(mirror)
-    val currentReducedMotion by rememberUpdatedState(reducedMotion)
+    val minSlot = with(density) { MaterialTheme.typography.labelMedium.lineHeight.toPx() }
+    val lettersTop = with(density) { TRACK_PADDING.toPx() }
+    val finger = rememberRailFinger(
+        RailFingerInputs(
+            letters = letters,
+            lettersTop = lettersTop,
+            hasLock = lock != null,
+            mirror = mirror,
+            reducedMotion = reducedMotion,
+            bowLimit = with(density) { WAVE_AMPLITUDE.toPx() },
+            onSelect = onSelect,
+            onTick = { haptics.railTick(it) },
+        ),
+    )
     val currentLock by rememberUpdatedState(lock)
-
     var height by remember { mutableIntStateOf(0) }
-    // The letters' own column, inside the track's end padding: what a finger's y maps onto.
-    var lettersHeight by remember { mutableIntStateOf(0) }
-    val lettersTop = with(LocalDensity.current) { TRACK_PADDING.toPx() }
-    val currentLettersTop by rememberUpdatedState(lettersTop)
-    var fingerY by remember { mutableFloatStateOf(0f) }
-    var active by remember { mutableIntStateOf(-1) }
-    // Unlike [active], kept after release, so the bubble fades out still showing the last letter.
-    var bubbleLetter by remember { mutableStateOf("") }
-    var scrubbing by remember { mutableStateOf(false) }
+    val placed = remember { RailPlacement() }
+    if (scrub != null) FollowRailScrub(scrub, finger) { placed.coordinates }
     // A small bow on touch, eased in, so the press shows before the finger moves.
-    val pressed by animateFloatAsState(if (scrubbing && !reducedMotion) 1f else 0f, motion.fastSpatialSpec())
-    // How far the letter under the finger bows out from the finger's slide toward the list: set
-    // straight from each move so it tracks without lag, eased back to the rail on release.
-    var dragBow by remember { mutableFloatStateOf(0f) }
-    var settle by remember { mutableStateOf<Job?>(null) }
-    val springBack = motion.fastSpatialSpec<Float>()
-
-    /** Moves to the entry under [y]; true when that is another entry than before. */
-    fun follow(y: Float): Boolean {
-        fingerY = y
-        val count = currentLetters.size
-        val index = RailMath.letterAt(y, currentLettersTop, lettersHeight.toFloat(), count)
-        if (index < 0 || index == active) return false
-        active = index
-        bubbleLetter = currentLetters[index]
-        haptics.railTick(RailEntries.tickFor(index, count, hasLock = currentLock != null))
-        currentOnSelect(index)
-        return true
-    }
+    val pressed by animateFloatAsState(if (finger.scrubbing && !reducedMotion) 1f else 0f, motion.fastSpatialSpec())
 
     val railLabel = stringResource(R.string.drawer_rail)
     val privateSpoken = stringResource(R.string.drawer_rail_private)
@@ -136,55 +115,41 @@ fun LetterRail(
             .fillMaxHeight()
             .width(RAIL_WIDTH)
             .onSizeChanged { height = it.height }
+            .onGloballyPositioned { placed.coordinates = it }
             .railSemantics(railLabel, spoken, current, spokenSelect, lockAction)
-            .pointerInput(Unit) {
+            .pointerInput(finger) {
                 awaitEachGesture {
                     val down = awaitFirstDown()
                     down.consume()
-                    settle?.cancel()
-                    dragBow = 0f
-                    scrubbing = true
-                    follow(down.position.y)
-                    // A tap on the lock, not a scrub through it, locks or unlocks the space.
-                    val downEntry = active
-                    var stayed = true
+                    finger.press(down.position.x, down.position.y)
                     do {
                         val event = awaitPointerEvent()
                         event.changes.filter { it.pressed }.forEach { change ->
                             change.consume()
-                            if (follow(change.position.y)) stayed = false
-                            if (!currentReducedMotion) {
-                                val travel = RailMath.travel(down.position.x, change.position.x, currentMirror)
-                                dragBow = RailMath.bow(travel, bowLimit)
-                            }
+                            finger.move(change.position.x, change.position.y)
                         }
                     } while (event.changes.any { it.pressed })
-                    scrubbing = false
-                    val tappedLock = stayed && downEntry == currentLetters.lastIndex
-                    currentLock?.takeIf { tappedLock }?.onToggle?.invoke()
-                    active = -1
-                    val from = dragBow
-                    settle = scope.launch {
-                        animate(from, 0f, animationSpec = springBack) { value, _ -> dragBow = value }
-                    }
+                    // A tap on the lock, not a scrub through it, locks or unlocks the space.
+                    if (finger.lift()) currentLock?.onToggle?.invoke()
                 }
             },
     ) {
         // A short rail (landscape) draws every other or third letter; all of them still scrub.
-        val stride = RailMath.labelStride(lettersHeight.toFloat(), letters.size, minSlot)
+        val stride = RailMath.labelStride(finger.lettersHeight.toFloat(), letters.size, minSlot)
         // No clip: the wave bows letters out past the track, toward the list.
         Column(
             Modifier
                 .fillMaxHeight()
                 .padding(horizontal = TRACK_INSET, vertical = TRACK_PADDING)
-                .onSizeChanged { lettersHeight = it.height },
+                .onSizeChanged { finger.lettersHeight = it.height },
         ) {
             val letterStyle = MaterialTheme.typography.labelMedium.onWallpaper()
             letters.forEachIndexed { index, letter ->
-                val lit = scrubbing && index == active
+                val lit = finger.scrubbing && index == finger.active
                 val wave = Modifier.graphicsLayer {
-                    val slot = RailMath.fingerSlot(fingerY, lettersTop, lettersHeight.toFloat(), letters.size)
-                    val bow = pressBow * pressed + dragBow
+                    val column = finger.lettersHeight.toFloat()
+                    val slot = RailMath.fingerSlot(finger.fingerY, lettersTop, column, letters.size)
+                    val bow = pressBow * pressed + finger.dragBow
                     translationX = -mirror * RailMath.letterOffset(index, slot, bow)
                     // Grows with the press, so it eases back to size on release.
                     scaleX = RailMath.letterScale(index, slot, pressed)
@@ -206,16 +171,21 @@ fun LetterRail(
             }
         }
         RailBubble(
-            letter = bubbleLetter,
-            symbol = lock?.symbol?.takeIf { bubbleLetter.isEmpty() },
-            visible = scrubbing,
-            fingerY = { fingerY },
+            letter = finger.bubbleLetter,
+            symbol = lock?.symbol?.takeIf { finger.bubbleLetter.isEmpty() },
+            visible = finger.scrubbing,
+            fingerY = { finger.fingerY },
             railHeight = { height.toFloat() },
-            bow = { pressBow * pressed + dragBow },
+            bow = { pressBow * pressed + finger.dragBow },
             mirror = mirror,
             modifier = Modifier.align(if (mirror > 0f) AbsoluteAlignment.TopLeft else AbsoluteAlignment.TopRight),
         )
     }
+}
+
+/** Where the rail sits in the window, for mapping a scrub from home onto it; not state, read on each move. */
+private class RailPlacement {
+    var coordinates: LayoutCoordinates? = null
 }
 
 /** Width of the rail's touch area, which the list leaves free on the rail's side. */
