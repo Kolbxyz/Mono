@@ -9,10 +9,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
@@ -22,9 +20,15 @@ import androidx.compose.ui.semantics.semantics
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchSource
 import com.wander.mono.ui.components.AppIcons
-import com.wander.mono.ui.components.pressShrink
+import com.wander.mono.ui.components.PressMorph
+import com.wander.mono.ui.components.expressivePress
+import com.wander.mono.ui.components.rememberMonoHaptics
+import com.wander.mono.ui.components.rememberRowAccent
 import com.wander.mono.ui.home.FavoriteRow
+import com.wander.mono.ui.home.HomeCardCorner
 import com.wander.mono.ui.home.HomeRow
+import com.wander.mono.ui.home.LocalRowDensity
+import com.wander.mono.ui.home.favoriteRowMetrics
 import com.wander.mono.ui.home.rememberLaunchOrigin
 
 /**
@@ -32,7 +36,8 @@ import com.wander.mono.ui.home.rememberLaunchOrigin
  * hold-and-drag that starts edit mode carries on as the row turns into its edit form.
  * [siblings] are the movable rows' keys (favourites and, in edit mode, widgets) in shown order:
  * what a drag moves among. [onShowPreview] expands the favourite's notification preview, null
- * when it has none.
+ * when it has none; [swipeLeft] is what the user chose for a swipe left, null for nothing.
+ * [overLimit] dims it: today's time in the app is past its daily limit.
  */
 @Composable
 fun ReorderableFavorite(
@@ -46,9 +51,13 @@ fun ReorderableFavorite(
     onAppInfo: () -> Unit,
     onShowPreview: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    swipeLeft: SwipeLeft? = null,
+    overLimit: Boolean = false,
 ) {
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val interactions = remember { MutableInteractionSource() }
+    // With "Tint rows with app colour", the press ripples in the app's colour; else the theme's.
+    val accent = rememberRowAccent(row.app.key, icons, favoriteRowMetrics(LocalRowDensity.current).iconSize)
     val reorder = editing.reorder
     val lifted = reorder.dragging == row.key
     val settle = rememberDropSettle()
@@ -56,42 +65,53 @@ fun ReorderableFavorite(
     // The app's window grows out of this row (spec 7.4.4).
     val origin = rememberLaunchOrigin()
     val launch = { onLaunch(origin.source()) }
-    val actions = FavoriteActions(launch, onLongPress, onAppInfo, onShowPreview)
+    val actions = FavoriteActions(launch, onLongPress, onAppInfo, onShowPreview, swipeLeft)
     val callbacks = rememberUpdatedState(
         FavoriteGestureCallbacks(
             editing = editing.active,
             onTap = launch,
             onSwipeRight = onShowPreview?.let { show ->
                 {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                    haptics.threshold()
                     show()
                 }
             },
-            onHeld = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
+            onSwipeLeft = swipeLeft?.let { swipe ->
+                {
+                    haptics.threshold()
+                    swipe.run()
+                }
+            },
+            onHeld = { haptics.longPress() },
             onHold = onLongPress,
             onLift = {
                 if (!editing.active) editing.onEnter()
                 reorder.start(row.key, siblings)
             },
-            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) },
+            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.segment() },
             onDrop = {
                 if (reorder.dragging == row.key) {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                    haptics.gestureEnd()
                     settle.release(reorder.displacement, settleSpec)
                     editing.drop(rows)
                 }
             },
         ),
     )
+    // The edit form draws its own container and lift shadow, which the press's clip would cut off.
+    val press = if (editing.active) {
+        Modifier
+    } else {
+        Modifier.expressivePress(interactions, PressMorph.squarer(HomeCardCorner))
+    }
     Box(
         Modifier
             .reorderLift(lifted, reorder, settle)
             .then(modifier)
             .then(origin.modifier)
             .favoriteSemantics(row, siblings, rows, editing, actions)
-            // The edit form draws its own container and lift shadow, which a clip would cut off.
-            .then(if (editing.active) Modifier else Modifier.pressShrink(interactions).clip(MaterialTheme.shapes.large))
-            .indication(interactions, if (editing.active) null else ripple())
+            .then(press)
+            .indication(interactions, if (editing.active) null else ripple(color = accent ?: Color.Unspecified))
             .pointerInput(row.key) { detectFavoriteGestures(interactions, callbacks) },
     ) {
         if (editing.active) {
@@ -105,16 +125,17 @@ fun ReorderableFavorite(
                 handle = Modifier.pointerInput(row.key) { detectHandleDrag(callbacks) },
             )
         } else {
-            FavoriteRow(row, icons)
+            FavoriteRow(row, icons, overLimit = overLimit)
         }
     }
 }
 
 /**
  * Outside edit mode the row is one button (open, options) offering App info, Show notifications
- * (the swipe right) and the moves among the favourites as custom actions, so TalkBack can reorder
- * without entering edit mode. In edit mode its buttons and switches stay separate nodes, and the
- * row offers TalkBack the moves a drag does, among favourites and widgets alike.
+ * (the swipe right), the swipe left's action and the moves among the favourites as custom
+ * actions, so TalkBack can reorder without entering edit mode. In edit mode its buttons and
+ * switches stay separate nodes, and the row offers TalkBack the moves a drag does, among
+ * favourites and widgets alike.
  */
 @Composable
 private fun Modifier.favoriteSemantics(
@@ -140,6 +161,7 @@ private fun Modifier.favoriteSemantics(
         customActions = buildList {
             add(CustomAccessibilityAction(appInfo) { actions.onAppInfo().let { true } })
             actions.onShowPreview?.let { show -> add(CustomAccessibilityAction(showPreview) { show().let { true } }) }
+            actions.swipeLeft?.let { swipe -> add(CustomAccessibilityAction(swipe.label) { swipe.run().let { true } }) }
             if (index > 0) add(CustomAccessibilityAction(moveUp) { editing.onMove(key, -1).let { true } })
             if (index in 0 until favorites.lastIndex) {
                 add(CustomAccessibilityAction(moveDown) { editing.onMove(key, 1).let { true } })
@@ -154,4 +176,5 @@ private class FavoriteActions(
     val onLongPress: () -> Unit,
     val onAppInfo: () -> Unit,
     val onShowPreview: (() -> Unit)?,
+    val swipeLeft: SwipeLeft?,
 )

@@ -25,13 +25,15 @@ data class PreviewConversation(
     /** What tapping its title opens: the deep link into the room; null when the app gave none. */
     val contentIntent: PendingIntent?,
     val autoCancel: Boolean,
+    /** The app it came from, whose lock holds opening it. */
+    val owner: PackageUser,
 )
 
 /** [sender] is null for a plain notification's text, which has none. */
 data class PreviewMessage(val sender: String?, val text: String)
 
-/** A button the notification itself offers ("Archive", "Like"), fired as the shade would. */
-data class PreviewAction(val label: String, val intent: PendingIntent)
+/** A button the notification itself offers ("Archive", "Like"), fired as the shade would; [owner]'s lock holds it. */
+data class PreviewAction(val label: String, val intent: PendingIntent, val owner: PackageUser)
 
 /** One notification as Mark read and Mute act on it. */
 data class NotificationHandle(

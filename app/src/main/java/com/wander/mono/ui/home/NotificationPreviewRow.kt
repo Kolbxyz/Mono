@@ -117,14 +117,14 @@ private fun PreviewContent(
     val motion = MaterialTheme.motionScheme
     val stacked = isLargeFontScale()
     val toggleLabel = stringResource(if (showsMore) R.string.preview_collapse else R.string.preview_expand)
-    Column(Modifier.fillMaxWidth().padding(bottom = 6.dp)) {
+    Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 previewText(preview),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.onWallpaper(),
                 color = secondaryTextColor(),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
