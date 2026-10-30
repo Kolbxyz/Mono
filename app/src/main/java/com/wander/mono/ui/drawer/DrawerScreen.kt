@@ -37,7 +37,8 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.readableColumn
 
 /**
- * All apps, alphabetical, with the letter rail and the work profile and private space at the bottom;
+ * All apps, alphabetical (or newest first), with the letter rail, the list's floating toolbar and
+ * category chips, and the work profile and private space at the bottom;
  * or, while a query is typed, the ranked results, the two cross-fading. Drawn on the background the
  * user chose, its blur following how far the drawer is [revealed]. With [focusSearch] (opened from
  * home's search bar or a search gesture), or on every opening when the user asked for the keyboard
@@ -60,6 +61,7 @@ fun DrawerScreen(
     onOpenSettings: () -> Unit,
     onUnlockHidden: () -> Unit,
     privateActions: PrivateSpaceActions,
+    listActions: DrawerListActions,
     onSetWorkPaused: (WorkProfile, Boolean) -> Unit,
     modifier: Modifier = Modifier,
     pickingApp: Boolean = false,
@@ -129,6 +131,7 @@ fun DrawerScreen(
                         state,
                         icons,
                         actions,
+                        listActions,
                         onSetWorkPaused,
                         onLaunchApp,
                         onLongPress,
