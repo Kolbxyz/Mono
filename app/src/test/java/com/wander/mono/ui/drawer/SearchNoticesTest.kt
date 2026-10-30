@@ -41,7 +41,10 @@ class SearchNoticesTest {
     )
 
     private fun conversation(key: String, title: String?, vararg messages: PreviewMessage) =
-        PreviewConversation(key, title, messages.toList(), Redaction.Full, contentIntent = null, autoCancel = true)
+        PreviewConversation(
+            key, title, messages.toList(), Redaction.Full, contentIntent = null, autoCancel = true,
+            owner = PackageUser("app", 0),
+        )
 
     private fun find(query: String, vararg previews: NotificationPreview) =
         SearchNotices.find(query, previews.toList(), listOf(signal, mail))
