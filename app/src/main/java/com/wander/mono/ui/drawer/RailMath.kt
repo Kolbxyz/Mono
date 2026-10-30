@@ -15,6 +15,9 @@ internal object RailMath {
     /** How many letters on each side of the finger the wave reaches before it is flat again. */
     const val WAVE_REACH = 4f
 
+    /** How much larger the letter nearest the finger is drawn while scrubbing. */
+    const val LETTER_ZOOM = 1.8f
+
     /**
      * The letter under a finger at [y] over letters from [top] down, [height] tall; clamped, so
      * sliding past an end keeps the end letter.
@@ -62,6 +65,14 @@ internal object RailMath {
     fun letterOffset(index: Int, slot: Float, bow: Float): Float = bow * waveFraction(index - slot)
 
     /**
+     * How large the letter at [index] is drawn while the finger, at [slot], has [pressed] the rail (0
+     * to 1): [LETTER_ZOOM] times under the finger at a full press, falling off along a wave half as
+     * wide as [letterOffset]'s, so close neighbours do not crowd it; 1 when not pressed.
+     */
+    fun letterScale(index: Int, slot: Float, pressed: Float): Float =
+        1f + (LETTER_ZOOM - 1f) * pressed * waveFraction((index - slot) * ZOOM_NARROWING)
+
+    /**
      * Every how many letters one is drawn so each drawn letter gets at least [minSlot]: 1 on a
      * phone in portrait, more on a short rail (landscape), where the skipped ones still scrub.
      */
@@ -82,6 +93,9 @@ internal object RailMath {
      * side ([mirror] as above).
      */
     fun bubbleX(mirror: Float, gap: Float, size: Float, bow: Float): Float = -mirror * (gap + size + bow)
+
+    /** The zoom wave is this many times narrower than the bow wave. */
+    private const val ZOOM_NARROWING = 2f
 
     private const val HALF = 0.5f
 }

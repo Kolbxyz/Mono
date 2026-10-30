@@ -30,6 +30,7 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.PressMorph
 import com.wander.mono.ui.components.expressivePress
 import com.wander.mono.ui.components.instantPress
+import com.wander.mono.ui.home.onWallpaper
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
@@ -141,7 +142,7 @@ private fun AppTile(
         AppIcon(app.key, icons, size = TILE_ICON)
         Text(
             rememberHighlighted(app.label, matched),
-            style = MaterialTheme.typography.labelMedium,
+            style = MaterialTheme.typography.labelMedium.onWallpaper(),
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,

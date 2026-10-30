@@ -6,13 +6,17 @@ import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.notifications.ConversationKey
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.NotificationPreviews
+import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.siblings.PhalanxUnread
 import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.SettingsPage
+import com.wander.mono.data.MutedApps
 import com.wander.mono.data.RecentSearch
 import com.wander.mono.data.settings.BadgeSettings
+import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.SettingsStore
+import com.wander.mono.ui.home.unmuted
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
@@ -26,6 +30,19 @@ internal fun searchableFor(sources: SearchSources, memory: SearchMemory, query: 
         combine(sources.quickAnswers(), sources.notices(), memory.recent, ::SearchExtras),
         ::Searchable,
     )
+
+/**
+ * Each app's latest notification, for the line under its name: none while previews are off, as on
+ * home, and none for the apps muted on home.
+ */
+internal fun shownPreviews(
+    previews: NotificationPreviews,
+    settings: SettingsStore,
+    muted: MutedApps,
+): Flow<Map<PackageUser, NotificationPreview>> =
+    combine(previews.previews, settings[PreviewSettings.ShowPreviews], muted.apps) { all, on, off ->
+        if (on) all.unmuted(off) else emptyMap()
+    }
 
 /** Unread per conversation, from notifications and from Phalanx, for the shortcut results' badges. */
 internal fun conversationUnread(
