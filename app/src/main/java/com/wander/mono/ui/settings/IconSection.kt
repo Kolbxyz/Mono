@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,7 +69,6 @@ fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = view
             settings,
             IconSettings.TintRows,
             title = R.string.settings_tint_rows,
-            summary = R.string.settings_tint_rows_short,
             icon = R.drawable.sym_invert_colors,
         )
     }
@@ -112,7 +112,7 @@ private fun PackRow(label: String, selected: Boolean, onSelect: () -> Unit, lead
         trailingContent = { RadioButton(selected = selected, onClick = null) },
         modifier = Modifier.selectable(selected, role = Role.RadioButton, onClick = onSelect),
     ) {
-        Text(label)
+        Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
