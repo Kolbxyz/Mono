@@ -45,6 +45,7 @@ class NotificationRowTest {
             is CalendarRow -> "calendar"
             is LiveActivityRow -> "live"
             is WidgetHomeRow -> "widget"
+            is HomeRow.Folder -> "folder"
         }
     }
 

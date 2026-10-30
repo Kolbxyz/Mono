@@ -72,7 +72,7 @@ class DrawerShapeTest {
     }
 
     @Test
-    fun `Personal drops the work cards; without a work profile the filter falls back to All`() {
+    fun `Personal drops the work cards, and without a work profile the filter falls back to All`() {
         val personal = state.shaped(ListChoices(profile = ProfileFilter.Personal), emptySet(), now)
         assertEquals(emptyList<WorkSection>(), personal.work)
         val noWork = state.copy(work = emptyList()).shaped(ListChoices(profile = ProfileFilter.Work), emptySet(), now)
