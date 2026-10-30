@@ -30,6 +30,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -102,7 +107,11 @@ private fun RowScope.ActionButton(action: MenuAction, baseWeight: Float, isHero:
         shape = RoundedCornerShape(corner),
         color = container,
         contentColor = content,
-        modifier = Modifier.weight(weight).fillMaxHeight().instantPress(interaction),
+        modifier = Modifier
+            .weight(weight)
+            .fillMaxHeight()
+            .instantPress(interaction)
+            .then(action.selected?.let { on -> Modifier.toggleSemantics(on) } ?: Modifier),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -126,6 +135,12 @@ private fun RowScope.ActionButton(action: MenuAction, baseWeight: Float, isHero:
             }
         }
     }
+}
+
+/** An on/off action reads as a switch to TalkBack, with its state, rather than as a plain button. */
+private fun Modifier.toggleSemantics(on: Boolean): Modifier = semantics {
+    role = Role.Switch
+    toggleableState = ToggleableState(on)
 }
 
 /** Few colours, one meaning each: primary for the menu's reason, one neutral, error for removal. */

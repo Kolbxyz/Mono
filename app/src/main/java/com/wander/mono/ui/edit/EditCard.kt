@@ -16,6 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import com.wander.mono.R
+import com.wander.mono.ui.home.HomeCardCorner
 
 /** How far a dragged row has risen, 0 at rest to 1 lifted, on the motion scheme's fast spatial spec. */
 @Composable
@@ -56,5 +57,7 @@ internal fun DragHandle(handle: Modifier) {
 
 private const val LIFT_SCALE = 0.03f
 private val LIFT_ELEVATION = 8.dp
-private val REST_CORNER = 16.dp
-private val LIFTED_CORNER = 28.dp
+
+/** At rest the card has home's card corner, as its live-row placeholders do; lifted, `extraLarge`. */
+private val REST_CORNER = HomeCardCorner
+private val LIFTED_CORNER = 36.dp

@@ -5,9 +5,9 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.withFrameNanos
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import com.wander.mono.ui.components.rememberMonoHaptics
 import com.wander.mono.ui.home.HomeRow
+import com.wander.mono.ui.home.folders.flattenFolders
 
 /**
  * What edit mode keeps in step with the list: the dragged order is dropped once saved (or when
@@ -17,9 +17,11 @@ import com.wander.mono.ui.home.HomeRow
 @Composable
 fun EditEffects(editing: HomeEditing, rows: List<HomeRow>?, list: LazyListState) {
     val reorder = editing.reorder
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val dragging = reorder.dragging != null
-    LaunchedEffect(rows, dragging) { reorder.settle(rows.orEmpty().filter(::isMovable).map { it.key }) }
+    LaunchedEffect(rows, dragging) {
+        reorder.settle(flattenFolders(rows.orEmpty()).filter(::isMovable).map { it.key })
+    }
     LaunchedEffect(editing.active) { if (!editing.active) reorder.reset() }
     LaunchedEffect(dragging) {
         while (dragging) {
@@ -27,7 +29,7 @@ fun EditEffects(editing: HomeEditing, rows: List<HomeRow>?, list: LazyListState)
             val overflow = reorder.overflow()
             if (overflow != 0f) {
                 list.scrollBy((overflow * AUTO_SCROLL_FRACTION).coerceIn(-MAX_STEP_PX, MAX_STEP_PX))
-                if (reorder.dragBy(0f)) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                if (reorder.dragBy(0f)) haptics.segment()
             }
         }
     }

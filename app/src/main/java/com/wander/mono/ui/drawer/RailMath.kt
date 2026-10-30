@@ -10,7 +10,8 @@ import kotlin.math.cos
  * Geometry of the letter rail. The letters' column, [top] down the rail and [height] tall, is split
  * into one equal slot per letter, a letter drawn at the centre of its slot; a finger at [y] (from the
  * rail's top) is over the slot it falls in. The rail's first entry is ★, the top of the list; the
- * letters follow it, so rail entry `i` is the list's letter item `i - 1`.
+ * letters follow it, so rail entry `i` is the list's letter item `i - 1`, after any lead groups
+ * ("New") the list has before its letters. A lock may end the rail, for the private space.
  */
 internal object RailMath {
     /** How many letters on each side of the finger the wave reaches before it is flat again. */
@@ -71,18 +72,25 @@ internal object RailMath {
         return ceil(minSlot * count / height).toInt().coerceAtLeast(1)
     }
 
-    /** The list item rail entry [railIndex] jumps to: ★ and the first letter both go to the top. */
-    fun listItemFor(railIndex: Int): Int = (railIndex - 1).coerceAtLeast(0)
+    /**
+     * The list item rail entry [railIndex] jumps to, with [lead] groups before the first letter: ★
+     * goes to the very top; without lead groups the first letter does too.
+     */
+    fun listItemFor(railIndex: Int, lead: Int = 0): Int = if (railIndex <= 0) 0 else railIndex - 1 + lead
 
     /**
-     * The rail entry for a list scrolled to [firstItem], [firstOffset] pixels into it: ★ only at the
-     * very top, else the letter at the top of the screen; the cards after the letters (work, private
-     * space) count as the last of [letters].
+     * The rail entry for a list scrolled to [firstItem], [firstOffset] pixels into it: ★ at the very
+     * top and over the [lead] groups, else the letter at the top of the screen; the cards after the
+     * letters (work, private space) count as the last of [letters].
      */
-    fun railIndexFor(firstItem: Int, firstOffset: Int, letters: Int): Int = when {
-        firstItem == 0 && firstOffset == 0 -> 0
-        else -> (firstItem + 1).coerceAtMost(letters)
+    fun railIndexFor(firstItem: Int, firstOffset: Int, letters: Int, lead: Int = 0): Int = when {
+        firstItem < lead || (firstItem == 0 && firstOffset == 0) -> 0
+        else -> (firstItem - lead + 1).coerceAtMost(letters)
     }
+
+    /** The tick for reaching rail entry [index] of [count]: a long one at ★ and at a closing lock ([hasLock]). */
+    fun tickFor(index: Int, count: Int, hasLock: Boolean): RailTick =
+        if (index == 0 || (hasLock && index == count - 1)) RailTick.Edge else RailTick.Letter
 
     /**
      * Which way the list lies from the rail, in screen pixels: 1f when the rail is on the right (the
@@ -99,3 +107,6 @@ internal object RailMath {
 
     private const val HALF = 0.5f
 }
+
+/** The haptic for reaching a rail entry: a light tick per letter, a long one at either end. */
+internal enum class RailTick { Letter, Edge }

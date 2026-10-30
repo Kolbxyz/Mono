@@ -24,7 +24,7 @@
     </plurals>
     <string name="backup_seal_mismatch">The passphrases don\'t match</string>
     <string name="backup_seal_confirm">Encrypt and save</string>
-    <string name="backup_seal_skip">Save without</string>
+    <string name="backup_seal_skip">No passphrase</string>
 
     <!-- Encrypted backups: restoring. -->
     <string name="backup_open_title">Encrypted backup</string>
