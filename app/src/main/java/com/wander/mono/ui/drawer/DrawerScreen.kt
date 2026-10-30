@@ -1,5 +1,6 @@
 package com.wander.mono.ui.drawer
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -21,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,12 +38,15 @@ import com.wander.mono.ui.components.readableColumn
 
 /**
  * All apps, alphabetical, with the letter rail and the work profile and private space at the bottom;
- * or, while a query is typed, the ranked results. Drawn on the background the user chose. With
- * [focusSearch] (opened from home's search bar) the search field takes focus and the keyboard opens.
- * Dragging it closed is handled by its container.
+ * or, while a query is typed, the ranked results, the two cross-fading. Drawn on the background the
+ * user chose, its blur following how far the drawer is [revealed]. With [focusSearch] (opened from
+ * home's search bar) the search field takes focus and the keyboard opens; once no longer [open], the
+ * keyboard goes. Dragging it closed is handled by its container.
  */
 @Composable
 fun DrawerScreen(
+    open: Boolean,
+    revealed: () -> Float,
     query: String,
     state: DrawerUiState,
     loadIcon: suspend (AppKey, IconMode, Int) -> AppIconImage?,
@@ -65,13 +71,22 @@ fun DrawerScreen(
     val topAndSides = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
     val searchFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
-    LaunchedEffect(focusSearch) {
-        if (!focusSearch) return@LaunchedEffect
-        // The field can only take focus once it is laid out, a frame after the drawer first composes.
-        withFrameNanos { }
-        searchFocus.requestFocus()
-        keyboard?.show()
+    val focusManager = LocalFocusManager.current
+    LaunchedEffect(open, focusSearch) {
+        if (!open) {
+            // Closing: the keyboard leaves with the drawer instead of staying up over home.
+            keyboard?.hide()
+            focusManager.clearFocus()
+        } else if (focusSearch) {
+            // The field can only take focus once it is laid out, a frame after the drawer first composes.
+            withFrameNanos { }
+            searchFocus.requestFocus()
+            keyboard?.show()
+        }
     }
+    // Hoisted, so the alphabetical list keeps its place through a search.
+    val appListState = rememberLazyListState()
+    val shown = rememberShownResults(query, state)
     // Over the wallpaper (scrim or blur) as over the surface, text takes the surface's content colour.
     CompositionLocalProvider(
         LocalContentColor provides MaterialTheme.colorScheme.onSurface,
@@ -80,7 +95,7 @@ fun DrawerScreen(
         Column(
             modifier
                 .fillMaxSize()
-                .background(drawerBackdrop(state.look))
+                .background(drawerBackdrop(state.look, revealed))
                 .windowInsetsPadding(topAndSides)
                 .readableColumn(),
         ) {
@@ -100,19 +115,35 @@ fun DrawerScreen(
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                 )
             }
-            if (query.isBlank()) {
-                // Picking for home leaves the private space out: its apps never go on home.
-                val actions = privateActions.takeUnless { pickingApp }
-                DrawerAppList(state, icons, actions, onSetWorkPaused, onLaunchApp, onLongPress, bottom)
-            } else {
-                SearchResultList(
-                    results = if (pickingApp) pickable(state.results) else state.results,
-                    icons = icons,
-                    onLaunchHit = onLaunchHit,
-                    onLongPress = onLongPress,
-                    contentPadding = bottom,
-                    onUnlockHidden = onUnlockHidden.takeIf { state.hiddenLocked },
-                )
+            Crossfade(
+                targetState = query.isBlank(),
+                animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+                label = "drawerContent",
+            ) { browsing ->
+                if (browsing) {
+                    // Picking for home leaves the private space out: its apps never go on home.
+                    val actions = privateActions.takeUnless { pickingApp }
+                    DrawerAppList(
+                        state,
+                        icons,
+                        actions,
+                        onSetWorkPaused,
+                        onLaunchApp,
+                        onLongPress,
+                        bottom,
+                        appListState,
+                    )
+                } else {
+                    SearchResultList(
+                        results = if (pickingApp) pickable(shown.results) else shown.results,
+                        settled = shown.settled,
+                        icons = icons,
+                        onLaunchHit = onLaunchHit,
+                        onLongPress = onLongPress,
+                        contentPadding = bottom,
+                        onUnlockHidden = onUnlockHidden.takeIf { state.hiddenLocked },
+                    )
+                }
             }
         }
     }
