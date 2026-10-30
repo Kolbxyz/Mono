@@ -40,7 +40,8 @@ enum class TileRequest(private val stored: String) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 startActivityAndCollapse(pendingIntent(this, request, intent))
             } else {
-                @Suppress("DEPRECATION")
+                // Below Android 14 the Intent overload is the only one there is.
+                @Suppress("DEPRECATION", "StartActivityAndCollapseDeprecated")
                 startActivityAndCollapse(intent)
             }
         }
