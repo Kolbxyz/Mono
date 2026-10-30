@@ -13,4 +13,16 @@ object SearchSettings {
 
     /** Sums, unit conversions, and timers and alarms handed to the clock app. */
     val QuickAnswers = BooleanSetting("search_quick_answers", default = true)
+
+    /**
+     * Titles and text of posted notifications, as much of them as their previews may show. Off by
+     * default: it needs notification access, and a match brings a message's content into search.
+     */
+    val Notifications = BooleanSetting("search_notifications", default = false)
+
+    /**
+     * Remember the last searches that opened something, offered again while the field is empty. Off
+     * by default; what was searched stays on the phone, out of backups ([com.wander.mono.data.SearchHistory]).
+     */
+    val RememberRecent = BooleanSetting("search_remember_recent", default = false)
 }

@@ -4,10 +4,16 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.wander.mono.core.apps.AppCatalog
+import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
+import com.wander.mono.core.apps.IconCache
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.usage.AppUsage
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.settings.IconMode
+import com.wander.mono.data.settings.IconSettings
+import com.wander.mono.data.settings.SettingsStore
+import com.wander.mono.ui.components.AppIcons
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,6 +38,8 @@ class FavoritePickerViewModel @Inject constructor(
     catalog: AppCatalog,
     usage: AppUsage,
     private val favorites: LauncherPrefs,
+    private val iconCache: IconCache,
+    settings: SettingsStore,
 ) : ViewModel() {
     private val suggestions: StateFlow<FavoriteSuggestions?> = catalog.apps
         .filterNotNull()
@@ -48,6 +56,14 @@ class FavoritePickerViewModel @Inject constructor(
             FavoritePicks(it.apps, picked)
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** Icons as home and the drawer draw them, in the user's mode and pack (a restored backup's, say). */
+    val icons: StateFlow<AppIcons> = combine(settings[IconSettings.Mode], settings[IconSettings.Pack]) { mode, pack ->
+        AppIcons(mode, ::icon, pack)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, AppIcons(IconSettings.Mode.default, ::icon))
+
+    private suspend fun icon(key: AppKey, mode: IconMode, sizePx: Int): AppIconImage? =
+        iconCache.icon(key, themed = mode == IconMode.Themed, sizePx)
 
     fun toggle(key: AppKey) {
         val current = picks.value?.picked ?: return
