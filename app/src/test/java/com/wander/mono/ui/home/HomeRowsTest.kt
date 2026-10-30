@@ -53,6 +53,7 @@ class HomeRowsTest {
             is CalendarRow -> "calendar"
             is LiveActivityRow -> "live"
             is WidgetHomeRow -> "widget:" + it.widget.placement.appWidgetId
+            is HomeRow.Folder -> "folder:" + it.name
         }
     }
 
