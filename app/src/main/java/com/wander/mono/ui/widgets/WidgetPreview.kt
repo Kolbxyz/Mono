@@ -7,6 +7,7 @@ import android.os.Build
 import android.view.View
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -34,11 +35,14 @@ private sealed interface Preview {
     data object Layout : Preview
 
     data class Icon(val image: ImageBitmap) : Preview
+
+    /** Not read yet: the entry keeps a preview's room, so the list does not jump when it arrives. */
+    data object Loading : Preview
 }
 
 /**
  * The provider's preview image, else (Android 12+, main profile) its preview layout, else its icon.
- * Nothing at all while loading or when the provider has none of these.
+ * Empty room the provider's size while loading; nothing at all when the provider has none of these.
  */
 @Composable
 internal fun WidgetPreview(
@@ -48,7 +52,7 @@ internal fun WidgetPreview(
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    val preview by produceState<Preview?>(null, info) {
+    val preview by produceState<Preview?>(Preview.Loading, info) {
         value = withContext(Dispatchers.IO) { loadPreview(context, info, isMainProfile) }
     }
     Box(modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -66,6 +70,7 @@ internal fun WidgetPreview(
                 )
             }
             is Preview.Icon -> Image(shown.image, contentDescription = null, modifier = Modifier.size(ICON_SIZE))
+            Preview.Loading -> Spacer(Modifier.height(layoutHeight(context, info)))
             null -> Unit
         }
     }

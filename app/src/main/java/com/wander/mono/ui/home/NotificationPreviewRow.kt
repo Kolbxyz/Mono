@@ -62,30 +62,29 @@ fun NotificationPreviewRow(
     BackHandler(enabled = expanded) { previews.setReplying(row, open = false) }
 
     // A newer notification starts with a fresh swipe state, even when the last one was swiped away.
-    key(row.preview.key) {
-        val swipe = rememberSwipeToDismissBoxState()
-        val dismissLabel = stringResource(R.string.preview_dismiss)
-        val actions = if (row.preview.isClearable) {
-            listOf(CustomAccessibilityAction(dismissLabel) { previews.dismiss(row) })
-        } else {
-            emptyList()
-        }
-        SwipeToDismissBox(
-            state = swipe,
-            backgroundContent = {},
-            modifier = modifier,
-            gesturesEnabled = row.preview.isClearable && !expanded,
-            onDismiss = { if (!previews.dismiss(row)) scope.launch { swipe.reset() } },
-        ) {
-            PreviewContent(
-                preview = row.preview,
-                expanded = expanded,
-                actions = actions,
-                onOpen = { previews.open(row) },
-                onReplyToggle = { previews.setReplying(row, open = true) },
-                onSend = { previews.reply(row, it) },
-            )
-        }
+    // Only the state is keyed: the content stays, so a reply being typed keeps its text and focus.
+    val swipe = key(row.preview.key) { rememberSwipeToDismissBoxState() }
+    val dismissLabel = stringResource(R.string.preview_dismiss)
+    val actions = if (row.preview.isClearable) {
+        listOf(CustomAccessibilityAction(dismissLabel) { previews.dismiss(row) })
+    } else {
+        emptyList()
+    }
+    SwipeToDismissBox(
+        state = swipe,
+        backgroundContent = {},
+        modifier = modifier,
+        gesturesEnabled = row.preview.isClearable && !expanded,
+        onDismiss = { if (!previews.dismiss(row)) scope.launch { swipe.reset() } },
+    ) {
+        PreviewContent(
+            preview = row.preview,
+            expanded = expanded,
+            actions = actions,
+            onOpen = { previews.open(row) },
+            onReplyToggle = { previews.setReplying(row, open = true) },
+            onSend = { previews.reply(row, it) },
+        )
     }
 }
 
