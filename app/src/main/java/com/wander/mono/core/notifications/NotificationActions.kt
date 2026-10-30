@@ -14,7 +14,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Opening, dismissing and replying to a notification from its preview row. */
+/** Opening, dismissing and replying to a notification from its preview row, and opening a live row. */
 @Singleton
 class NotificationActions @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -26,6 +26,43 @@ class NotificationActions @Inject constructor(
         val result = send(intent, fillIn = null)
         if (result == ActionResult.Done && preview.autoCancel) previews.cancel(preview.key)
         return result
+    }
+
+    /** Opens one conversation of an expanded row; null when it has no tap intent (the caller opens the app). */
+    fun open(conversation: PreviewConversation): ActionResult? {
+        val intent = conversation.contentIntent ?: return null
+        val result = send(intent, fillIn = null)
+        if (result == ActionResult.Done && conversation.autoCancel) previews.cancel(conversation.key)
+        return result
+    }
+
+    /** Sends a live row's tap intent; null when it has none (the caller opens the app). Ongoing, so never cancelled. */
+    fun open(activity: LiveActivity): ActionResult? = activity.contentIntent?.let { send(it, fillIn = null) }
+
+    /** One of the notification's own buttons, fired as the shade would. */
+    fun fire(action: PreviewAction): ActionResult = send(action.intent, fillIn = null)
+
+    /**
+     * Marks the app's notifications read: through the app's own mark-as-read action where it has
+     * one, so the app knows too, else by clearing the notification. Failed when neither is possible.
+     */
+    fun markRead(preview: NotificationPreview): ActionResult {
+        val results = preview.expansion.handles.mapNotNull { handle ->
+            when {
+                handle.markRead != null -> send(handle.markRead, fillIn = null)
+                handle.isClearable -> if (previews.cancel(handle.key)) ActionResult.Done else GONE
+                else -> null
+            }
+        }
+        if (results.isEmpty()) return ActionResult.Failed(R.string.preview_error_mark_read)
+        return results.firstOrNull { it is ActionResult.Failed } ?: ActionResult.Done
+    }
+
+    /** Snoozes the app's notifications for [MUTE_MS]; Mono has no mute of its own to add them to. */
+    fun mute(preview: NotificationPreview): ActionResult {
+        val handles = preview.expansion.handles
+        if (handles.isEmpty()) return GONE
+        return if (handles.all { previews.snooze(it.key, MUTE_MS) }) ActionResult.Done else GONE
     }
 
     fun dismiss(preview: NotificationPreview): ActionResult =
@@ -66,4 +103,11 @@ class NotificationActions @Inject constructor(
 
     @Suppress("DEPRECATION") // Replaced by ALLOW_IF_VISIBLE, which only exists from Android 16.
     private fun legacyAllowedMode(): Int = ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
+
+    private companion object {
+        val GONE = ActionResult.Failed(R.string.error_notification_gone)
+
+        /** How long Mute snoozes for, as its label says. */
+        const val MUTE_MS = 60 * 60 * 1_000L
+    }
 }

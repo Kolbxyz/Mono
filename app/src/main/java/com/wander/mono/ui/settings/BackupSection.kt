@@ -22,23 +22,31 @@ import java.time.LocalDate
 private enum class BackupStep { Export, Import }
 
 /**
- * Save to and restore from a file the user picks in Android's file picker. Restoring asks first,
- * since it replaces favourites and settings; with hidden apps locked, both ask for the screen lock.
+ * Save to and restore from a file the user picks in Android's file picker. Saving offers a
+ * passphrase first; restoring a sealed file asks for it, and asks again before replacing
+ * favourites and settings. With hidden apps locked, both ask for the screen lock.
  */
 @Composable
 fun BackupSection(backup: BackupViewModel = viewModel()) {
     val revealed by backup.revealed.collectAsStateWithLifecycle()
     val pending by backup.pending.collectAsStateWithLifecycle()
+    val sealed by backup.sealed.collectAsStateWithLifecycle()
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_JSON), backup::export)
+    val saveSealed =
+        rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(MIME_SEALED), backup::exportSealed)
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument(), backup::read)
-    val run: (BackupStep) -> Unit = { step ->
+    var choosingSeal by rememberSaveable { mutableStateOf(false) }
+    val picker: (() -> Unit) -> Unit = { launch ->
         try {
-            when (step) {
-                BackupStep.Export -> save.launch("mono-backup-${LocalDate.now()}.json")
-                BackupStep.Import -> open.launch(OPEN_TYPES)
-            }
+            launch()
         } catch (_: ActivityNotFoundException) {
             backup.reportNoPicker()
+        }
+    }
+    val run: (BackupStep) -> Unit = { step ->
+        when (step) {
+            BackupStep.Export -> { choosingSeal = true }
+            BackupStep.Import -> picker { open.launch(OPEN_TYPES) }
         }
     }
     var afterUnlock by rememberSaveable { mutableStateOf<BackupStep?>(null) }
@@ -67,8 +75,25 @@ fun BackupSection(backup: BackupViewModel = viewModel()) {
             guarded(BackupStep.Import)
         }
     }
+    if (choosingSeal) {
+        SealBackupDialog(
+            onSeal = { passphrase ->
+                choosingSeal = false
+                backup.sealNextExport(passphrase)
+                picker { saveSealed.launch("${fileName()}.$SEALED_EXTENSION") }
+            },
+            onPlain = {
+                choosingSeal = false
+                picker { save.launch("${fileName()}.json") }
+            },
+            onDismiss = { choosingSeal = false },
+        )
+    }
+    sealed?.let { prompt -> OpenSealedDialog(prompt, onOpen = backup::openSealed, onDismiss = backup::cancelSealed) }
     if (pending != null) RestoreDialog(onConfirm = backup::confirmRestore, onDismiss = backup::cancelRestore)
 }
+
+private fun fileName() = "mono-backup-${LocalDate.now()}"
 
 @Composable
 private fun RestoreDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
@@ -82,6 +107,10 @@ private fun RestoreDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
 }
 
 private const val MIME_JSON = "application/json"
+
+/** A sealed backup is not JSON to anything but Mono: plain bytes, under Mono's own extension. */
+private const val MIME_SEALED = "application/octet-stream"
+private const val SEALED_EXTENSION = "monobackup"
 
 /** File managers label JSON inconsistently; the file is checked whole on reading anyway. */
 private val OPEN_TYPES = arrayOf(MIME_JSON, "text/plain", "application/octet-stream")

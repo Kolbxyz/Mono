@@ -42,6 +42,7 @@ fun ReorderableWidget(
         FavoriteGestureCallbacks(
             editing = true,
             onTap = {},
+            onSwipeRight = null,
             onHeld = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
             onHold = {},
             onLift = { reorder.start(row.key, siblings) },

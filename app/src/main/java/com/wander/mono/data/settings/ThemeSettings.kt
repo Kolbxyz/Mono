@@ -26,6 +26,7 @@ data class ThemeChoice(
     val amoledBlack: Boolean,
     val blackWallpaper: Boolean,
     val iconShape: IconShape,
+    val iconTheming: IconTheming,
 )
 
 fun SettingsStore.themeChoice(): Flow<ThemeChoice> = combine(
@@ -33,5 +34,6 @@ fun SettingsStore.themeChoice(): Flow<ThemeChoice> = combine(
     this[ThemeSettings.AmoledBlack],
     this[ThemeSettings.BlackWallpaper],
     this[IconSettings.Shape],
+    combine(this[IconSettings.ThemedTint], this[IconSettings.TintRows], ::IconTheming),
     ::ThemeChoice,
 )
