@@ -59,7 +59,9 @@ fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
                 prompt()
             }
             list == null -> Unit
-            list.isEmpty() -> ListItem { Text(stringResource(R.string.settings_hidden_empty)) }
+            list.isEmpty() -> ListItem(colors = settingRowColors()) {
+                Text(stringResource(R.string.settings_hidden_empty))
+            }
             else -> list.forEach { app ->
                 ListItem(
                     colors = settingRowColors(),
