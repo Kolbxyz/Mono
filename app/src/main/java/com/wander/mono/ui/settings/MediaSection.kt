@@ -5,10 +5,20 @@ import com.wander.mono.R
 import com.wander.mono.data.settings.MediaSettings
 import com.wander.mono.data.settings.PausedHide
 
-/** How the now-playing card behaves: how it opens, its swipe, its colour and how long it stays paused. */
+/**
+ * The player under the clock: whether it shows, how it opens, its swipe, its colour and how long
+ * it stays paused.
+ */
 @Composable
 fun MediaSection(settings: SettingsViewModel) {
     SettingsGroup(R.string.settings_media) {
+        SwitchSetting(
+            settings,
+            MediaSettings.ShowPlayer,
+            title = R.string.settings_media_show,
+            summary = R.string.settings_media_show_short,
+            icon = R.drawable.sym_visibility,
+        )
         SwitchSetting(
             settings,
             MediaSettings.ExpandedByDefault,

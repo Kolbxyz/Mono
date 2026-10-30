@@ -1,7 +1,7 @@
 package com.wander.mono.ui.home
 
 import android.content.Context
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,10 +24,10 @@ import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
 import com.wander.mono.data.SwipeAction
 import com.wander.mono.data.settings.IconMode
+import com.wander.mono.data.settings.LIST_POSITIONS
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.edit.ReorderableFavorite
-import com.wander.mono.ui.edit.ReorderableNowPlaying
 import com.wander.mono.ui.edit.ReorderableWidget
 import com.wander.mono.ui.edit.SwipeLeft
 import com.wander.mono.ui.edit.isMovable
@@ -41,12 +41,13 @@ import com.wander.mono.ui.home.live.LiveActivityCard
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
- * Home's rows, anchored to the bottom of the list so favourites sit in the thumb zone: the empty
- * state until there is a favourite, then each row in shown order. The [lifted] favourites go first
- * while headphones are connected or a routine is on, outside edit mode only. The [pulse] favourite,
- * just added, pulses once. Open folders show their favourites under them, indented; edit mode
- * shows every favourite on its own, in the saved order, folders and all, with the now-playing
- * card as a spot to place.
+ * Home's rows: the empty state until there is a favourite, then each row in shown order. A list
+ * shorter than its room sits [position] percent of the way down the free space (the default, 100,
+ * keeps it at the bottom so favourites sit in the thumb zone), moving on the motion scheme. The
+ * [lifted] favourites go first while headphones are connected or a routine is on, outside edit
+ * mode only. The [pulse] favourite, just added, pulses once. Open folders show their favourites
+ * under them, indented; edit mode shows every favourite on its own, in the saved order, folders
+ * and all.
  */
 @Composable
 internal fun HomeList(
@@ -59,16 +60,10 @@ internal fun HomeList(
     pulse: AppKey?,
     onPulsed: (AppKey) -> Unit,
     contentPadding: PaddingValues,
+    position: Int,
     onLaunch: (LaunchableApp, LaunchSource?) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     onAppInfo: (LaunchableApp) -> Unit,
-    onTogglePlay: () -> Unit,
-    onSkipNext: () -> Unit,
-    onSkipPrevious: () -> Unit,
-    onSeek: (positionMs: Long) -> Unit,
-    onPlayQueueItem: (id: Long) -> Unit,
-    onOpenOutput: () -> Unit,
-    onMediaOptions: () -> Unit,
     onGrantAccess: () -> Unit,
     onOpenEvent: (CalendarEvent) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -80,6 +75,11 @@ internal fun HomeList(
 ) {
     val motion = MaterialTheme.motionScheme
     val open by folders.open.collectAsStateWithLifecycle()
+    val placement by animateFloatAsState(
+        position.toFloat() / LIST_POSITIONS.last,
+        motion.defaultSpatialSpec(),
+        label = "list-position",
+    )
     val swipes by extras.swipes.collectAsStateWithLifecycle()
     val overLimit by extras.overLimit.collectAsStateWithLifecycle()
     // A preview lines up with its favourite's name, so it reads as that app's.
@@ -95,10 +95,10 @@ internal fun HomeList(
     LazyColumn(
         state = listState,
         modifier = modifier,
-        verticalArrangement = Arrangement.Bottom,
+        verticalArrangement = ListPlacement(placement),
         contentPadding = contentPadding,
     ) {
-        // The now-playing and prompt rows are not favourites: the empty state shows until there is one.
+        // The prompt row is not a favourite: the empty state shows until there is one.
         if (flat != null && !editing.active && flat.none { it is HomeRow.App }) {
             item(key = "empty", contentType = "empty") {
                 EmptyHome(onChooseFavorites = onOpenDrawer, modifier = schemeAnimateItem())
@@ -151,23 +151,6 @@ internal fun HomeList(
                     onOptions = { folders.showOptions(row.id) },
                     modifier = animated,
                 )
-                is HomeRow.NowPlaying -> NowPlayingCard(
-                    media = row.media,
-                    onTogglePlay = onTogglePlay,
-                    onSkipNext = onSkipNext,
-                    onSkipPrevious = onSkipPrevious,
-                    onSeek = onSeek,
-                    onPlayQueueItem = onPlayQueueItem,
-                    onOpenOutput = onOpenOutput,
-                    onLongPress = onMediaOptions,
-                    // No fade-out: a removed card leaves at once and its neighbours close the space.
-                    modifier = Modifier.animateItem(
-                        fadeInSpec = motion.defaultEffectsSpec(),
-                        placementSpec = motion.defaultSpatialSpec(),
-                        fadeOutSpec = null,
-                    ),
-                )
-                HomeRow.NowPlayingSpot -> ReorderableNowPlaying(movable, flat.orEmpty(), editing, animated)
                 HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
                 is NotificationRow -> NotificationPreviewRow(row, animated.padding(start = previewStart), previews)
                 is CalendarRow -> CalendarCard(row, onOpenEvent, animated)

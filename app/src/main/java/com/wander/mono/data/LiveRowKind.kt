@@ -10,13 +10,14 @@ import com.wander.mono.data.settings.StoredEnum
 /**
  * The kinds of live row that can hang under a favourite. Each can be switched off per app in edit
  * mode. [stored] is what is saved, so a constant can be renamed but its [stored] value never changed.
+ * Now playing was one until it moved under the clock; refs saved for it no longer decode, so the
+ * store drops them on read and a backup skips them ([LiveRowRef.isRetired]).
  */
 enum class LiveRowKind(
     override val stored: String,
     @param:StringRes val title: Int,
     @param:DrawableRes val icon: Int,
 ) : StoredEnum {
-    NowPlaying("now_playing", R.string.live_row_now_playing, R.drawable.sym_music_note),
     NotificationPreview("notification_preview", R.string.live_row_notification_preview, R.drawable.sym_notifications),
     Calendar("calendar", R.string.live_row_calendar, R.drawable.sym_calendar_today),
     LiveUpdate("live_update", R.string.live_row_live_update, R.drawable.sym_hourglass_bottom),
@@ -39,6 +40,12 @@ data class LiveRowRef(val app: AppKey, val kind: LiveRowKind) {
     companion object {
         // App keys use '/', never '|'.
         private const val SEPARATOR = '|'
+
+        /** Kinds saved by older builds that are no longer live rows. */
+        private val RETIRED = listOf("now_playing")
+
+        /** Whether [encoded] is a ref of a retired kind: skipped where read, never malformed. */
+        fun isRetired(encoded: String): Boolean = RETIRED.any { encoded.startsWith(it + SEPARATOR) }
 
         fun decode(encoded: String): LiveRowRef? {
             val kind = LiveRowKind.entries.firstOrNull { encoded.startsWith(it.stored + SEPARATOR) } ?: return null

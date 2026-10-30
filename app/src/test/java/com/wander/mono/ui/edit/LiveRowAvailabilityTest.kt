@@ -81,12 +81,12 @@ class LiveRowAvailabilityTest {
     @Test
     fun `availability merges per app`() {
         val merged = mergeAvailability(
-            mapOf(signal.key to setOf(LiveRowKind.NowPlaying)),
+            mapOf(signal.key to setOf(LiveRowKind.Timer)),
             mapOf(signal.key to setOf(LiveRowKind.NotificationPreview), etar.key to setOf(LiveRowKind.Calendar)),
         )
         assertEquals(
             mapOf(
-                signal.key to setOf(LiveRowKind.NowPlaying, LiveRowKind.NotificationPreview),
+                signal.key to setOf(LiveRowKind.Timer, LiveRowKind.NotificationPreview),
                 etar.key to setOf(LiveRowKind.Calendar),
             ),
             merged,

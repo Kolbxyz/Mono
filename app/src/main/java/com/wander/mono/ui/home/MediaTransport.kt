@@ -45,8 +45,8 @@ internal fun PlayPauseButton(
     isPlaying: Boolean,
     tint: Color,
     onTogglePlay: () -> Unit,
+    size: DpSize,
     modifier: Modifier = Modifier,
-    size: DpSize = COLLAPSED_PLAY,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -88,7 +88,7 @@ internal fun MediaTransport(
         if (media.canSkipPrevious) {
             SkipButton(R.drawable.sym_skip_previous_filled, R.string.media_previous, leading = true, onSkipPrevious)
         }
-        PlayPauseButton(media.isPlaying, tint, onTogglePlay, size = EXPANDED_PLAY)
+        PlayPauseButton(media.isPlaying, tint, onTogglePlay, EXPANDED_PLAY)
         if (media.canSkipNext) {
             SkipButton(R.drawable.sym_skip_next_filled, R.string.media_next, leading = false, onSkipNext)
         }
@@ -151,8 +151,6 @@ private fun TransportButton(
     }
 }
 
-/** Collapsed, as tall as the artwork beside it, so the row is symmetrical. */
-private val COLLAPSED_PLAY = DpSize(56.dp, 56.dp)
 private val EXPANDED_PLAY = DpSize(96.dp, 64.dp)
 private val SKIP_SIZE = DpSize(64.dp, 64.dp)
 

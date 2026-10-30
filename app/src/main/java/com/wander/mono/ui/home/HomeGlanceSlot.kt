@@ -13,7 +13,7 @@ import com.wander.mono.R
  * The glance header in home's column, above the list or, [shell] reachable, below it. A long press
  * on the clock opens its sheet ([onClockOptions]); elsewhere on the header it is home's own (home
  * options), so TalkBack gets that here as a named action. [onPlaced] reports where it sits, for
- * the scrim.
+ * the scrim. [nowPlaying] is the player under the clock, which moves with it.
  */
 @Composable
 internal fun HomeGlanceSlot(
@@ -24,6 +24,7 @@ internal fun HomeGlanceSlot(
     onPlaced: (LayoutCoordinates) -> Unit,
     onHomeOptions: () -> Unit,
     onClockOptions: () -> Unit,
+    nowPlaying: @Composable () -> Unit,
 ) {
     val optionsLabel = stringResource(R.string.action_home_options)
     GlanceHeader(
@@ -33,6 +34,7 @@ internal fun HomeGlanceSlot(
         simple = shell.simple,
         hero = hero,
         onClockOptions = onClockOptions,
+        player = nowPlaying,
         modifier = Modifier
             .onGloballyPositioned(onPlaced)
             .semantics {
