@@ -21,6 +21,7 @@ import com.wander.mono.ui.onboarding.Onboarding
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.theme.MonoTheme
 import com.wander.mono.ui.theme.isDark
+import com.wander.mono.ui.theme.showWallpaper
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -55,6 +56,7 @@ class MainActivity : ComponentActivity() {
             // finds it already read in the view model and draws from its first frame.
             val theme = themes.theme.collectAsStateWithLifecycle().value ?: return@setContent
             val dark = theme.mode.isDark()
+            val blackWindow = dark && theme.amoledBlack && theme.blackWallpaper
             // The bar icons follow Mono's theme, not the system's, when the user has fixed one; set
             // in the same frame as the content, not one after it.
             SideEffect {
@@ -62,8 +64,9 @@ class MainActivity : ComponentActivity() {
                     statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
                     navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { dark },
                 )
+                window.showWallpaper(!blackWindow)
             }
-            MonoTheme(darkTheme = dark, amoledBlack = theme.amoledBlack) {
+            MonoTheme(darkTheme = dark, amoledBlack = theme.amoledBlack, iconShape = theme.iconShape) {
                 Box {
                     LauncherApp()
                     Onboarding()
