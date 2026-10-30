@@ -54,12 +54,12 @@ class PreviewPublisher @Inject constructor(
         ranking: Ranking,
     ): PreviewExpansion {
         val conversations = conversationKeys(news, MAX_CONVERSATIONS).mapNotNull(byKey::get).map { sbn ->
-            conversationOf(sbn, redactions.of(sbn, rankings, ranking))
+            conversationOf(sbn, ownerOf(sbn), redactions.of(sbn, rankings, ranking))
         }
         val full = redactions.of(latest, rankings, ranking) == Redaction.Full
         return PreviewExpansion(
             conversations = conversations,
-            actions = if (full) buttonsOf(latest.notification) else emptyList(),
+            actions = if (full) buttonsOf(latest.notification, ownerOf(latest)) else emptyList(),
             handles = news.mapNotNull { byKey[it.key] }.map(::handleOf),
         )
     }

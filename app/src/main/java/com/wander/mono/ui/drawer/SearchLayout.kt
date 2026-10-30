@@ -6,7 +6,9 @@ import com.wander.mono.R
 /** The kinds of result search groups under their own label, in the order search ranks them. */
 internal enum class ResultKind(@StringRes val label: Int) {
     Shortcuts(R.string.search_section_shortcuts),
+    HandOff(R.string.search_section_hand_off),
     Contacts(R.string.search_section_contacts),
+    Notifications(R.string.search_section_notifications),
     Music(R.string.search_section_music),
     Settings(R.string.search_section_settings),
     Web(R.string.search_section_web),
@@ -32,7 +34,9 @@ internal data class SearchLayout(val top: SearchHit?, val apps: List<SearchHit.A
 
         private fun kindOf(hit: SearchHit): ResultKind = when (hit) {
             is SearchHit.Shortcut -> ResultKind.Shortcuts
+            is SearchHit.Link, is SearchHit.ShareText -> ResultKind.HandOff
             is SearchHit.Person -> ResultKind.Contacts
+            is SearchHit.Notice -> ResultKind.Notifications
             is SearchHit.Track -> ResultKind.Music
             is SearchHit.Setting -> ResultKind.Settings
             is SearchHit.Web -> ResultKind.Web

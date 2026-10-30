@@ -4,6 +4,10 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.contacts.Contact
+import com.wander.mono.core.notifications.NotificationPreview
+import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.core.notifications.PreviewExpansion
+import com.wander.mono.core.notifications.Redaction
 import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.WebSearchTarget
@@ -30,7 +34,84 @@ class SearchResultsTest {
         tracks: List<WandaTrack> = emptyList(),
         pages: List<SettingsPage> = emptyList(),
         web: WebSearchTarget? = browser,
-    ) = SearchResults.assemble(query, SearchActions.of(query), apps, shortcuts, contacts, tracks, pages) { web }
+        notices: List<NotificationPreview> = emptyList(),
+        preferred: String? = null,
+    ) = SearchResults.assemble(
+        query,
+        SearchActions.of(query),
+        apps,
+        shortcuts,
+        contacts,
+        tracks,
+        pages,
+        handOffs = SearchLinks.of(query),
+        notices = notices,
+        preferred = preferred,
+    ) { web }
+
+    private fun notice(pkg: String, title: String) = NotificationPreview(
+        key = title,
+        owner = PackageUser(pkg, 0),
+        title = title,
+        text = null,
+        redaction = Redaction.Full,
+        contentIntent = null,
+        autoCancel = true,
+        isClearable = true,
+        reply = null,
+        expansion = PreviewExpansion(emptyList(), emptyList(), emptyList()),
+    )
+
+    @Test
+    fun `a result opened for this query before comes first`() {
+        val pages = listOf(page("Maps settings"))
+        val apps = listOf(entry("Maps"))
+        assertEquals(listOf("Maps", "Maps settings"), search("maps", apps = apps, pages = pages).map { it.label })
+        val preferred = search("maps", apps = apps, pages = pages, preferred = "setting:maps settings")
+        assertEquals(listOf("Maps settings", "Maps"), preferred.map { it.label })
+        assertEquals(listOf("Maps"), search("maps", apps = apps, preferred = "app:gone").map { it.label })
+    }
+
+    @Test
+    fun `pasted text offers sharing without keeping the web out`() {
+        val text = "remember to buy milk and eggs"
+        assertEquals(listOf(SearchHit.Web(text, "Vanadium"), SearchHit.ShareText(text)), search(text))
+    }
+
+    @Test
+    fun `a link comes after matching apps, before contacts`() {
+        val hits = search(
+            "maps.example.org",
+            apps = listOf(entry("Maps.example.org")),
+            contacts = listOf(Contact(1, "k", "maps.example.org")),
+        )
+        assertEquals(
+            listOf(SearchHit.App::class, SearchHit.Link::class, SearchHit.Person::class, SearchHit.ShareText::class),
+            hits.map { it::class },
+        )
+        val alone = search("example.org")
+        assertEquals(listOf(SearchHit.Link("https://example.org"), SearchHit.ShareText("example.org")), alone)
+    }
+
+    @Test
+    fun `notifications come after contacts and before settings, for searchable apps only`() {
+        val signal = entry("Signal")
+        val hits = search(
+            "dinner",
+            apps = listOf(signal),
+            contacts = listOf(Contact(1, "k", "Dinner Club")),
+            pages = listOf(page("Dinner mode")),
+            notices = listOf(notice("signal", "Dinner tonight?"), notice("hidden.app", "Dinner plans")),
+        )
+        assertEquals(listOf("Dinner Club", "Dinner tonight?", "Dinner mode"), hits.map { it.label })
+        assertEquals(signal.app, (hits[1] as SearchHit.Notice).app)
+    }
+
+    @Test
+    fun `contacts and settings carry what matched`() {
+        val hits = search("gm", contacts = listOf(Contact(1, "k", "Gina Morel")), pages = listOf(page("Game mode")))
+        assertEquals(listOf(listOf(0..0, 5..5), listOf(0..0, 5..5)), hits.map { it.matched })
+    }
 
     private fun track(title: String) = WandaTrack(title, title, null, "wanda://track?id=$title", "com.wander.android")
 
