@@ -32,12 +32,14 @@ import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcon
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.AppLabel
+import com.wander.mono.ui.components.PreviewLine
 import com.wander.mono.ui.components.rememberRowAccent
 
 /**
  * An app in the drawer or in search results: icon and name, with what search matched in [name]
- * highlighted. Tap opens, long-press shows options. A new app ends in a small tertiary dot; an
- * archived one is greyed with a cloud, and opening it has the system restore it first.
+ * highlighted, and its latest notification on one line under that when it has one. Tap opens,
+ * long-press shows options. A new app ends in a small tertiary dot; an archived one is greyed with a
+ * cloud, and opening it has the system restore it first.
  */
 @Composable
 fun DrawerAppRow(
@@ -70,7 +72,11 @@ fun DrawerAppRow(
         val archived = entry.app.archived
         val dim = Modifier.alpha(if (archived) ARCHIVED_ALPHA else 1f)
         AppIcon(entry.app.key, icons, dim, size = iconSize)
-        AppLabel(entry.app, entry.badge, style = labelStyle, name = name, modifier = dim.weight(1f, fill = false))
+        Column(dim.weight(1f, fill = false)) {
+            AppLabel(entry.app, entry.badge, style = labelStyle, name = name)
+            // Part of the row: a tap still opens the app, not the notification.
+            entry.preview?.let { PreviewLine(it) }
+        }
         if (archived) {
             Icon(
                 painterResource(R.drawable.sym_archive),

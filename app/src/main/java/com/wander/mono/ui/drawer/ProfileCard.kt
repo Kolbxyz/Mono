@@ -35,12 +35,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.components.AppIcons
-import com.wander.mono.ui.components.SegmentedColumn
+import com.wander.mono.ui.home.onWallpaper
+import com.wander.mono.ui.theme.secondaryTextColor
 
 /**
- * A profile under the alphabetical list (the private space, a work profile): one segmented card
- * whose first strip says what state it is in with its buttons, its apps as the strips under that
- * while it is [open]. The apps fold away when it locks and unfold when it opens.
+ * A profile under the alphabetical list (the private space, a work profile), straight on the
+ * drawer's background like the letter groups: a header saying what state it is in with its buttons,
+ * its apps under that while it is [open]. The apps fold away when it locks and unfold when it opens.
  */
 @Composable
 internal fun ProfileCard(
@@ -62,31 +63,31 @@ internal fun ProfileCard(
     Column(modifier) {
         Text(
             stringResource(title),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.onWallpaper(),
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier
                 .padding(start = 16.dp, top = 24.dp, bottom = 8.dp)
                 .semantics { heading() },
         )
-        SegmentedColumn {
-            ProfileHeader(symbol, status, actions)
-            lastOpen.apps.forEach { entry ->
-                key(entry.app.key) {
-                    // Shown at once when the drawer opens on an open profile; unfolds when it opens here.
-                    val visible = remember { MutableTransitionState(lastOpen.openAtStart) }
-                    visible.targetState = open
-                    AnimatedVisibility(
-                        visibleState = visible,
-                        enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
-                        exit = shrinkVertically(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
-                    ) {
-                        DrawerAppRow(
-                            entry = entry,
-                            icons = icons,
-                            onLaunch = { onLaunchApp(entry.app) },
-                            onLongPress = { onLongPress(entry.app) },
-                        )
-                    }
+        ProfileHeader(symbol, status, actions)
+        val labelStyle = MaterialTheme.typography.titleMedium.onWallpaper()
+        lastOpen.apps.forEach { entry ->
+            key(entry.app.key) {
+                // Shown at once when the drawer opens on an open profile; unfolds when it opens here.
+                val visible = remember { MutableTransitionState(lastOpen.openAtStart) }
+                visible.targetState = open
+                AnimatedVisibility(
+                    visibleState = visible,
+                    enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+                    exit = shrinkVertically(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+                ) {
+                    DrawerAppRow(
+                        entry = entry,
+                        icons = icons,
+                        onLaunch = { onLaunchApp(entry.app) },
+                        onLongPress = { onLongPress(entry.app) },
+                        labelStyle = labelStyle,
+                    )
                 }
             }
         }
@@ -108,8 +109,8 @@ private fun ProfileHeader(@DrawableRes symbol: Int, @StringRes status: Int, acti
         }
         Text(
             stringResource(status),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            style = MaterialTheme.typography.bodyMedium.onWallpaper(),
+            color = secondaryTextColor(),
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -118,7 +119,7 @@ private fun ProfileHeader(@DrawableRes symbol: Int, @StringRes status: Int, acti
     }
 }
 
-/** Not snapshot state: only read while composing the card, which opening or locking recomposes anyway. */
+/** Not snapshot state: only read while composing the section, which opening or locking recomposes anyway. */
 private class LastOpen(val openAtStart: Boolean) {
     var apps: List<DrawerEntry> = emptyList()
 }

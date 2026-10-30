@@ -37,6 +37,9 @@ import com.wander.mono.data.RecentSearch
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.readableColumn
+import com.wander.mono.ui.home.LocalWallpaperTextShadow
+import com.wander.mono.ui.home.onWallpaper
+import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
  * All apps, alphabetical (or newest first), with the letter rail, the list's floating toolbar and
@@ -98,10 +101,13 @@ fun DrawerScreen(
     // Hoisted, so the alphabetical list keeps its place through a search.
     val appListState = rememberLazyListState()
     val shown = rememberShownResults(query, state)
-    // Over the wallpaper (scrim or blur) as over the surface, text takes the surface's content colour.
+    // Over the wallpaper (bare, scrim or blur) as over the surface, text takes the surface's content
+    // colour; on the wallpaper it gets a shadow too, as home's does.
     CompositionLocalProvider(
         LocalContentColor provides MaterialTheme.colorScheme.onSurface,
         LocalShortcutIcons provides loadShortcutIcon,
+        LocalWallpaperTextShadow provides drawerTextShadow(state.look.background),
+        LocalHighContrast provides state.look.highContrast,
     ) {
         Column(
             modifier
@@ -123,7 +129,7 @@ fun DrawerScreen(
             if (pickingApp) {
                 Text(
                     stringResource(R.string.edit_pick_hint),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleMedium.onWallpaper(),
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
                 )

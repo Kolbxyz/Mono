@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Drawer settings: what the drawer is drawn on -->
+    <string name="drawer_background_none">Wallpaper</string>
+    <string name="drawer_background_soft_blur">Softly blurred</string>
+</resources>

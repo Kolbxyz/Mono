@@ -1,10 +1,13 @@
 package com.wander.mono.data.settings
 
 /**
- * What the drawer sits on: the home scrim over the wallpaper, the wallpaper blurred (Android 12+,
- * when the device allows window blur; the scrim otherwise), or the opaque surface.
+ * What the drawer sits on: the bare wallpaper; the wallpaper softly blurred under a light tint, or
+ * strongly blurred under the home scrim (Android 12+, when the device allows window blur; the tint
+ * alone otherwise); the home scrim over the wallpaper; or the opaque surface.
  */
 enum class DrawerBackground(override val stored: String) : StoredEnum {
+    None("none"),
+    SoftBlur("soft_blur"),
     Scrim("scrim"),
     Blur("blur"),
     Solid("solid"),
@@ -17,7 +20,7 @@ enum class DrawerSort(override val stored: String) : StoredEnum {
 }
 
 object DrawerSettings {
-    val Background = EnumSetting("drawer_background", DrawerBackground.Scrim, DrawerBackground.entries)
+    val Background = EnumSetting("drawer_background", DrawerBackground.SoftBlur, DrawerBackground.entries)
 
     /** Every opening of the drawer focuses search and brings up the keyboard, not only home's search bar. */
     val KeyboardOnOpen = BooleanSetting("drawer_keyboard_on_open", default = false)

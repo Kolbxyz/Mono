@@ -32,8 +32,11 @@ class Profiles @Inject constructor(@ApplicationContext context: Context) {
     /** Null once the profile has been removed. */
     fun userOf(serial: Long): UserHandle? = userManager.getUserForSerialNumber(serial)
 
-    /** The profiles whose apps are listed: every one, except the private space while it is locked. */
-    fun listed(): List<UserHandle> = launcherApps.profiles.filterNot { isPrivate(it) && isLocked(it) }
+    /**
+     * The profiles whose apps are listed: every one, except the private space until it is ready
+     * ([isReady]); before then Android lists none of its apps.
+     */
+    fun listed(): List<UserHandle> = launcherApps.profiles.filterNot { isPrivate(it) && !isReady(it) }
 
     /** The private space, when there is one and Mono may see it. */
     fun privateSpace(): UserHandle? = launcherApps.profiles.firstOrNull(::isPrivate)
@@ -44,6 +47,12 @@ class Profiles @Inject constructor(@ApplicationContext context: Context) {
 
     /** Locked is quiet mode: the profile's apps are stopped until the user unlocks it again. */
     fun isLocked(user: UserHandle): Boolean = userManager.isQuietModeEnabled(user)
+
+    /**
+     * Out of quiet mode and with its storage unlocked: only then are its apps listed. Android says a
+     * profile is available as soon as quiet mode ends, which can be before its storage is unlocked.
+     */
+    fun isReady(user: UserHandle): Boolean = !isLocked(user) && userManager.isUserUnlocked(user)
 
     /**
      * The user chose, in the private space settings, to leave no trace of it while it is locked.

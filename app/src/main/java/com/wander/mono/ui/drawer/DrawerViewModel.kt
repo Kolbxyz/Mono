@@ -25,6 +25,7 @@ import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.system.SystemContrast
 import com.wander.mono.core.system.Wallpaper
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.MutedApps
 import com.wander.mono.data.OpenedNewApps
 import com.wander.mono.data.RecentSearch
 import com.wander.mono.data.RecentSearches
@@ -70,6 +71,7 @@ class DrawerViewModel @Inject constructor(
     wallpaper: Wallpaper,
     systemContrast: SystemContrast,
     openedNew: OpenedNewApps,
+    muted: MutedApps,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
     val query: StateFlow<String> = savedState.getStateFlow(QUERY, "")
@@ -83,10 +85,11 @@ class DrawerViewModel @Inject constructor(
         catalog.apps.filterNotNull(),
         counts.counts,
         settings[BadgeSettings.ShowCounts],
-    ) { apps, badges, showCounts ->
+        shownPreviews(previews, settings, muted),
+    ) { apps, badges, showCounts, shown ->
         apps.map { app ->
-            val count = badges[PackageUser(app.key.packageName, app.key.userSerial)] ?: 0
-            DrawerEntry(app, appBadge(count, showCounts))
+            val owner = PackageUser(app.key.packageName, app.key.userSerial)
+            DrawerEntry(app, appBadge(badges[owner] ?: 0, showCounts), preview = shown[owner])
         }
     }
 
