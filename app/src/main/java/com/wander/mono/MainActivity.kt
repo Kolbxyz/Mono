@@ -14,9 +14,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.calendar.CalendarAccess
 import com.wander.mono.core.notifications.ListenerAccess
+import com.wander.mono.core.tiles.TileRequest
 import com.wander.mono.core.widgets.WidgetHost
 import com.wander.mono.ui.LauncherApp
 import com.wander.mono.ui.LauncherViewModel
+import com.wander.mono.ui.drawer.DrawerViewModel
 import com.wander.mono.ui.onboarding.Onboarding
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.theme.MonoTheme
@@ -45,10 +47,15 @@ class MainActivity : ComponentActivity() {
     private val launcher: LauncherViewModel by viewModels()
     private val sheet: AppSheetViewModel by viewModels()
     private val themes: ThemeViewModel by viewModels()
+    private val drawer: DrawerViewModel by viewModels()
+
+    /** A Quick Settings tile's request, run once Mono is in front. */
+    private var tileRequest: TileRequest? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        if (savedInstanceState == null) tileRequest = TileRequest.of(intent)
         widgetResults.attach(this)
         setContent {
             // Nothing is drawn until the theme is read (a few ms, once per process): drawing the
@@ -66,7 +73,12 @@ class MainActivity : ComponentActivity() {
                 )
                 window.showWallpaper(!blackWindow)
             }
-            MonoTheme(darkTheme = dark, amoledBlack = theme.amoledBlack, iconShape = theme.iconShape) {
+            MonoTheme(
+                darkTheme = dark,
+                amoledBlack = theme.amoledBlack,
+                iconShape = theme.iconShape,
+                iconTheming = theme.iconTheming,
+            ) {
                 Box {
                     LauncherApp()
                     Onboarding()
@@ -84,6 +96,20 @@ class MainActivity : ComponentActivity() {
         calendarAccess.recheck()
     }
 
+    override fun onResume() {
+        super.onResume()
+        when (tileRequest ?: return) {
+            TileRequest.Search -> launcher.openDrawer(focusSearch = true)
+            TileRequest.LockPrivateSpace -> drawer.setPrivateLocked(true)
+            TileRequest.UnlockPrivateSpace -> {
+                // Into the drawer, where the private space's apps appear once it unlocks.
+                launcher.openDrawer()
+                drawer.setPrivateLocked(false)
+            }
+        }
+        tileRequest = null
+    }
+
     override fun onStop() {
         super.onStop()
         // A recreation (locale, font scale) keeps the drawer; really leaving resets to home.
@@ -98,6 +124,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        TileRequest.of(intent)?.let {
+            sheet.dismiss()
+            tileRequest = it
+            return
+        }
         if (intent.action != Intent.ACTION_MAIN || !intent.hasCategory(Intent.CATEGORY_HOME)) return
         // Launcher3's test: focused and not just brought back from another app.
         val alreadyOnHome = hasWindowFocus() && intent.flags and Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT == 0

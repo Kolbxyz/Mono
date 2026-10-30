@@ -16,4 +16,16 @@ object HomeLookSettings {
     val TextShadow = BooleanSetting("home_text_shadow", default = false)
 
     val Density = EnumSetting("home_row_density", RowDensity.Default, RowDensity.entries)
+
+    /** Home's row text in percent, on top of the system font size: it only ever grows. */
+    val LabelScale = IntSetting("home_label_scale", default = 100, range = LABEL_SCALES)
+
+    /** One-handed: the clock moves down above the search dock, so everything sits in thumb reach. */
+    val Reachable = BooleanSetting("home_reachable_layout", default = false)
 }
+
+/** Label scales the slider stops at, in percent. */
+val LABEL_SCALES = 100..150
+
+/** Distance between the label scale slider's stops, in percent. */
+const val LABEL_SCALE_STEP = 10

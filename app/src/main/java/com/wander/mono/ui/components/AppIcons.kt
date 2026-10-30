@@ -3,7 +3,6 @@ package com.wander.mono.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
@@ -32,7 +31,7 @@ data class AppIcons(
 
 /**
  * An app icon from the in-memory cache, or an empty slot of the same size when [key] is null so
- * rows stay aligned. Themed glyphs are tinted `onSurfaceVariant`. Unmasked adaptive icons are cut
+ * rows stay aligned. Themed glyphs are tinted as the user chose ([themedGlyphColour]). Unmasked adaptive icons are cut
  * to the user's shape ([LocalIconMask]); a new shape loads every icon again, since whether one
  * comes unmasked depends on it. Text-only mode draws nothing at all, so labels start at the row's
  * gutter. Decorative: the label next to it names the app.
@@ -52,7 +51,7 @@ fun AppIcon(
     }
     val image = icon
     if (image != null) {
-        val tint = if (image.isMonochrome) ColorFilter.tint(MaterialTheme.colorScheme.onSurfaceVariant) else null
+        val tint = if (image.isMonochrome) ColorFilter.tint(themedGlyphColour(image.accent)) else null
         val shaped = if (image.isFullBleed && mask != null) Modifier.clip(mask) else Modifier
         Image(image.bitmap, contentDescription = null, modifier = modifier.size(size).then(shaped), colorFilter = tint)
     } else {

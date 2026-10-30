@@ -33,12 +33,13 @@ Single module `:app`, package root `com.wander.mono`.
 | `core/system` | Clock tick and next alarm, from system broadcasts; wallpaper colours and hints; settings pages, web search hand-off, clipboard. |
 | `core/contacts` | Opt-in contact lookup by name for search (`READ_CONTACTS`), never cached. |
 | `core/quiet` | Quiet mode state, its Quick Settings tile and Mono's own Do Not Disturb rule (`AutomaticZenRule`, opt-in policy access). |
-| `core/security` | Hidden-apps lock: revealed only after the screen lock, in memory only. |
+| `core/security` | Hidden-apps lock and app lock (launches held in `AppActions` until the screen lock, unlocked until screen off), in memory only; the passphrase cipher for sealed backups. |
+| `core/tiles` | Quick Settings tiles that act through home: Search, Private space. |
 | `core/usage` | Opt-in usage access (`UsageStatsManager`): today's foreground time per app, read on demand. |
 | `core/widgets` | The `AppWidgetHost`, widget providers, binding and configure flow, placement and sizes. |
 | `core/siblings` | Wanda and Phalanx providers (signature permission, `docs/design/sibling-contract.md`): up next, library search, per-room unread; absent means hidden. |
 | `data` | DataStore: ordered favourites and hidden apps. |
-| `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, settings (no widgets). |
+| `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, locked apps, settings (no widgets); optionally sealed with a passphrase. |
 | `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
 | `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / prompt rows. |
