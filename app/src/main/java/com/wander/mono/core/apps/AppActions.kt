@@ -21,8 +21,9 @@ class AppActions @Inject constructor(
 ) {
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
 
-    fun launch(key: AppKey): ActionResult = inProfile(key.userSerial) { user ->
-        launcherApps.startMainActivity(key.component(), user, null, null)
+    /** Opens [key], growing its window out of [source] when the tap gave one, else as the system animates it. */
+    fun launch(key: AppKey, source: LaunchSource? = null): ActionResult = inProfile(key.userSerial) { user ->
+        launcherApps.startMainActivity(key.component(), user, source?.bounds, source?.options)
     }
 
     fun openAppInfo(key: AppKey): ActionResult = inProfile(key.userSerial) { user ->
