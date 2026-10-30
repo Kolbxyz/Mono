@@ -46,7 +46,7 @@ Single module `:app`, package root `com.wander.mono`.
 ## 3. Window Insets & Motion
 
 - The window shows the wallpaper; home draws a surface scrim so M3 text colors stay readable.
-- Containers pad `WindowInsets.safeDrawing` on the edges they touch (`.only(...)` when only some matter). `safeDrawing` includes the IME.
+- Containers pad `WindowInsets.safeDrawing` on the edges they touch (`.only(...)` when only some matter). `safeDrawing` includes the IME; home pads system bars and cutout only, and adds the IME just while an inline reply is open (`replyImePadding`), so the drawer's keyboard never moves it.
 - Animations take specs from `MaterialTheme.motionScheme`; reduced motion swaps in `NoMotionScheme` (1 ms tweens, not `snap()`).
 
 ## 4. Adding a Setting
