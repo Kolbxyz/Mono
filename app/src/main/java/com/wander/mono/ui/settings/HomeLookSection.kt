@@ -5,9 +5,14 @@ import androidx.compose.ui.res.stringResource
 import com.wander.mono.R
 import com.wander.mono.data.settings.HomeLookSettings
 import com.wander.mono.data.settings.LABEL_SCALE_STEP
+import com.wander.mono.data.settings.LIST_POSITION_STEP
 import com.wander.mono.ui.home.densityLabel
+import com.wander.mono.ui.home.listPositionLabel
 
-/** How home stays readable over the wallpaper, how roomy and large its rows are, and where the clock sits. */
+/**
+ * How home stays readable over the wallpaper, how roomy and large its rows are, where a short list
+ * sits and where the clock sits.
+ */
 @Composable
 fun HomeLookSection(settings: SettingsViewModel) {
     SettingsGroup(R.string.settings_home_look) {
@@ -28,6 +33,13 @@ fun HomeLookSection(settings: SettingsViewModel) {
             step = LABEL_SCALE_STEP,
             icon = R.drawable.sym_format_size,
         ) { stringResource(R.string.settings_label_scale_value, it) }
+        SliderSetting(
+            settings,
+            HomeLookSettings.ListPosition,
+            title = R.string.settings_list_position,
+            step = LIST_POSITION_STEP,
+            icon = R.drawable.sym_view_agenda,
+        ) { listPositionLabel(it) }
         SwitchSetting(
             settings,
             HomeLookSettings.Reachable,

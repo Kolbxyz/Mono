@@ -1,12 +1,12 @@
 package com.wander.mono.ui.home
 
 import com.wander.mono.core.apps.LaunchableApp
-import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.ui.components.AppBadge
 
 /**
- * One row of the home list. Rows are not only apps: live content (the playing media today,
- * widgets later) is a row of its own, placed next to the app it belongs to.
+ * One row of the home list. Rows are not only apps: live content (previews, the calendar, live
+ * activities, widgets) is a row of its own, placed next to the app it belongs to. The playing media
+ * is not a row: it lives under the clock, in the glance header.
  */
 sealed interface HomeRow {
     /** Stable `LazyColumn` key. */
@@ -24,19 +24,7 @@ sealed interface HomeRow {
         override val key: String get() = "folder:$id"
     }
 
-    data class NowPlaying(val media: PlayingMedia) : HomeRow {
-        override val key: String get() = "now-playing"
-    }
-
-    /**
-     * Edit mode's stand-in for the now-playing card, there whether or not anything plays, so the
-     * card can be placed ahead of time. Never on home outside edit mode.
-     */
-    data object NowPlayingSpot : HomeRow {
-        override val key: String get() = "now-playing-spot"
-    }
-
-    /** Notification access is missing, so there are no dots and no now-playing row. */
+    /** Notification access is missing, so there are no dots and no now-playing player. */
     data object ListenerPrompt : HomeRow {
         override val key: String get() = "listener-prompt"
     }

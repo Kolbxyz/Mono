@@ -6,8 +6,6 @@ import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvents
-import com.wander.mono.core.media.MediaSessions
-import com.wander.mono.core.media.MediaState
 import com.wander.mono.core.notifications.LiveActivities
 import com.wander.mono.core.notifications.LiveActivity
 import com.wander.mono.core.notifications.NotificationPreview
@@ -18,7 +16,6 @@ import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.LiveRowRef
-import com.wander.mono.data.NowPlayingAnchor
 import com.wander.mono.data.WidgetPrefs
 import com.wander.mono.data.settings.HomeLookSettings
 import com.wander.mono.data.settings.PreviewSettings
@@ -37,13 +34,12 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
- * Edit mode's changes to the home list: order, removal, additions, per-app live rows, the
- * now-playing card's place, widgets and row density.
+ * Edit mode's changes to the home list: order, removal, additions, per-app live rows, widgets,
+ * row density and where the list sits.
  */
 @HiltViewModel
 class EditHomeViewModel @Inject constructor(
     catalog: AppCatalog,
-    media: MediaSessions,
     previews: NotificationPreviews,
     private val settings: SettingsStore,
     calendar: CalendarEvents,
@@ -57,13 +53,12 @@ class EditHomeViewModel @Inject constructor(
     val toggles: StateFlow<Map<AppKey, List<LiveRowToggle>>> = combine(
         prefs.favorites,
         catalog.apps.filterNotNull(),
-        liveSources(media, previews, settings, calendar, liveActivities),
+        liveSources(previews, settings, calendar, liveActivities),
         liveRows.hidden,
     ) { favorites, apps, sources, hidden ->
         val installed = apps.associateBy { it.key }
         val shown = favorites.mapNotNull(installed::get)
         val available = mergeAvailability(
-            nowPlayingAvailability(sources.media, shown),
             previewAvailability(sources.previews, shown),
             calendarAvailability(sources.agenda, shown),
             liveActivityAvailability(sources.live, shown),
@@ -71,26 +66,22 @@ class EditHomeViewModel @Inject constructor(
         liveRowToggles(shown, available, hidden)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
 
-    /** Where the user placed the now-playing card; null while it follows the app that plays. */
-    val nowPlaying: StateFlow<NowPlayingAnchor?> = liveRows.nowPlayingAnchor
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+    /** Where a short list sits, in percent of the free room above it; the toolbar's Position slider. */
+    val listPosition: StateFlow<Int> = settings[HomeLookSettings.ListPosition].stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+        HomeLookSettings.ListPosition.default,
+    )
 
     /** How roomy the favourite rows are, which the toolbar's Density button names. */
     val density: StateFlow<RowDensity> = settings[HomeLookSettings.Density]
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeLookSettings.Density.default)
 
-    /**
-     * Saves a drag: the favourites' new order, then each widget under the favourite now above it,
-     * and the now-playing card's place when it was the one moved.
-     */
+    /** Saves a drag: the favourites' new order, then each widget under the favourite now above it. */
     fun arrange(arrangement: HomeArrangement) = launch {
         prefs.reorderFavorites(arrangement.favorites)
         widgetPrefs.edit { it.arranged(arrangement.widgets) }
-        arrangement.nowPlaying?.let { liveRows.setNowPlayingAnchor(it) }
     }
-
-    /** The now-playing card goes back under the app that plays. */
-    fun unplaceNowPlaying() = launch { liveRows.setNowPlayingAnchor(null) }
 
     fun move(key: AppKey, by: Int) = launch { prefs.moveFavorite(key, by) }
 
@@ -109,6 +100,8 @@ class EditHomeViewModel @Inject constructor(
         settings.set(HomeLookSettings.Density, settings[HomeLookSettings.Density].first().next())
     }
 
+    fun setListPosition(percent: Int) = launch { settings.set(HomeLookSettings.ListPosition, percent) }
+
     private fun launch(change: suspend () -> Unit) {
         viewModelScope.launch { change() }
     }
@@ -120,20 +113,17 @@ class EditHomeViewModel @Inject constructor(
 
 /** What live rows exist right now, before the user's switches. */
 private class LiveSources(
-    val media: MediaState,
     val previews: Map<PackageUser, NotificationPreview>,
     val agenda: CalendarAgenda?,
     val live: List<LiveActivity>,
 )
 
 private fun liveSources(
-    media: MediaSessions,
     previews: NotificationPreviews,
     settings: SettingsStore,
     calendar: CalendarEvents,
     live: LiveActivities,
 ): Flow<LiveSources> = combine(
-    media.state,
     combine(previews.previews, settings[PreviewSettings.ShowPreviews]) { all, on -> if (on) all else emptyMap() },
     calendar.agenda,
     combine(live.activities, settings.liveActivityKinds()) { all, on -> all.filter { it.kind in on } },

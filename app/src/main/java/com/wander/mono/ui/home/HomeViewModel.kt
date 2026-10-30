@@ -14,6 +14,7 @@ import com.wander.mono.core.calendar.CalendarEvents
 import com.wander.mono.core.media.ListeningDevices
 import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.media.MediaState
+import com.wander.mono.core.media.PlayerApp
 import com.wander.mono.core.media.collapsedWhenPaused
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.LiveActivities
@@ -43,6 +44,7 @@ import com.wander.mono.data.settings.clockLook
 import com.wander.mono.data.settings.liveActivityKinds
 import com.wander.mono.ui.UserMessages
 import com.wander.mono.ui.home.folders.withFolders
+import com.wander.mono.ui.home.media.MediaControls
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -51,6 +53,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -80,14 +83,15 @@ class HomeViewModel @Inject constructor(
     muted: MutedApps,
     routines: Routines,
     private val media: MediaSessions,
+    private val playerApp: PlayerApp,
     wandaUpNext: WandaUpNext,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
     private val messages: UserMessages,
-) : ViewModel() {
+) : ViewModel(), MediaControls {
     /**
-     * The playing media, unless its row is switched off, its app's notifications are muted on home
-     * or it has been paused as long as the user lets it linger (spec 7.6).
+     * The playing media, unless its app's notifications are muted on home or it has been paused as
+     * long as the user lets it linger (spec 7.6).
      */
     private val shownMedia: Flow<MediaState> = combine(
         wandaUpNext.fill(
@@ -96,9 +100,16 @@ class HomeViewModel @Inject constructor(
                 SystemClock::elapsedRealtime,
             ),
         ),
-        liveRows.hidden,
         muted.apps,
-    ) { state, hidden, off -> state.unlessHidden(hidden).unlessMuted(off) }
+    ) { state, off -> state.unlessMuted(off) }
+
+    /** The player under the clock, while something plays and the user has it on. */
+    val player: StateFlow<HomePlayer?> = combine(
+        shownMedia,
+        catalog.apps.filterNotNull(),
+        settings[MediaSettings.ShowPlayer],
+        ::homePlayer,
+    ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     /**
      * Live updates, timers and routes whose kind is on in settings, whose row is not switched off
@@ -118,11 +129,10 @@ class HomeViewModel @Inject constructor(
         prefs.favorites,
         catalog.apps.filterNotNull(),
         combine(counts.counts, muted.apps) { all, off -> all.unmuted(off) },
-        combine(shownMedia, liveRows.nowPlayingAnchor, ::Pair),
+        media.state.map { it == MediaState.NoAccess }.distinctUntilChanged(),
         settings[BadgeSettings.ShowCounts],
-    ) { favorites, apps, badges, (playing, anchor), showCounts ->
-        assembleHomeRows(favorites, apps, badges, playing, showCounts, anchor)
-    }.combine(
+        ::assembleHomeRows,
+    ).combine(
         combine(
             previews.previews,
             settings[PreviewSettings.ShowPreviews],
@@ -205,17 +215,22 @@ class HomeViewModel @Inject constructor(
         messages.report(calendarActions.open(event))
     }
 
-    fun togglePlayPause() = media.togglePlayPause()
+    override fun togglePlayPause() = media.togglePlayPause()
 
-    fun skipNext() = media.skipNext()
+    override fun skipNext() = media.skipNext()
 
-    fun skipPrevious() = media.skipPrevious()
+    override fun skipPrevious() = media.skipPrevious()
 
-    fun seekTo(positionMs: Long) = media.seekTo(positionMs)
+    override fun seekTo(positionMs: Long) = media.seekTo(positionMs)
 
-    fun playQueueItem(id: Long) = media.skipToQueueItem(id)
+    override fun playQueueItem(id: Long) = media.skipToQueueItem(id)
 
-    fun openOutputSwitcher() = media.openOutputSwitcher()
+    override fun openOutputSwitcher() = media.openOutputSwitcher()
+
+    override fun openPlayer() {
+        val shown = player.value ?: return
+        messages.report(playerApp.open(shown.media.packageName, shown.app?.key))
+    }
 
     fun openListenerSettings() {
         messages.report(listenerAccess.openSettings())

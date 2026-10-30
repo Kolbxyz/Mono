@@ -72,7 +72,7 @@ internal object BackupFormat {
             favorites = tree.strings("favorites").map(::appKey).distinct(),
             hidden = tree.strings("hidden").mapTo(mutableSetOf(), ::appKey),
             labels = tree.field<Map<*, *>>("labels").entries.associate { (key, label) -> appKey(key) to string(label) },
-            liveRowsOff = tree.strings("liveRowsOff").mapTo(mutableSetOf(), ::liveRow),
+            liveRowsOff = tree.strings("liveRowsOff").filterNot(LiveRowRef::isRetired).mapTo(mutableSetOf(), ::liveRow),
             quietApps = tree.strings("quietApps").mapTo(mutableSetOf(), ::appKey),
             headphoneApps = tree.strings("headphoneApps").mapTo(mutableSetOf(), ::appKey),
             settings = settings.map { setting -> settingValue(setting, stored[setting.name]) },

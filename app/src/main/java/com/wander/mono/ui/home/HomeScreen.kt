@@ -58,13 +58,14 @@ import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
  * The home screen over the wallpaper: the glance header at the top (or, [shell] reachable, just
- * over the dock), the rows anchored to the bottom so favourites sit in the thumb zone, and the
- * search dock under them. [hero] is how far the hero pull has grown the clock. Drags anywhere
- * (past the end of the list when it scrolls) go to [gestureScroll]: up pulls the drawer, down
- * opens the notification shade. Long-pressing an empty spot opens the home options and
- * double-tapping one runs [onDoubleTap]; rows consume their own presses, so they never reach them.
- * Long-pressing the clock opens its own sheet ([onClockOptions]), the now-playing card its own
- * ([onMediaOptions]).
+ * over the dock) with the player under the clock ([nowPlaying], told whether the header is
+ * compact), the rows where the user placed them ([HomeLook.listPosition], by default the bottom so
+ * favourites sit in the thumb zone), and the search dock under them. [hero] is how far the hero
+ * pull has grown the clock. Drags anywhere (past the end of the list when it scrolls) go to
+ * [gestureScroll]: up pulls the drawer, down opens the notification shade. Long-pressing an empty
+ * spot opens the home options and double-tapping one runs [onDoubleTap]; rows consume their own
+ * presses, so they never reach them.
+ * Long-pressing the clock opens its own sheet ([onClockOptions]); the player handles its own.
  * The favourite [pulse] keys, just added, pulses once, then [onPulsed] clears it.
  * The [lifted] favourites go first while headphones are connected, outside edit mode only.
  *
@@ -85,12 +86,6 @@ fun HomeScreen(
     onLaunch: (LaunchableApp, LaunchSource?) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     onAppInfo: (LaunchableApp) -> Unit,
-    onTogglePlay: () -> Unit,
-    onSkipNext: () -> Unit,
-    onSkipPrevious: () -> Unit,
-    onSeek: (positionMs: Long) -> Unit,
-    onPlayQueueItem: (id: Long) -> Unit,
-    onOpenOutput: () -> Unit,
     onGrantAccess: () -> Unit,
     onOpenEvent: (CalendarEvent) -> Unit,
     onOpenDrawer: () -> Unit,
@@ -99,13 +94,13 @@ fun HomeScreen(
     onDoubleTap: (() -> Unit)?,
     onHomeOptions: () -> Unit,
     onClockOptions: () -> Unit,
-    onMediaOptions: () -> Unit,
     createWidgetView: (Context, Int) -> MonoWidgetHostView,
     onWidgetLongPress: (WidgetHomeRow) -> Unit,
     modifier: Modifier = Modifier,
     contentModifier: Modifier = Modifier,
     shell: HomeShell = HomeShell(),
     hero: () -> Float = { 0f },
+    nowPlaying: @Composable (compact: Boolean) -> Unit = {},
     previews: NotificationPreviewViewModel = viewModel(),
 ) {
     // The header and search dock are not scrollable; this lets drags on them reach gestureScroll too.
@@ -184,7 +179,7 @@ fun HomeScreen(
                         scrimEdges::onHeader,
                         onHomeOptions,
                         onClockOptions,
-                    )
+                    ) { nowPlaying(compactHeader) }
                 }
                 if (!shell.reachable) header()
                 val listModifier = Modifier
@@ -203,16 +198,10 @@ fun HomeScreen(
                         onPulsed = onPulsed,
                         // In edit mode the floating toolbar covers the list's foot: keep the last row clear of it.
                         contentPadding = PaddingValues(bottom = editPadding.value.coerceAtLeast(0.dp)),
+                        position = look.listPosition,
                         onLaunch = onLaunch,
                         onLongPress = onLongPress,
                         onAppInfo = onAppInfo,
-                        onTogglePlay = onTogglePlay,
-                        onSkipNext = onSkipNext,
-                        onSkipPrevious = onSkipPrevious,
-                        onSeek = onSeek,
-                        onPlayQueueItem = onPlayQueueItem,
-                        onOpenOutput = onOpenOutput,
-                        onMediaOptions = onMediaOptions,
                         onGrantAccess = onGrantAccess,
                         onOpenEvent = onOpenEvent,
                         onOpenDrawer = onOpenDrawer,

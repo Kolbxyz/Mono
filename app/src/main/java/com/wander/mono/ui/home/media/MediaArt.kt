@@ -26,13 +26,13 @@ import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.ui.theme.textAlpha
 
 /**
- * The artwork at [size], its corners a share of its size so it keeps its look at any size. Without
+ * The artwork at [size], its [corner] by default a share of its size so it keeps its look at any size. Without
  * artwork the slot stays, as a veil of the content colour holding a note glyph: the layout keeps
  * its balance and nothing pretends to be a cover.
  */
 @Composable
-internal fun MediaArt(art: ImageBitmap?, size: Dp, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(size * ART_CORNER)
+internal fun MediaArt(art: ImageBitmap?, size: Dp, modifier: Modifier = Modifier, corner: Dp = size * ART_CORNER) {
+    val shape = RoundedCornerShape(corner)
     if (art != null) {
         Image(
             art,
@@ -54,11 +54,11 @@ internal fun MediaArt(art: ImageBitmap?, size: Dp, modifier: Modifier = Modifier
     }
 }
 
-/** Title over artist; [large] for the expanded card, where both are centred. */
+/** Title over artist; [large] for the expanded player, [centred] when they sit on its axis. */
 @Composable
-internal fun MediaTitle(media: PlayingMedia, large: Boolean, modifier: Modifier = Modifier) {
-    val align = if (large) TextAlign.Center else TextAlign.Start
-    Column(modifier, horizontalAlignment = if (large) Alignment.CenterHorizontally else Alignment.Start) {
+internal fun MediaTitle(media: PlayingMedia, large: Boolean, modifier: Modifier = Modifier, centred: Boolean = large) {
+    val align = if (centred) TextAlign.Center else TextAlign.Start
+    Column(modifier, horizontalAlignment = if (centred) Alignment.CenterHorizontally else Alignment.Start) {
         Text(
             media.title,
             style = with(MaterialTheme.typography) { if (large) titleLarge else titleMedium },
