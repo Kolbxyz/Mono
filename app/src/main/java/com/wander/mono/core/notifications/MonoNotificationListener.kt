@@ -31,7 +31,7 @@ class MonoNotificationListener : NotificationListenerService() {
 
     override fun onListenerConnected() {
         access.recheck()
-        cancels.bind(::cancelNotification)
+        cancels.bind(this)
         recount()
     }
 
