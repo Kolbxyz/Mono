@@ -42,6 +42,7 @@ fun ReorderableWidget(
             editing = true,
             onTap = {},
             onSwipeRight = null,
+            onSwipeLeft = null,
             onHeld = { haptics.longPress() },
             onHold = {},
             onLift = { reorder.start(row.key, siblings) },

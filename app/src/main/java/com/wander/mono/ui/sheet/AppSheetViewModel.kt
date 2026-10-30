@@ -104,7 +104,7 @@ class AppSheetViewModel @Inject constructor(
     }
 
     /** Hiding offers Undo (spec 7.8): the app is gone from the drawer before the user sees where it went. */
-    fun setHidden(key: AppKey, hidden: Boolean) = edit {
+    fun setHidden(key: AppKey, hidden: Boolean): Unit = edit {
         prefs.setHidden(key, hidden)
         if (hidden) {
             messages.show(R.string.app_hidden, MessageAction(R.string.action_undo) { setHidden(key, hidden = false) })

@@ -52,7 +52,7 @@ class BackupViewModel @Inject constructor(
 
     /** The passphrase the next sealed export uses, set just before its file picker opens. */
     fun sealNextExport(passphrase: CharArray) {
-        exportPassphrase?.fill(0)
+        exportPassphrase?.fill(Char(0))
         exportPassphrase = passphrase
     }
 
@@ -83,7 +83,7 @@ class BackupViewModel @Inject constructor(
             val read = try {
                 backups.open(file, passphrase)
             } finally {
-                passphrase.fill(0)
+                passphrase.fill(Char(0))
             }
             if (read is BackupRead.Failed && read.error == BackupError.WrongPassphrase) {
                 mutableSealed.value = SealedPrompt(wrong = true)
@@ -120,19 +120,19 @@ class BackupViewModel @Inject constructor(
     }
 
     override fun onCleared() {
-        exportPassphrase?.fill(0)
+        exportPassphrase?.fill(Char(0))
     }
 
     private fun save(uri: Uri?, passphrase: CharArray?) {
         if (uri == null) {
-            passphrase?.fill(0)
+            passphrase?.fill(Char(0))
             return
         }
         viewModelScope.launch {
             try {
                 if (messages.report(backups.export(uri, passphrase))) messages.show(R.string.backup_saved)
             } finally {
-                passphrase?.fill(0)
+                passphrase?.fill(Char(0))
             }
         }
     }
