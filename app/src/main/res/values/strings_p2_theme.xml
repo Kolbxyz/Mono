@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme: where the colours come from. -->
+    <string name="theme_palette">Colours</string>
+    <string name="theme_palette_wallpaper">Wallpaper</string>
+    <string name="theme_palette_graphite">Graphite</string>
+    <string name="theme_palette_sand">Sand</string>
+    <string name="theme_palette_sage">Sage</string>
+    <string name="theme_palette_ocean">Ocean</string>
+    <string name="theme_palette_dusk">Dusk</string>
+    <string name="theme_palette_ember">Ember</string>
+
+    <!-- Presets: a whole look (colours, clock, icons, drawer) in one tap. -->
+    <string name="theme_presets">Looks</string>
+    <string name="theme_preset_classic">Classic</string>
+    <string name="theme_preset_minimal">Minimal</string>
+    <string name="theme_preset_soft">Soft</string>
+    <string name="theme_preset_calm">Calm</string>
+    <string name="theme_preset_bold">Bold</string>
+    <string name="theme_preset_mono">Mono</string>
+    <string name="theme_preset_applied">Look applied</string>
+    <!-- Snackbar button after a look is applied: also sets the wallpaper made for it. -->
+    <string name="theme_preset_set_wallpaper">Set wallpaper</string>
+
+    <!-- Bundled wallpapers. -->
+    <string name="wallpapers">Wallpapers</string>
+    <string name="wallpaper_ink">Ink</string>
+    <string name="wallpaper_ember">Ember</string>
+    <string name="wallpaper_moss">Moss</string>
+    <string name="wallpaper_graphite">Graphite</string>
+    <string name="wallpaper_dusk">Dusk</string>
+    <string name="wallpaper_dune">Dune</string>
+    <string name="wallpaper_mist">Mist</string>
+    <string name="wallpaper_sage">Sage</string>
+    <string name="wallpaper_set_on">Set wallpaper on</string>
+    <string name="wallpaper_target_home">Home screen</string>
+    <string name="wallpaper_target_lock">Lock screen</string>
+    <string name="wallpaper_target_both">Home and lock screens</string>
+    <string name="wallpaper_applied">Wallpaper set</string>
+    <string name="wallpaper_failed">Couldn\'t set the wallpaper</string>
+    <string name="wallpaper_not_allowed">This device doesn\'t allow changing the wallpaper</string>
+</resources>
