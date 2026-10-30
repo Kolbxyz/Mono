@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.Icon
@@ -48,10 +49,18 @@ internal fun SettingsPage(
                 windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
             )
         },
-        // The top bar pads the status bar itself; the list pads the rest.
-        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom),
+        // The top bar pads the status bar itself; the list pads the bottom, the sides come below.
+        contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
     ) { padding ->
-        // The bar spans the window; the rows sit in the centred readable column.
-        LazyColumn(Modifier.fillMaxSize().readableColumn(), contentPadding = padding, content = content)
+        // The bar spans the window; the rows sit in the centred readable column, inside the
+        // side insets so a landscape cutout pushes the column only when it reaches it.
+        LazyColumn(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                .readableColumn(),
+            contentPadding = padding,
+            content = content,
+        )
     }
 }
