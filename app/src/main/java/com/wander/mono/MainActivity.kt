@@ -9,14 +9,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.SideEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.calendar.CalendarAccess
 import com.wander.mono.core.notifications.ListenerAccess
-import com.wander.mono.data.settings.SettingsStore
-import com.wander.mono.data.settings.themeChoice
+import com.wander.mono.core.widgets.WidgetHost
 import com.wander.mono.ui.LauncherApp
 import com.wander.mono.ui.LauncherViewModel
 import com.wander.mono.ui.onboarding.Onboarding
@@ -35,7 +33,7 @@ class MainActivity : ComponentActivity() {
     lateinit var listenerAccess: ListenerAccess
 
     @Inject
-    lateinit var settings: SettingsStore
+    lateinit var widgetHost: WidgetHost
 
     @Inject
     lateinit var widgetResults: WidgetActivityResults
@@ -45,6 +43,7 @@ class MainActivity : ComponentActivity() {
 
     private val launcher: LauncherViewModel by viewModels()
     private val sheet: AppSheetViewModel by viewModels()
+    private val themes: ThemeViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,12 +51,13 @@ class MainActivity : ComponentActivity() {
         widgetResults.attach(this)
         setContent {
             // Nothing is drawn until the theme is read (a few ms, once per process): drawing the
-            // default first would flash the wrong theme on every cold start.
-            val theme = remember { settings.themeChoice() }.collectAsStateWithLifecycle(null).value
-                ?: return@setContent
+            // default first would flash the wrong theme on every cold start. A recreated activity
+            // finds it already read in the view model and draws from its first frame.
+            val theme = themes.theme.collectAsStateWithLifecycle().value ?: return@setContent
             val dark = theme.mode.isDark()
-            // The bar icons follow Mono's theme, not the system's, when the user has fixed one.
-            LaunchedEffect(dark) {
+            // The bar icons follow Mono's theme, not the system's, when the user has fixed one; set
+            // in the same frame as the content, not one after it.
+            SideEffect {
                 enableEdgeToEdge(
                     statusBarStyle = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { dark },
                     navigationBarStyle = SystemBarStyle.auto(LIGHT_SCRIM, DARK_SCRIM) { dark },
@@ -85,6 +85,12 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         // A recreation (locale, font scale) keeps the drawer; really leaving resets to home.
         if (!isChangingConfigurations) launcher.leaveToHome()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // The kept widget views hold this activity as their context.
+        widgetHost.releaseViews()
     }
 
     override fun onNewIntent(intent: Intent) {
