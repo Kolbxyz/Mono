@@ -118,6 +118,17 @@
         <intent>
             <action android:name="android.intent.action.WEB_SEARCH" />
         </intent>
+        <!-- Search: an app that opens a pasted web address (core/system/TextHandOff). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
         <!-- Search: the clock app that takes timers and alarms (core/system/ClockActions). -->
         <intent>
             <action android:name="android.intent.action.SET_TIMER" />

@@ -17,20 +17,23 @@ import com.wander.mono.core.apps.ShortcutIcons
 import com.wander.mono.core.apps.WorkProfile
 import com.wander.mono.core.apps.WorkProfiles
 import com.wander.mono.core.contacts.Contact
+import com.wander.mono.core.contacts.ContactReach
 import com.wander.mono.core.notifications.ConversationKey
 import com.wander.mono.core.notifications.NotificationCounts
+import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.core.security.HiddenAppsLock
 import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.siblings.PhalanxUnread
 import com.wander.mono.core.siblings.WandaTrack
-import com.wander.mono.core.system.ClockActions
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.SystemContrast
 import com.wander.mono.core.system.Wallpaper
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.OpenedNewApps
+import com.wander.mono.data.RecentSearch
+import com.wander.mono.data.RecentSearches
 import com.wander.mono.data.settings.AccessibilitySettings
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.DrawerSettings
@@ -64,7 +67,8 @@ class DrawerViewModel @Inject constructor(
     private val icons: IconCache,
     private val messages: UserMessages,
     private val sources: SearchSources,
-    private val clock: ClockActions,
+    private val opener: SearchOpener,
+    private val memory: SearchMemory,
     private val hiddenLock: HiddenAppsLock,
     private val privateSpace: PrivateSpace,
     private val workProfiles: WorkProfiles,
@@ -98,7 +102,7 @@ class DrawerViewModel @Inject constructor(
         sources.contacts(query),
         sources.tracks(query),
         sources.pages(),
-        sources.quickAnswers(),
+        combine(sources.quickAnswers(), sources.notices(), memory.recent, ::SearchExtras),
         ::Searchable,
     )
 
@@ -126,13 +130,16 @@ class DrawerViewModel @Inject constructor(
             sections = sectionsOf(lists.apps.map { it.app.label }),
             results = SearchResults.assemble(
                 q,
-                sources.actions(q, extra.quickAnswers),
+                sources.actions(q, extra.more.quickAnswers),
                 hidden.searchableApps(searchableApps(all, work)),
                 hidden.searchableShortcuts(searchableShortcuts(extra.shortcuts, work)),
                 extra.contacts.itemsFor(q),
                 extra.tracks.itemsFor(q),
                 extra.pages,
-                sources::webTarget,
+                handOffs = sources.handOffs(q, extra.more.quickAnswers),
+                notices = extra.more.notices,
+                preferred = RecentSearches.preferredFor(extra.more.recent, q),
+                webTarget = sources::webTarget,
             ),
             resultsQuery = builtFor(q, extra.contacts, extra.tracks),
             iconMode = mode,
@@ -190,16 +197,17 @@ class DrawerViewModel @Inject constructor(
     /** The drawer closed: the next opening starts on every app again. */
     fun clearListFilters() = listChoices.clear()
 
-    fun launch(hit: SearchHit): HitOutcome = when (hit) {
-        is SearchHit.App -> opened(launch(hit.entry.app))
-        is SearchHit.Shortcut -> opened(messages.report(actions.launchShortcut(hit.shortcut)))
-        is SearchHit.Calculation -> sources.copy(hit)
-        is SearchHit.Timer -> opened(messages.report(clock.setTimer(hit.seconds)))
-        is SearchHit.Alarm -> opened(messages.report(clock.setAlarm(hit.time.hour, hit.time.minute)))
-        is SearchHit.Person -> sources.open(hit)
-        is SearchHit.Track -> sources.open(hit)
-        is SearchHit.Setting -> sources.open(hit)
-        is SearchHit.Web -> sources.open(hit)
+    fun launch(hit: SearchHit): HitOutcome = opener.open(hit, query.value)
+
+    /** A contact's Call, Message or Email action. */
+    fun reach(hit: SearchHit.Person, how: ContactReach): HitOutcome = opener.reach(hit, how, query.value)
+
+    /** Searches remembered while the setting is on, offered as chips while the field is empty. */
+    val recentSearches: StateFlow<List<RecentSearch>> = memory.recent
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyList())
+
+    fun forgetRecent(search: RecentSearch) {
+        viewModelScope.launch { memory.forget(search) }
     }
 
     /**
@@ -215,14 +223,19 @@ class DrawerViewModel @Inject constructor(
         }
     }
 
-    private fun opened(done: Boolean) = if (done) HitOutcome.Opened else HitOutcome.Stayed
-
     private data class Searchable(
         val shortcuts: List<AppShortcut>,
         val contacts: QueryResults<Contact>,
         val tracks: QueryResults<WandaTrack>,
         val pages: List<SettingsPage>,
+        val more: SearchExtras,
+    )
+
+    /** Whether quick answers (and hand-offs) are on, the notifications to look in, the remembered searches. */
+    private data class SearchExtras(
         val quickAnswers: Boolean,
+        val notices: List<NotificationPreview>,
+        val recent: List<RecentSearch>,
     )
 
     fun unlockHidden() = hiddenLock.unlock()

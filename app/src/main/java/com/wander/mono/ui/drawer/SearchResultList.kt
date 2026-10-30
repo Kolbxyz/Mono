@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.contacts.ContactReach
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.SegmentGap
@@ -35,8 +36,9 @@ import com.wander.mono.ui.theme.schemeAnimateItem
 /**
  * The ranked results for a query, laid out by [SearchLayout]: the top hit large on a tonal container
  * (what the keyboard's Go key opens), the other apps as a row of icons, then shortcuts, contacts,
- * songs, settings and the web each as a labelled segmented group. Only [settled] results (built for
- * the query typed now) may say there are none.
+ * notifications, songs, settings and the web each as a labelled segmented group, what the query
+ * matched highlighted in each. Only [settled] results (built for the query typed now) may say there
+ * are none. With [onReach], contacts offer their Call, Message and Email actions.
  */
 @Composable
 fun SearchResultList(
@@ -48,6 +50,7 @@ fun SearchResultList(
     contentPadding: PaddingValues,
     modifier: Modifier = Modifier,
     onUnlockHidden: (() -> Unit)? = null,
+    onReach: ((SearchHit.Person, ContactReach) -> Unit)? = null,
 ) {
     val layout = remember(results) { SearchLayout.of(results) }
     val listState = rememberLazyListState()
@@ -82,7 +85,9 @@ fun SearchResultList(
                     modifier = schemeAnimateItem().fillMaxWidth().padding(horizontal = 16.dp),
                 ) {
                     val onLaunch = { onLaunchHit(top) }
-                    TopHitRow(top, icons, onLaunch, onLongPress) { ResultRow(top, icons, onLaunch, onLongPress) }
+                    TopHitRow(top, icons, onLaunch, onLongPress, onReach) {
+                        ResultRow(top, icons, onLaunch, onLongPress, onReach)
+                    }
                 }
             }
         }
@@ -93,7 +98,9 @@ fun SearchResultList(
             if (icons.mode == IconMode.TextOnly) {
                 // No icons to make a row of: the apps are a group like the others.
                 itemsIndexed(layout.apps, key = { _, hit -> hit.key }) { index, hit ->
-                    GroupedRow(index, layout.apps.size) { ResultRow(hit, icons, { onLaunchHit(hit) }, onLongPress) }
+                    GroupedRow(index, layout.apps.size) {
+                        ResultRow(hit, icons, { onLaunchHit(hit) }, onLongPress, onReach)
+                    }
                 }
             } else {
                 item(key = "apps", contentType = "apps") {
@@ -106,7 +113,7 @@ fun SearchResultList(
                 GroupLabel(group.kind.label, schemeAnimateItem())
             }
             itemsIndexed(group.hits, key = { _, hit -> hit.key }, contentType = { _, hit -> hit::class }) { i, hit ->
-                GroupedRow(i, group.hits.size) { ResultRow(hit, icons, { onLaunchHit(hit) }, onLongPress) }
+                GroupedRow(i, group.hits.size) { ResultRow(hit, icons, { onLaunchHit(hit) }, onLongPress, onReach) }
             }
         }
         if (onUnlockHidden != null) {
@@ -141,14 +148,34 @@ private fun GroupLabel(@StringRes label: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ResultRow(hit: SearchHit, icons: AppIcons, onLaunch: () -> Unit, onLongPress: (LaunchableApp) -> Unit) {
+private fun ResultRow(
+    hit: SearchHit,
+    icons: AppIcons,
+    onLaunch: () -> Unit,
+    onLongPress: (LaunchableApp) -> Unit,
+    onReach: ((SearchHit.Person, ContactReach) -> Unit)?,
+) {
     when (hit) {
-        is SearchHit.App -> DrawerAppRow(hit.entry, icons, onLaunch, onLongPress = { onLongPress(hit.entry.app) })
+        is SearchHit.App -> DrawerAppRow(
+            hit.entry,
+            icons,
+            onLaunch,
+            onLongPress = { onLongPress(hit.entry.app) },
+            name = rememberHighlighted(hit.label, hit.matched),
+        )
         is SearchHit.Shortcut -> ShortcutRow(hit, icons, onLaunch)
         is SearchHit.Calculation -> CalculationRow(hit, icons, onCopy = onLaunch)
         is SearchHit.Timer -> TimerRow(hit, icons, onSet = onLaunch)
         is SearchHit.Alarm -> AlarmRow(hit, icons, onSet = onLaunch)
-        is SearchHit.Person -> PersonRow(hit, icons, onOpen = onLaunch)
+        is SearchHit.Link -> LinkRow(hit, icons, onOpen = onLaunch)
+        is SearchHit.ShareText -> ShareRow(hit, icons, onShare = onLaunch)
+        is SearchHit.Person -> PersonRow(
+            hit,
+            icons,
+            onOpen = onLaunch,
+            onReach = onReach?.let { reach -> { how: ContactReach -> reach(hit, how) } },
+        )
+        is SearchHit.Notice -> NoticeRow(hit, icons, onOpen = onLaunch)
         is SearchHit.Track -> TrackRow(hit, icons, onPlay = onLaunch)
         is SearchHit.Setting -> SettingRow(hit, icons, onOpen = onLaunch)
         is SearchHit.Web -> WebRow(hit, icons, onSearch = onLaunch)
