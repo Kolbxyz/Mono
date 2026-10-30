@@ -125,6 +125,15 @@
         <intent>
             <action android:name="android.intent.action.SET_ALARM" />
         </intent>
+        <!-- Home: dismissing the next alarm through the clock app (core/system/ClockActions). -->
+        <intent>
+            <action android:name="android.intent.action.DISMISS_ALARM" />
+        </intent>
+        <!-- Calendar card: Map hands an event's place to a maps app (core/calendar/CalendarActions). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
+        </intent>
         <!-- Sibling providers (core/siblings), release and debug builds. -->
         <provider android:authorities="com.wander.android.mono" />
         <provider android:authorities="com.wander.android.debug.mono" />
