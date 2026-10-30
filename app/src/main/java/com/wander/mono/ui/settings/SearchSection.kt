@@ -17,12 +17,12 @@ import com.wander.mono.R
 import com.wander.mono.data.settings.SearchSettings
 
 /**
- * What search looks in besides apps (a source switched off is not even asked), and whether it
- * remembers recent searches.
+ * What search looks in besides apps (a source switched off is not even asked), then, as a group of
+ * its own, whether it remembers recent searches.
  */
 @Composable
 fun SearchSection(settings: SettingsViewModel, history: SearchHistoryViewModel = viewModel()) {
-    SettingsGroup(R.string.settings_search) {
+    SettingsGroup(R.string.settings_search_sources) {
         SwitchSetting(
             settings,
             SearchSettings.QuickAnswers,
@@ -52,29 +52,26 @@ fun SearchSection(settings: SettingsViewModel, history: SearchHistoryViewModel =
             summary = R.string.search_source_notifications_summary,
             icon = R.drawable.sym_notifications,
         )
-        RecentRows(settings, history)
     }
+    RecentGroup(settings, history)
 }
 
 /** Remembering recent searches, and once some are, clearing them. Switching it off forgets them too. */
 @Composable
-private fun RecentRows(settings: SettingsViewModel, history: SearchHistoryViewModel) {
+private fun RecentGroup(settings: SettingsViewModel, history: SearchHistoryViewModel) {
     val remembering = settings.collect(SearchSettings.RememberRecent) ?: return
     val hasHistory by history.hasHistory.collectAsStateWithLifecycle(initialValue = false)
-    SwitchRow(
-        checked = remembering,
-        onCheckedChange = history::setRemembering,
-        title = R.string.search_remember_recent,
-        summary = R.string.search_remember_recent_summary,
-        icon = R.drawable.sym_schedule,
-    )
-    if (hasHistory) {
-        ActionRow(
-            title = R.string.search_clear_history,
-            summary = R.string.search_clear_history_summary,
-            icon = R.drawable.sym_delete,
-            onClick = history::clear,
+    SettingsGroup(R.string.settings_search_recent) {
+        SwitchRow(
+            checked = remembering,
+            onCheckedChange = history::setRemembering,
+            title = R.string.search_remember_recent,
+            summary = R.string.search_remember_recent_summary,
+            icon = R.drawable.sym_schedule,
         )
+        if (hasHistory) {
+            ActionRow(title = R.string.search_clear_history, icon = R.drawable.sym_delete, onClick = history::clear)
+        }
     }
 }
 

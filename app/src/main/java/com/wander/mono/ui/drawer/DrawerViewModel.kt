@@ -16,18 +16,12 @@ import com.wander.mono.core.apps.PrivateSpace
 import com.wander.mono.core.apps.ShortcutIcons
 import com.wander.mono.core.apps.WorkProfile
 import com.wander.mono.core.apps.WorkProfiles
-import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.contacts.ContactReach
-import com.wander.mono.core.notifications.ConversationKey
 import com.wander.mono.core.notifications.NotificationCounts
-import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.core.security.HiddenAppsLock
 import com.wander.mono.core.siblings.PhalanxRooms
-import com.wander.mono.core.siblings.PhalanxUnread
-import com.wander.mono.core.siblings.WandaTrack
-import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.SystemContrast
 import com.wander.mono.core.system.Wallpaper
 import com.wander.mono.data.LauncherPrefs
@@ -96,15 +90,8 @@ class DrawerViewModel @Inject constructor(
         }
     }
 
-    /** What search looks in besides the apps themselves; sources switched off come in empty. */
-    private val searchable = combine(
-        sources.shortcuts(),
-        sources.contacts(query),
-        sources.tracks(query),
-        sources.pages(),
-        combine(sources.quickAnswers(), sources.notices(), memory.recent, ::SearchExtras),
-        ::Searchable,
-    )
+    /** What search looks in besides the apps themselves. */
+    private val searchable = searchableFor(sources, memory, query)
 
     private val hidden = combine(prefs.hidden, hiddenLock.revealed, ::HiddenApps)
 
@@ -157,9 +144,7 @@ class DrawerViewModel @Inject constructor(
         .combine(
             combine(settings[DrawerSettings.KeyboardOnOpen], settings[DrawerSettings.RailAtStart], ::Pair),
         ) { state, (keyboard, railAtStart) -> state.copy(keyboardOnOpen = keyboard, railAtStart = railAtStart) }
-        .combine(
-            combine(previews.conversations, phalanx.unread, settings[BadgeSettings.ShowCounts], ::ShortcutUnread),
-        ) { state, unread ->
+        .combine(conversationUnread(previews, phalanx, settings)) { state, unread ->
             val results = state.results.withUnread(unread.notified, unread.showCounts)
                 .withRoomUnread(unread.phalanx, unread.showCounts)
             state.copy(results = results)
@@ -223,21 +208,6 @@ class DrawerViewModel @Inject constructor(
         }
     }
 
-    private data class Searchable(
-        val shortcuts: List<AppShortcut>,
-        val contacts: QueryResults<Contact>,
-        val tracks: QueryResults<WandaTrack>,
-        val pages: List<SettingsPage>,
-        val more: SearchExtras,
-    )
-
-    /** Whether quick answers (and hand-offs) are on, the notifications to look in, the remembered searches. */
-    private data class SearchExtras(
-        val quickAnswers: Boolean,
-        val notices: List<NotificationPreview>,
-        val recent: List<RecentSearch>,
-    )
-
     fun unlockHidden() = hiddenLock.unlock()
 
     fun relockHidden() = hiddenLock.relock()
@@ -245,16 +215,6 @@ class DrawerViewModel @Inject constructor(
     fun reportNoScreenLock() {
         messages.report(ActionResult.Failed(R.string.error_no_screen_lock))
     }
-
-    /** Every app, and the work profiles to list theirs apart. */
-    private data class Profiled(val all: List<DrawerEntry>, val work: List<WorkProfile>)
-
-    /** Unread per conversation from notifications, and from Phalanx itself when it publishes it. */
-    private data class ShortcutUnread(
-        val notified: Map<ConversationKey, Int>,
-        val phalanx: PhalanxUnread?,
-        val showCounts: Boolean,
-    )
 
     private companion object {
         const val QUERY = "query"
