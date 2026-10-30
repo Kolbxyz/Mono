@@ -8,10 +8,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,6 +25,7 @@ import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.components.AppIcon
 import com.wander.mono.ui.components.AppIcons
+import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
  * The top hit, larger than the rows under it: a bigger icon and title for an app or a shortcut; any
@@ -60,7 +63,10 @@ internal fun TopHitRow(
     }
 }
 
-/** The apps after the top hit, side by side as icons with their names under them, scrolling sideways. */
+/**
+ * The apps after the top hit, side by side as icons with their names under them, scrolling sideways;
+ * back to the first whenever the apps change.
+ */
 @Composable
 internal fun AppIconRow(
     apps: List<SearchHit.App>,
@@ -69,8 +75,11 @@ internal fun AppIconRow(
     onLongPress: (LaunchableApp) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val rowState = rememberLazyListState()
+    LaunchedEffect(apps) { rowState.requestScrollToItem(0) }
     LazyRow(
         modifier,
+        state = rowState,
         contentPadding = PaddingValues(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
@@ -80,7 +89,7 @@ internal fun AppIconRow(
                 icons,
                 onLaunch = { onLaunchHit(hit) },
                 onLongPress = { onLongPress(hit.entry.app) },
-                modifier = Modifier.animateItem(),
+                modifier = schemeAnimateItem(),
             )
         }
     }
