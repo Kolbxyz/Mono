@@ -17,6 +17,8 @@ val backedUpSettings: List<Setting<*>> = listOf(
     IconSettings.Mode,
     IconSettings.Pack,
     IconSettings.Shape,
+    IconSettings.ThemedTint,
+    IconSettings.TintRows,
     BadgeSettings.ShowCounts,
     PreviewSettings.ShowPreviews,
     CalendarSettings.Enabled,
