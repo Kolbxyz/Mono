@@ -3,11 +3,14 @@ package com.wander.mono.ui.drawer
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,12 +28,14 @@ import com.wander.mono.core.apps.PrivateSpaceState
 import com.wander.mono.core.apps.WorkProfile
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.SegmentedColumn
+import com.wander.mono.ui.theme.schemeAnimateItem
 import kotlinx.coroutines.launch
 
 /**
  * The main profile's apps under their letters, with the letter rail, then a card per work profile
  * and the private space at the very bottom; no private space without [privateActions] (while
- * picking an app for home, where private apps never go).
+ * picking an app for home, where private apps never go). [listState] is the caller's, so the list
+ * keeps its place while search results show instead.
  */
 @Composable
 internal fun DrawerAppList(
@@ -41,9 +46,9 @@ internal fun DrawerAppList(
     onLaunchApp: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     bottom: PaddingValues,
+    listState: LazyListState,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     // One list item per letter, so the rail's sections and the list's items share their indexes.
     val groups = remember(state.apps, state.sections) { letterGroups(state.apps, state.sections) }
@@ -58,7 +63,7 @@ internal fun DrawerAppList(
             ),
         ) {
             items(groups, key = { it.letter }) { group ->
-                Column(Modifier.animateItem()) {
+                Column(schemeAnimateItem()) {
                     Text(
                         group.letter,
                         style = MaterialTheme.typography.labelLarge,
@@ -81,7 +86,7 @@ internal fun DrawerAppList(
             }
             // After the letters, so the rail's indexes still match the list's.
             items(state.work, key = { "work:${it.profile.serial}" }) { section ->
-                WorkSectionCard(section, icons, onSetWorkPaused, onLaunchApp, onLongPress, Modifier.animateItem())
+                WorkSectionCard(section, icons, onSetWorkPaused, onLaunchApp, onLongPress, schemeAnimateItem())
             }
             val space = state.privateSpace
             if (privateActions != null && space is PrivateSpaceState.Present) {
@@ -93,12 +98,14 @@ internal fun DrawerAppList(
                         privateActions,
                         onLaunchApp,
                         onLongPress,
-                        Modifier.animateItem(),
+                        schemeAnimateItem(),
                     )
                 }
             }
         }
-        val current by remember { derivedStateOf { listState.firstVisibleItemIndex } }
+        val current by remember(listState) { derivedStateOf { listState.firstVisibleItemIndex } }
+        // Not the keyboard: the rail would re-measure, and its letters reflow, every frame it slides.
+        val navigationBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
         LetterRail(
             sections = state.sections,
             current = current.coerceAtMost(state.sections.lastIndex.coerceAtLeast(0)),
@@ -107,7 +114,7 @@ internal fun DrawerAppList(
             },
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .padding(bottom = bottom.calculateBottomPadding() + 8.dp, top = 8.dp),
+                .padding(bottom = navigationBottom + 8.dp, top = 8.dp),
         )
     }
 }
