@@ -101,6 +101,36 @@ class RailMathTest {
         assertEquals(0f, RailMath.letterOffset(index = 3, slot = 3f, bow = 0f), DELTA)
     }
 
+    @Test
+    fun `star and the first letter both jump to the top, later letters to their own item`() {
+        assertEquals(0, RailMath.listItemFor(railIndex = 0))
+        assertEquals(0, RailMath.listItemFor(railIndex = 1))
+        assertEquals(4, RailMath.listItemFor(railIndex = 5))
+    }
+
+    @Test
+    fun `rail shows star only at the very top and clamps past the letters`() {
+        assertEquals(0, RailMath.railIndexFor(firstItem = 0, firstOffset = 0, letters = 5))
+        assertEquals(1, RailMath.railIndexFor(firstItem = 0, firstOffset = 12, letters = 5))
+        assertEquals(4, RailMath.railIndexFor(firstItem = 3, firstOffset = 0, letters = 5))
+        // Work and private space cards after the last letter keep the last letter.
+        assertEquals(5, RailMath.railIndexFor(firstItem = 6, firstOffset = 0, letters = 5))
+    }
+
+    @Test
+    fun `wave faces the list from whichever edge the rail is on`() {
+        assertEquals(1f, RailMath.mirror(rtl = false, atStart = false), DELTA)
+        assertEquals(-1f, RailMath.mirror(rtl = false, atStart = true), DELTA)
+        assertEquals(-1f, RailMath.mirror(rtl = true, atStart = false), DELTA)
+        assertEquals(1f, RailMath.mirror(rtl = true, atStart = true), DELTA)
+    }
+
+    @Test
+    fun `bubble sits on the list's side, clear of the bowed letter`() {
+        assertEquals(-100f, RailMath.bubbleX(mirror = 1f, gap = 16f, size = 72f, bow = 12f), DELTA)
+        assertEquals(100f, RailMath.bubbleX(mirror = -1f, gap = 16f, size = 72f, bow = 12f), DELTA)
+    }
+
     private companion object {
         const val DELTA = 1e-4f
     }
