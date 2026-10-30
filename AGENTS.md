@@ -32,20 +32,30 @@ Single module `:app`, package root `com.wander.mono`.
 | `core/calendar` | Opt-in upcoming events (`READ_CALENDAR`) from `CalendarContract.Instances`, observed, re-read only at event boundaries. |
 | `core/system` | Clock tick and next alarm, from system broadcasts; wallpaper colours and hints; settings pages, web search hand-off, clipboard. |
 | `core/contacts` | Opt-in contact lookup by name for search (`READ_CONTACTS`), never cached. |
+| `core/quiet` | Quiet mode state, its Quick Settings tile and Mono's own Do Not Disturb rule (`AutomaticZenRule`, opt-in policy access). |
+| `core/security` | Hidden-apps lock and app lock (launches held in `AppActions` until the screen lock, unlocked until screen off), in memory only; the passphrase cipher for sealed backups. |
+| `core/tiles` | Quick Settings tiles that act through home: Search, Private space. |
+| `core/usage` | Opt-in usage access (`UsageStatsManager`): today's foreground time per app, read on demand. |
+| `core/widgets` | The `AppWidgetHost`, widget providers, binding and configure flow, placement and sizes. |
 | `core/siblings` | Wanda and Phalanx providers (signature permission, `docs/design/sibling-contract.md`): up next, library search, per-room unread; absent means hidden. |
 | `data` | DataStore: ordered favourites and hidden apps. |
-| `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, settings (no widgets). |
+| `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, locked apps, settings (no widgets); optionally sealed with a passphrase. |
 | `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
 | `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / prompt rows. |
 | `ui/drawer` | Alphabetical list, letter rail, ranked search (calculator, apps, shortcuts, contacts, settings, web hand-off). |
+| `ui/edit` | Edit mode: drag reorder of favourites and widgets, live-row toggles, floating toolbar. |
+| `ui/widgets` | Widget picker, widget options and size sheets. |
+| `ui/onboarding` | First-run steps (home, favourites, notification access, calendar) and the one-time swipe hint. |
+| `ui/quiet` | Quiet mode's drawer gate and its view model. |
+| `ui/components` | Shared composables: app icons, segmented lists, badges, sheets, wavy seek bar, press motion. |
 | `ui/sheet` | Long-press options: per app (`AppSheet`) and for home itself (`HomeSheet`). |
 | `ui/settings` | Settings screen, reusable setting rows, one `*Section.kt` per feature. |
-| `ui/theme` | `MonoTheme`, reduced motion. |
+| `ui/theme` | `MonoTheme`, reduced motion, icon mask, window backdrop (wallpaper or solid black). |
 
 ## 3. Window Insets & Motion
 
-- The window shows the wallpaper; home draws a surface scrim so M3 text colors stay readable.
+- The window shows the wallpaper (opaque black with "Solid black wallpaper", `ui/theme/WindowBackdrop.kt`); home draws a surface scrim so M3 text colors stay readable.
 - Containers pad `WindowInsets.safeDrawing` on the edges they touch (`.only(...)` when only some matter). `safeDrawing` includes the IME; home pads system bars and cutout only, and adds the IME just while an inline reply is open (`replyImePadding`), so the drawer's keyboard never moves it.
 - Animations take specs from `MaterialTheme.motionScheme`; reduced motion swaps in `NoMotionScheme` (1 ms tweens, not `snap()`).
 
@@ -55,12 +65,12 @@ Settings opens from long-pressing the clock or an empty spot on home (`HomeSheet
 
 1. Declare the key in your own `data/settings/<Feature>Settings.kt`: `BooleanSetting(name, default)` or `EnumSetting(name, default, entries)` with an enum implementing `StoredEnum` (its `stored` string is what is saved; never change it).
 2. Add rows in your own `ui/settings/<Feature>Section.kt` with `SettingsGroup`, `SwitchSetting`, `ChoiceSetting`.
-3. Register the section with one line in `ui/settings/SettingsSections.kt`, and the setting in `backedUpSettings` (`data/settings/BackedUpSettings.kt`) so backups carry it. Read the value elsewhere with `SettingsStore[setting]` (a `Flow`).
+3. Register the section with one line in `ui/settings/SettingsSections.kt`, in the hub page it belongs to (the pages are the categories in `ui/settings/SettingsCategory.kt`), and the setting in `backedUpSettings` (`data/settings/BackedUpSettings.kt`) so backups carry it. Read the value elsewhere with `SettingsStore[setting]` (a `Flow`).
 
 ```kotlin
-object GestureSettings { val SwipeDownNotifications = BooleanSetting("swipe_down_notifications", default = true) }
-@Composable fun GestureSection(settings: SettingsViewModel) = SettingsGroup(R.string.settings_gestures) {
-    SwitchSetting(settings, GestureSettings.SwipeDownNotifications, title = R.string.settings_swipe_down)
+object DrawerSettings { val KeyboardOnOpen = BooleanSetting("drawer_keyboard_on_open", default = false) }
+@Composable fun DrawerSection(settings: SettingsViewModel) = SettingsGroup(R.string.drawer_settings_title) {
+    SwitchSetting(settings, DrawerSettings.KeyboardOnOpen, title = R.string.drawer_keyboard_on_open)
 }
 ```
 

@@ -4,8 +4,11 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvent
+import com.wander.mono.core.notifications.LiveActivity
+import com.wander.mono.core.notifications.LiveActivityKind
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.core.notifications.PreviewExpansion
 import com.wander.mono.core.notifications.Redaction
 import com.wander.mono.data.LiveRowKind
 import org.junit.Assert.assertEquals
@@ -29,6 +32,7 @@ class LiveRowAvailabilityTest {
         autoCancel = true,
         isClearable = true,
         reply = null,
+        expansion = PreviewExpansion(emptyList(), emptyList(), emptyList()),
     )
 
     private fun agenda(events: Int) = CalendarAgenda(
@@ -50,6 +54,28 @@ class LiveRowAvailabilityTest {
         assertEquals(mapOf(etar.key to setOf(LiveRowKind.Calendar)), available)
         assertEquals(emptyMap<AppKey, Set<LiveRowKind>>(), calendarAvailability(agenda(0), listOf(etar)))
         assertEquals(emptyMap<AppKey, Set<LiveRowKind>>(), calendarAvailability(null, listOf(etar)))
+    }
+
+    @Test
+    fun `live activity switches belong to the favourite in the notification's profile, one per kind`() {
+        fun live(owner: PackageUser, kind: LiveActivityKind) = LiveActivity(
+            key = "$owner:$kind",
+            owner = owner,
+            kind = kind,
+            title = "Title",
+            text = null,
+            progress = null,
+            chronometer = null,
+            icon = null,
+            actions = emptyList(),
+            contentIntent = null,
+        )
+        val work = PackageUser("org.signal", 10)
+        val available = liveActivityAvailability(
+            listOf(live(work, LiveActivityKind.Progress), live(work, LiveActivityKind.Timer)),
+            listOf(signal, workSignal, etar),
+        )
+        assertEquals(mapOf(workSignal.key to setOf(LiveRowKind.LiveUpdate, LiveRowKind.Timer)), available)
     }
 
     @Test

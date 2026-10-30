@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Live row kinds, as edit mode's switches name them -->
+    <string name="live_row_live_update">Live update</string>
+    <string name="live_row_timer">Timer</string>
+    <string name="live_row_navigation">Navigation</string>
+
+    <!-- Live rows on home -->
+    <string name="live_open">Open</string>
+    <string name="live_progress_percent">%1$d%%</string>
+    <!-- A countdown that has passed zero, as the shade shows it: "−00:05" -->
+    <string name="live_time_negative">−%1$s</string>
+    <string name="live_next_turn">Next turn</string>
+
+    <!-- Settings -->
+    <string name="settings_live_rows">Live rows</string>
+    <string name="settings_live_updates">Show live updates</string>
+    <string name="settings_live_updates_summary">Downloads, deliveries and other things under way</string>
+    <string name="settings_live_timers">Show timers and stopwatches</string>
+    <string name="settings_live_navigation">Show navigation</string>
+
+    <!-- Calendar card actions -->
+    <string name="calendar_action_join">Join</string>
+    <string name="calendar_action_map">Map</string>
+
+    <!-- Errors -->
+    <string name="error_no_maps_app">No app can show this place</string>
+    <string name="error_meeting_link">No app can open this meeting link</string>
+</resources>

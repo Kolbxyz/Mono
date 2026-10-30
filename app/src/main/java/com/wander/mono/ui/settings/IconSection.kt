@@ -17,11 +17,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.data.settings.IconSettings
+import com.wander.mono.data.settings.IconShape
 import com.wander.mono.data.settings.SYSTEM_ICON_PACK
+import com.wander.mono.data.settings.ThemedIconTint
 
 /**
- * Full-colour, themed monochrome, or no app icons at all; and in full colour, the icon pack they
- * come from. Apps a pack does not cover keep their own icon.
+ * Full-colour, themed monochrome, or no app icons at all, and the shape they are cut to; in full
+ * colour, the icon pack they come from. Apps a pack does not cover keep their own icon. Themed
+ * icons pick their colour; rows can take their app's colour in any mode.
  */
 @Composable
 fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = viewModel()) {
@@ -34,6 +37,40 @@ fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = view
                 IconMode.TextOnly -> R.string.settings_icon_text_only
             }
         }
+        if (mode != null && mode != IconMode.TextOnly) {
+            ChoiceSetting(
+                settings,
+                IconSettings.Shape,
+                R.string.settings_icon_shape,
+                R.drawable.sym_interests,
+            ) { shape ->
+                when (shape) {
+                    IconShape.System -> R.string.settings_icon_shape_system
+                    IconShape.Circle -> R.string.settings_icon_shape_circle
+                    IconShape.Squircle -> R.string.settings_icon_shape_squircle
+                    IconShape.Cookie -> R.string.settings_icon_shape_cookie
+                    IconShape.Clover -> R.string.settings_icon_shape_clover
+                }
+            }
+        }
+        if (mode == IconMode.Themed) {
+            ChoiceSetting(settings, IconSettings.ThemedTint, R.string.settings_icon_tint, R.drawable.sym_palette) {
+                when (it) {
+                    ThemedIconTint.Neutral -> R.string.settings_icon_tint_neutral
+                    ThemedIconTint.App -> R.string.settings_icon_tint_app
+                    ThemedIconTint.Primary -> R.string.settings_icon_tint_primary
+                    ThemedIconTint.Secondary -> R.string.settings_icon_tint_secondary
+                    ThemedIconTint.Tertiary -> R.string.settings_icon_tint_tertiary
+                }
+            }
+        }
+        SwitchSetting(
+            settings,
+            IconSettings.TintRows,
+            title = R.string.settings_tint_rows,
+            summary = R.string.settings_tint_rows_short,
+            icon = R.drawable.sym_invert_colors,
+        )
     }
     if (mode == IconMode.Colour) IconPackGroup(settings, iconPacks)
 }

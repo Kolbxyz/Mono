@@ -24,6 +24,7 @@ class QuietRowsTest {
         progress = null,
         upNext = emptyList(),
         output = null,
+        collapseAtMs = null,
     )
     private val rows = listOf(
         HomeRow.App(phalanx, AppBadge.Count(3)),
