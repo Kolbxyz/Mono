@@ -69,8 +69,8 @@ internal fun drawerBackdrop(look: DrawerLook, revealed: () -> Float): Color {
 @ReadOnlyComposable
 internal fun drawerTextShadow(background: DrawerBackground): Shadow? = when (background) {
     DrawerBackground.Solid -> null
-    DrawerBackground.None, DrawerBackground.SoftBlur -> wallpaperTextShadow(textShadow = true)
-    DrawerBackground.Scrim, DrawerBackground.Blur -> wallpaperTextShadow(textShadow = false)
+    DrawerBackground.None, DrawerBackground.SoftBlur -> wallpaperTextShadow(textShadow = true, halo = 1f)
+    DrawerBackground.Scrim, DrawerBackground.Blur -> wallpaperTextShadow(textShadow = false, halo = 1f)
 }
 
 /** Blurs the wallpaper behind the window by up to [radius]; true while Android allows it. */
