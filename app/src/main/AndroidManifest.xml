@@ -118,12 +118,32 @@
         <intent>
             <action android:name="android.intent.action.WEB_SEARCH" />
         </intent>
+        <!-- Search: an app that opens a pasted web address (core/system/TextHandOff). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
         <!-- Search: the clock app that takes timers and alarms (core/system/ClockActions). -->
         <intent>
             <action android:name="android.intent.action.SET_TIMER" />
         </intent>
         <intent>
             <action android:name="android.intent.action.SET_ALARM" />
+        </intent>
+        <!-- The glance header's long press on the next alarm (core/system/AlarmDismiss). -->
+        <intent>
+            <action android:name="android.intent.action.DISMISS_ALARM" />
+        </intent>
+        <!-- Calendar card: Map hands an event's place to a maps app (core/calendar/CalendarActions). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="geo" />
         </intent>
         <!-- Sibling providers (core/siblings), release and debug builds. -->
         <provider android:authorities="com.wander.android.mono" />
@@ -218,6 +238,36 @@
             android:exported="true"
             android:icon="@drawable/sym_quiet"
             android:label="@string/quiet_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <!-- Quick Settings tile opening the drawer with search focused (core/tiles). An action, not a toggle. -->
+        <service
+            android:name=".core.tiles.SearchTileService"
+            android:exported="true"
+            android:icon="@drawable/sym_search"
+            android:label="@string/search_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!--
+          Quick Settings tile locking and unlocking Android 15's private space through Mono, the
+          default home app; unavailable on older Android and without a private space. A toggle.
+        -->
+        <service
+            android:name=".core.tiles.PrivateSpaceTileService"
+            android:exported="true"
+            android:icon="@drawable/sym_lock"
+            android:label="@string/private_tile_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />

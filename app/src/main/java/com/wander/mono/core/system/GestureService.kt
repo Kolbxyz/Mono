@@ -9,7 +9,7 @@ import javax.inject.Inject
 /**
  * Bound by Android once the user switches it on in accessibility settings. It receives no events
  * and cannot read any window (`res/xml/gesture_service.xml`): it only lends [GestureActions] the
- * global actions that lock the screen and open the notification shade.
+ * global actions that lock the screen and open the notification shade or quick settings.
  */
 @AndroidEntryPoint
 class GestureService : AccessibilityService() {

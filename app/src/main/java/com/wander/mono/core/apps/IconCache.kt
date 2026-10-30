@@ -5,14 +5,26 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
+import android.graphics.drawable.Drawable
 import android.util.LruCache
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
+import com.wander.mono.data.settings.IconSettings
+import com.wander.mono.data.settings.IconShape
 import com.wander.mono.data.settings.SYSTEM_ICON_PACK
+import com.wander.mono.data.settings.SettingsStore
+import com.wander.mono.di.AppScope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
 /**
@@ -20,19 +32,30 @@ import kotlinx.coroutines.withContext
  * the icon pack in use. Full-colour icons come from the chosen pack when it has one for the app,
  * else the app's own; they are profile-badged. Themed ones are not, the row's label carries the
  * work badge. Entries are evicted per package when `LauncherApps` reports a change, and all of
- * them when the chosen pack itself changes.
+ * them when the chosen pack itself changes. With an icon shape chosen, adaptive icons of Mono's
+ * own profile come unmasked ([fullBleedBitmap]) for the UI to cut; work icons keep the system's
+ * mask, which their badge sits on. Each icon carries its app's [AppIconImage.accent], read from
+ * the full-colour icon while it is decoded anyway (from the app's own icon for a themed one, which
+ * packs do not apply to), so rows and themed glyphs can take the app's colour at no extra load.
  */
 @Singleton
 class IconCache @Inject constructor(
     @ApplicationContext context: Context,
     private val profiles: Profiles,
     private val packs: IconPacks,
+    settings: SettingsStore,
+    @AppScope scope: CoroutineScope,
 ) {
-    private data class Entry(val key: AppKey, val themed: Boolean, val pack: String)
+    private data class Entry(val key: AppKey, val themed: Boolean, val pack: String, val unmasked: Boolean)
 
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
     private val packageManager = context.packageManager
     private val cache = LruCache<Entry, AppIconImage>(MAX_ICONS)
+
+    /** Whether a shape other than the system's is chosen; null until the setting is read. */
+    private val unmasked: StateFlow<Boolean?> = settings[IconSettings.Shape]
+        .map { it != IconShape.System }
+        .stateIn(scope, SharingStarted.Eagerly, null)
 
     /**
      * Null when the activity no longer exists, e.g. the app was just uninstalled. A [themed] request
@@ -40,7 +63,8 @@ class IconCache @Inject constructor(
      */
     suspend fun icon(key: AppKey, themed: Boolean, sizePx: Int): AppIconImage? {
         // Packs apply to full-colour icons only; themed icons are the apps' own glyphs.
-        val entry = Entry(key, themed, if (themed) SYSTEM_ICON_PACK else packs.current())
+        val unmask = unmasked.value ?: unmasked.filterNotNull().first()
+        val entry = Entry(key, themed, if (themed) SYSTEM_ICON_PACK else packs.current(), unmask)
         cache.get(entry)?.let { return it }
         return withContext(Dispatchers.IO) { load(entry, sizePx) }?.also { cache.put(entry, it) }
     }
@@ -55,16 +79,30 @@ class IconCache @Inject constructor(
     fun evictAll() = cache.evictAll()
 
     private fun load(entry: Entry, sizePx: Int): AppIconImage? = resolve(entry.key)?.let { info ->
-        val monochrome = if (entry.themed) monochromeBitmap(info.getIcon(0), sizePx) else null
-        monochrome?.let { AppIconImage(it.asImageBitmap(), isMonochrome = true) } ?: colourIcon(entry, info, sizePx)
+        val themed = if (entry.themed) themedIcon(info.getIcon(0), sizePx) else null
+        themed ?: colourIcon(entry, info, sizePx)
     }
 
-    /** The pack's icon for the activity when it has one, else the app's own; badged for its profile. */
+    /** The app's monochrome glyph, with the accent of the full-colour icon it stands in for. */
+    private fun themedIcon(own: Drawable, sizePx: Int): AppIconImage? = monochromeBitmap(own, sizePx)?.let {
+        AppIconImage(it.asImageBitmap(), isMonochrome = true, accent = own.accentColour())
+    }
+
+    /**
+     * The pack's icon for the activity when it has one, else the app's own; badged for its profile,
+     * or unmasked when a shape is chosen and the icon is adaptive.
+     */
     private fun colourIcon(entry: Entry, info: LauncherActivityInfo, sizePx: Int): AppIconImage {
-        val fromPack = packs.icon(entry.pack, entry.key.packageName, entry.key.className)
-            ?.let { packageManager.getUserBadgedIcon(it, info.user) }
-        val icon = fromPack ?: info.getBadgedIcon(0)
-        return AppIconImage(icon.toBitmap(sizePx, sizePx).asImageBitmap(), isMonochrome = false)
+        val packIcon = packs.icon(entry.pack, entry.key.packageName, entry.key.className)
+        if (entry.unmasked && info.user == profiles.main) {
+            fullBleedBitmap(packIcon ?: info.getIcon(0), sizePx)?.let { bitmap ->
+                val accent = bitmap.accentColour()
+                return AppIconImage(bitmap.asImageBitmap(), isMonochrome = false, isFullBleed = true, accent = accent)
+            }
+        }
+        val icon = packIcon?.let { packageManager.getUserBadgedIcon(it, info.user) } ?: info.getBadgedIcon(0)
+        val bitmap = icon.toBitmap(sizePx, sizePx)
+        return AppIconImage(bitmap.asImageBitmap(), isMonochrome = false, accent = bitmap.accentColour())
     }
 
     private fun resolve(key: AppKey): LauncherActivityInfo? {

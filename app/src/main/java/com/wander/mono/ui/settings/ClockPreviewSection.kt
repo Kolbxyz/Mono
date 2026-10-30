@@ -1,5 +1,10 @@
 package com.wander.mono.ui.settings
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,16 +19,31 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.ui.components.SegmentOuter
+import com.wander.mono.ui.home.Glance
 import com.wander.mono.ui.home.GlanceContent
 
 /**
  * The home clock as the settings below shape it, live: same face, lines and chips as home, with
- * nothing to tap. Hidden from TalkBack, which reads the settings themselves.
+ * nothing to tap. Hidden from TalkBack, which reads the settings themselves. Its sources (the
+ * clock tick, battery and alarm broadcasts) answer only once registered, so the preview grows in
+ * rather than appearing in one frame and pushing the rows below.
  */
 @Composable
 fun ClockPreviewSection(preview: ClockPreviewViewModel = viewModel()) {
     val glance by preview.glance.collectAsStateWithLifecycle()
-    val shown = glance ?: return
+    val motion = MaterialTheme.motionScheme
+    AnimatedVisibility(
+        visible = glance != null,
+        enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
+        exit = shrinkVertically(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+    ) {
+        // Never null again once read: the view model keeps its last glance.
+        glance?.let { ClockPreview(it) }
+    }
+}
+
+@Composable
+private fun ClockPreview(shown: Glance) {
     Box(
         Modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)

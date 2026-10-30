@@ -14,10 +14,9 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
+import com.wander.mono.ui.components.rememberMonoHaptics
 import kotlin.math.abs
 
 /**
@@ -62,7 +61,7 @@ internal fun Modifier.skipSwipe(
     val density = LocalDensity.current
     val distance = with(density) { SKIP_DISTANCE.toPx() }
     val flingVelocity = with(density) { SKIP_FLING_VELOCITY.toPx() }
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val settle = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val currentOnSkip by rememberUpdatedState(onSkip)
     var drag by remember { mutableFloatStateOf(0f) }
@@ -73,7 +72,7 @@ internal fun Modifier.skipSwipe(
     val state = rememberDraggableState { delta ->
         drag += delta
         val past = skipDirectionFor(drag, 0f, distance, flingVelocity, canNext, canPrevious) != null
-        if (past && !armed) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+        if (past && !armed) haptics.threshold()
         armed = past
     }
     return draggable(
@@ -83,7 +82,7 @@ internal fun Modifier.skipSwipe(
         onDragStarted = { settling.stop() },
         onDragStopped = { velocity ->
             skipDirectionFor(drag, velocity, distance, flingVelocity, canNext, canPrevious)?.let {
-                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                haptics.confirm()
                 currentOnSkip(it)
             }
             armed = false

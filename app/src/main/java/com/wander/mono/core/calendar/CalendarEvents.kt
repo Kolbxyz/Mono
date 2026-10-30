@@ -76,7 +76,7 @@ class CalendarEvents @Inject constructor(
             val zone = ZoneId.systemDefault()
             val events = query(now, zone)
             boundary = nextBoundary(events, now, zone)
-            emit(CalendarAgenda(upcomingEvents(events, now), now, calendarApp()))
+            emit(CalendarAgenda(upcomingEvents(events, now), now, calendarApp(), canOpenMaps()))
         }
     }.flowOn(Dispatchers.IO)
 
@@ -94,6 +94,7 @@ class CalendarEvents @Inject constructor(
         val allDay = getInt(COL_ALL_DAY) != 0
         val begin = getLong(COL_BEGIN)
         val end = getLong(COL_END)
+        val location = getString(COL_LOCATION)?.trim()?.ifEmpty { null }
         return CalendarEvent(
             eventId = getLong(COL_EVENT_ID),
             title = getString(COL_TITLE).orEmpty(),
@@ -101,8 +102,14 @@ class CalendarEvents @Inject constructor(
             end = if (allDay) allDayToLocal(end, zone) else end,
             allDay = allDay,
             declined = getInt(COL_STATUS) == Attendees.ATTENDEE_STATUS_DECLINED,
+            location = location,
+            meetingUrl = meetingLinkIn(location) ?: meetingLinkIn(getString(COL_DESCRIPTION)),
         )
     }
+
+    /** Whether any app shows a place, resolved with the read so the card never offers a dead Map. */
+    private fun canOpenMaps(): Boolean =
+        context.packageManager.resolveActivity(mapIntent(""), PackageManager.MATCH_DEFAULT_ONLY) != null
 
     /** The default calendar app; with no default set the resolver is the system chooser, so null. */
     private fun calendarApp(): String? {
@@ -122,6 +129,8 @@ class CalendarEvents @Inject constructor(
             Instances.END,
             Instances.ALL_DAY,
             Instances.SELF_ATTENDEE_STATUS,
+            Instances.EVENT_LOCATION,
+            Instances.DESCRIPTION,
         )
         const val COL_EVENT_ID = 0
         const val COL_TITLE = 1
@@ -129,5 +138,7 @@ class CalendarEvents @Inject constructor(
         const val COL_END = 3
         const val COL_ALL_DAY = 4
         const val COL_STATUS = 5
+        const val COL_LOCATION = 6
+        const val COL_DESCRIPTION = 7
     }
 }

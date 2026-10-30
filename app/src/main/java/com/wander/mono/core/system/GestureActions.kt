@@ -16,9 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Locking the screen and pulling down the notification shade from home, which only an
- * accessibility service may do. [GestureService] binds itself here while the user has it switched
- * on; until then each action fails with a message instead of doing nothing.
+ * Locking the screen and pulling down the notification shade or quick settings from home, which
+ * only an accessibility service may do. [GestureService] binds itself here while the user has it
+ * switched on; until then each action fails with a message instead of doing nothing.
  */
 @Singleton
 class GestureActions @Inject constructor(@ApplicationContext private val context: Context) {
@@ -41,6 +41,8 @@ class GestureActions @Inject constructor(@ApplicationContext private val context
     }
 
     fun openNotifications(): ActionResult = run(AccessibilityService.GLOBAL_ACTION_NOTIFICATIONS)
+
+    fun openQuickSettings(): ActionResult = run(AccessibilityService.GLOBAL_ACTION_QUICK_SETTINGS)
 
     /** Android's accessibility page, where the user switches the gesture service on once. */
     fun openAccessSettings(): ActionResult = try {

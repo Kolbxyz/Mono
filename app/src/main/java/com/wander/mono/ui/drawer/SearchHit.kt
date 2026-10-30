@@ -3,6 +3,8 @@ package com.wander.mono.ui.drawer
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.contacts.Contact
+import com.wander.mono.core.notifications.NotificationPreview
+import com.wander.mono.core.notifications.PreviewConversation
 import com.wander.mono.core.siblings.WandaTrack
 import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.ui.components.AppBadge
@@ -10,13 +12,16 @@ import java.util.Locale
 
 /**
  * One search result: an app (hidden ones included), a shortcut, a sum or conversion, a timer or
- * alarm, a contact, a song, a settings page or the web.
+ * alarm, a link or text to hand off, a contact, a notification, a song, a settings page or the web.
  */
 sealed interface SearchHit {
     val key: String
     val label: String
 
-    data class App(val entry: DrawerEntry) : SearchHit {
+    /** The characters of [label] the query matched, highlighted in its row; empty for none. */
+    val matched: List<IntRange> get() = emptyList()
+
+    data class App(val entry: DrawerEntry, override val matched: List<IntRange> = emptyList()) : SearchHit {
         override val key: String get() = "app:${entry.app.key.encode()}"
         override val label: String get() = entry.app.label
     }
@@ -29,6 +34,7 @@ sealed interface SearchHit {
         val shortcut: AppShortcut,
         val owner: LaunchableApp?,
         val badge: AppBadge = AppBadge.None,
+        override val matched: List<IntRange> = emptyList(),
     ) : SearchHit {
         override val key: String get() = "shortcut:${shortcut.userSerial}/${shortcut.packageName}/${shortcut.id}"
         override val label: String get() = shortcut.label
@@ -52,7 +58,20 @@ sealed interface SearchHit {
         override val label: String get() = "%02d:%02d".format(Locale.ROOT, time.hour, time.minute)
     }
 
-    data class Person(val contact: Contact) : SearchHit {
+    /** The query read as a web address; tapping opens it in the app that takes it. */
+    data class Link(val url: String) : SearchHit {
+        override val key: String get() = "link"
+        override val label: String get() = url
+    }
+
+    /** Pasted text (or a link) handed to another app through Android's share sheet. */
+    data class ShareText(val text: String) : SearchHit {
+        override val key: String get() = "share"
+        override val label: String get() = text
+    }
+
+    /** The contact's phone and email decide which of its Call, Message and Email actions show. */
+    data class Person(val contact: Contact, override val matched: List<IntRange> = emptyList()) : SearchHit {
         override val key: String get() = "contact:${contact.id}"
         override val label: String get() = contact.name
     }
@@ -63,7 +82,25 @@ sealed interface SearchHit {
         override val label: String get() = track.title
     }
 
-    data class Setting(val page: SettingsPage) : SearchHit {
+    /**
+     * A posted notification of [app] whose title or text matched, as much of it as its redaction
+     * lets show: one [conversation] of the app's expanded preview, or the [preview] itself when it
+     * has none. Tapping fires its own tap intent. [matched] is in [title], [textMatched] in [text].
+     */
+    data class Notice(
+        val preview: NotificationPreview,
+        val conversation: PreviewConversation?,
+        val app: LaunchableApp,
+        val title: String,
+        val text: String?,
+        override val matched: List<IntRange> = emptyList(),
+        val textMatched: List<IntRange> = emptyList(),
+    ) : SearchHit {
+        override val key: String get() = "notice:${conversation?.key ?: preview.key}"
+        override val label: String get() = title
+    }
+
+    data class Setting(val page: SettingsPage, override val matched: List<IntRange> = emptyList()) : SearchHit {
         override val key: String get() = "setting:${page.id}"
         override val label: String get() = page.label
     }

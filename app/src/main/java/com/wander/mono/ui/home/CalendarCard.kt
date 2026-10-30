@@ -29,18 +29,24 @@ import java.time.ZoneId
 import java.util.Locale
 
 /**
- * The next few events, one calm line each: when, then what. Tapping a line opens that event. Above
+ * The next few events, one calm line each: when, then what. Tapping a line opens that event; the
+ * next one may also offer Join (a meeting link) and Map (its location) as tonal chips. Above
  * 1.5× font scale the time goes above the title, which then keeps the full width.
  */
 @Composable
 fun CalendarCard(row: CalendarRow, onOpen: (CalendarEvent) -> Unit, modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = modifier.fillMaxWidth().padding(vertical = HomeCardMargin),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
-        Column(Modifier.padding(vertical = 8.dp)) {
-            row.events.forEach { event -> EventLine(event, row.at, onOpen) }
+        // Lines pad themselves, so their touch targets reach the card's edges and the text sits at its inset.
+        Column(Modifier.padding(vertical = HomeCardInset - LINE_PADDING)) {
+            row.events.forEachIndexed { index, event ->
+                EventLine(event, row.at, onOpen)
+                // Only the next event offers Join and Map, so the card stays calm.
+                if (index == 0) CalendarEventActions(event, row.canOpenMaps)
+            }
         }
     }
 }
@@ -52,7 +58,7 @@ private fun EventLine(event: CalendarEvent, at: Long, onOpen: (CalendarEvent) ->
         .fillMaxWidth()
         .heightIn(min = MIN_LINE_HEIGHT)
         .clickable(onClickLabel = stringResource(R.string.action_open_event)) { onOpen(event) }
-        .padding(horizontal = 16.dp, vertical = 8.dp)
+        .padding(horizontal = HomeCardInset, vertical = LINE_PADDING)
     if (isLargeFontScale()) {
         Column(line) {
             WhenText(event, at)
@@ -103,6 +109,7 @@ private fun timeLabel(begin: Long, at: Long, timeSkeleton: String, locale: Local
 }
 
 private const val WEEKDAY_SKELETON = "EEE"
+private val LINE_PADDING = 8.dp
 private val WHEN_WIDTH = 72.dp
 
 /** Each line is its own touch target (spec 9). */

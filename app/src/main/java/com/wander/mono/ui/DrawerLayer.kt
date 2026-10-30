@@ -72,9 +72,12 @@ fun DrawerLayer(
  */
 fun Modifier.fadeBehindDrawer(motion: DrawerMotion): Modifier = graphicsLayer { alpha = 1f - motion.shown }
 
-/** Home's content behind the drawer shrinks back a little as the drawer rises; its scrim does not. */
+/**
+ * Home's content behind the drawer shrinks back as the drawer rises, as far as under any
+ * full-screen overlay ([OverlayLevel.Screen]); its scrim does not.
+ */
 fun Modifier.shrinkBehindDrawer(motion: DrawerMotion): Modifier = graphicsLayer {
-    val scale = lerp(1f, HOME_SCALE, motion.shown)
+    val scale = lerp(1f, OverlayLevel.Screen.scale, motion.shown)
     scaleX = scale
     scaleY = scale
 }
@@ -84,5 +87,3 @@ fun Modifier.shrinkBehindDrawer(motion: DrawerMotion): Modifier = graphicsLayer 
  * must use the same share so a drag maps to exactly that distance.
  */
 const val TRAVEL_FRACTION = 1f / 3f
-
-private const val HOME_SCALE = 0.92f
