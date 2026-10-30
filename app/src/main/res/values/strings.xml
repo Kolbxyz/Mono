@@ -81,12 +81,12 @@
     <!-- Settings -->
     <string name="settings_title">Settings</string>
     <string name="settings_theme">Theme</string>
-    <string name="settings_theme_mode">Appearance</string>
+    <string name="settings_theme_mode">Light or dark</string>
     <string name="settings_theme_system">System</string>
     <string name="settings_theme_light">Light</string>
     <string name="settings_theme_dark">Dark</string>
-    <string name="settings_amoled_black">AMOLED black</string>
-    <string name="settings_home_look">Home</string>
+    <string name="settings_amoled_black">Pure black</string>
+    <string name="settings_home_look">Layout</string>
     <string name="settings_text_shadow">Text shadow</string>
     <string name="settings_accessibility">Accessibility</string>
     <string name="settings_high_contrast_text">High contrast text</string>
@@ -97,7 +97,6 @@
     <string name="settings_icon_text_only">Text only</string>
 
     <!-- Badges -->
-    <string name="settings_badges">Notification badges</string>
     <string name="settings_badge_counts">Show unread count</string>
     <string name="settings_badge_counts_summary">Off shows a dot instead</string>
 
@@ -111,10 +110,10 @@
     <string name="quiet_gate_show_all">Show all apps</string>
     <string name="quiet_gate_back">Back to home</string>
     <string name="settings_quiet">Quiet mode</string>
-    <string name="settings_quiet_mode">Quiet mode</string>
+    <string name="settings_quiet_mode">Use quiet mode</string>
     <string name="settings_quiet_apps">Apps that stay on home</string>
     <string name="settings_quiet_apps_empty">Add favourites to home first</string>
-    <string name="settings_quiet_dnd">Turn on Do Not Disturb with quiet mode</string>
+    <string name="settings_quiet_dnd">Also turn on Do Not Disturb</string>
     <string name="settings_quiet_dnd_grant">Do Not Disturb with quiet mode</string>
 
     <!-- Hidden apps -->
@@ -134,14 +133,13 @@
     <string name="sheet_usage_under_minute">Today: under a minute</string>
     <string name="sheet_usage_minutes">Today: %1$d min</string>
     <string name="sheet_usage_hours">Today: %1$d h %2$d min</string>
-    <string name="settings_usage">App usage</string>
-    <string name="settings_usage_in_sheet">Show today\'s time in app options</string>
+    <string name="settings_usage_in_sheet">Today\'s time in app options</string>
 
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_export">Save to a file</string>
-    <string name="settings_backup_export_summary">Favourites, hidden apps, names, live rows, quiet and headphone apps and settings, in a file you choose. Widgets are not included.</string>
+    <string name="settings_backup_export_summary">Favourites, names, hidden apps and settings. Not widgets.</string>
     <string name="settings_backup_import">Restore from a file</string>
-    <string name="settings_backup_import_summary">Replaces your favourites and settings with a saved backup</string>
+    <string name="settings_backup_import_summary">Replaces your favourites and settings</string>
     <string name="backup_unlock_title">Unlock to include hidden apps</string>
     <string name="backup_restore_title">Restore this backup?</string>
     <string name="backup_restore_text">It replaces your favourites, hidden apps, names, live rows, quiet and headphone apps and settings. Widgets on home stay as they are.</string>
@@ -157,7 +155,6 @@
     <string name="backup_error_restore">Restoring stopped partway. Try again.</string>
     <string name="backup_error_no_picker">No app on this phone can pick a file</string>
     <!-- Notification previews -->
-    <string name="settings_previews">Notification previews</string>
     <string name="settings_previews_show">Show notification previews</string>
     <string name="preview_hidden">New notification</string>
     <string name="preview_reply">Reply</string>
@@ -198,7 +195,6 @@
     <string name="search_alarm">Set an alarm for %1$s</string>
     <string name="search_alarm_kind">Alarm in your clock app</string>
     <string name="action_set">Set</string>
-    <string name="settings_search">Search</string>
     <string name="settings_search_contacts">Search contacts</string>
 
     <!-- Edit mode -->
@@ -219,8 +215,8 @@
     <string name="sheet_rename">Rename</string>
     <string name="sheet_headphones_top">First on home with headphones</string>
     <string name="settings_headphones">Headphones</string>
-    <string name="settings_headphones_lift">Media apps first</string>
-    <string name="settings_headphones_lift_summary">While headphones are connected, the favourites you choose from their options move to the top of home.</string>
+    <string name="settings_headphones_lift">Apps first with headphones</string>
+    <string name="settings_headphones_lift_summary">Pick them in a favourite\'s options</string>
     <string name="rename_title">Rename app</string>
     <string name="rename_field">Name</string>
     <string name="rename_original">Original name: %1$s</string>

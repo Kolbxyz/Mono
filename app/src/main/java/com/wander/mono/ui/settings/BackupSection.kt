@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -11,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,10 +70,10 @@ fun BackupSection(backup: BackupViewModel = viewModel()) {
         }
     }
     SettingsGroup(R.string.settings_backup) {
-        ActionRow(R.string.settings_backup_export, R.string.settings_backup_export_summary) {
+        ActionRow(R.string.settings_backup_export, R.string.settings_backup_export_summary, R.drawable.sym_download) {
             guarded(BackupStep.Export)
         }
-        ActionRow(R.string.settings_backup_import, R.string.settings_backup_import_summary) {
+        ActionRow(R.string.settings_backup_import, R.string.settings_backup_import_summary, R.drawable.sym_upload) {
             guarded(BackupStep.Import)
         }
     }
@@ -99,6 +101,7 @@ private fun fileName() = "mono-backup-${LocalDate.now()}"
 private fun RestoreDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { Icon(painterResource(R.drawable.sym_upload), contentDescription = null) },
         title = { Text(stringResource(R.string.backup_restore_title)) },
         text = { Text(stringResource(R.string.backup_restore_text)) },
         confirmButton = { TextButton(onClick = onConfirm) { Text(stringResource(R.string.backup_restore_confirm)) } },

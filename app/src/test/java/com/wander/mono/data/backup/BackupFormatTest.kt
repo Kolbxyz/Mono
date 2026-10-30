@@ -1,8 +1,11 @@
 package com.wander.mono.data.backup
 
 import com.wander.mono.core.apps.AppKey
+import com.wander.mono.data.HomeFolder
 import com.wander.mono.data.LiveRowKind
 import com.wander.mono.data.LiveRowRef
+import com.wander.mono.data.Routine
+import com.wander.mono.data.SwipeAction
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.SettingValue
 import com.wander.mono.data.settings.ThemeMode
@@ -27,6 +30,13 @@ class BackupFormatTest {
             .replace(SettingValue(ThemeSettings.Mode, ThemeMode.Dark))
             .replace(SettingValue(BadgeSettings.ShowCounts, false)),
         lockedApps = setOf(work),
+        structure = HomeStructure(
+            folders = listOf(HomeFolder("talk", "Talk", listOf(work, mail))),
+            swipes = mapOf(mail to SwipeAction.AppInfo, work to SwipeAction.Shortcut("room|1")),
+            mutedApps = setOf(work),
+            dailyLimits = mapOf(mail to 30),
+            routines = listOf(Routine(start = 1320, end = 60, apps = setOf(mail))),
+        ),
     )
 
     @Test
@@ -87,6 +97,42 @@ class BackupFormatTest {
     fun `a file from before app lock locks nothing`() {
         val read = decode(BackupFormat.encode(backup) - "lockedApps") as BackupRead.Read
         assertEquals(emptySet<AppKey>(), read.backup.lockedApps)
+    }
+
+    @Test
+    fun `a file from before home's structure restores none of it`() {
+        val structure = listOf("folders", "swipeLeft", "mutedOnHome", "dailyLimits", "routines")
+        val tree = BackupFormat.encode(backup) - structure
+        val read = decode(tree) as BackupRead.Read
+        assertEquals(HomeStructure(), read.backup.structure)
+        assertEquals(backup.favorites, read.backup.favorites)
+    }
+
+    @Test
+    fun `damaged structure makes the whole file malformed`() {
+        val damaged = listOf(
+            "folders" to listOf(mapOf("id" to "talk", "name" to " ", "apps" to emptyList<String>())),
+            "folders" to listOf(mapOf("id" to "talk", "name" to "Talk", "apps" to listOf("not a key"))),
+            "swipeLeft" to mapOf(mail.encode() to "wave"),
+            "mutedOnHome" to mail.encode(),
+            "dailyLimits" to mapOf(mail.encode() to 0),
+            "routines" to listOf(mapOf("start" to 1440, "end" to 60, "apps" to emptyList<String>())),
+        )
+        damaged.forEach { field ->
+            val tree = BackupFormat.encode(backup) + field
+            assertEquals(field.toString(), BackupRead.Failed(BackupError.Malformed), decode(tree))
+        }
+    }
+
+    @Test
+    fun `remapping moves home's structure with the other keys`() {
+        val moved = backup.remapped(mainSerial = 5) { serial -> if (serial == 0L) 5L else null }
+        val mailHere = mail.copy(userSerial = 5)
+        assertEquals(listOf(HomeFolder("talk", "Talk", listOf(mailHere))), moved.structure.folders)
+        assertEquals(mapOf(mailHere to SwipeAction.AppInfo), moved.structure.swipes)
+        assertEquals(emptySet<AppKey>(), moved.structure.mutedApps)
+        assertEquals(setOf(mailHere), moved.structure.routines.single().apps)
+        assertEquals(setOf(0L, 10L), backup.serials)
     }
 
     @Test
