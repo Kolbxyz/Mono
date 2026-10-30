@@ -21,13 +21,13 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchSource
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarEvent
-import com.wander.mono.data.SwipeAction
 import com.wander.mono.core.widgets.MonoWidgetHostView
+import com.wander.mono.data.SwipeAction
+import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.ui.edit.ReorderableWidget
-import com.wander.mono.ui.home.live.LiveActivityCard
 import com.wander.mono.ui.edit.SwipeLeft
 import com.wander.mono.ui.home.folders.FolderOverlays
 import com.wander.mono.ui.home.folders.FolderRow
@@ -35,6 +35,7 @@ import com.wander.mono.ui.home.folders.FolderViewModel
 import com.wander.mono.ui.home.folders.flattenFolders
 import com.wander.mono.ui.home.folders.folderMemberKeys
 import com.wander.mono.ui.home.folders.openFolders
+import com.wander.mono.ui.home.live.LiveActivityCard
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
@@ -77,6 +78,8 @@ internal fun HomeList(
     val open by folders.open.collectAsStateWithLifecycle()
     val swipes by extras.swipes.collectAsStateWithLifecycle()
     val overLimit by extras.overLimit.collectAsStateWithLifecycle()
+    // A preview lines up with its favourite's name, so it reads as that app's.
+    val previewStart = favoriteRowMetrics(LocalRowDensity.current).labelStart(icons.mode != IconMode.TextOnly)
     // Usage has no event: today's time is read again each time home comes back.
     LifecycleStartEffect(extras) {
         extras.recheckUsage()
@@ -160,9 +163,9 @@ internal fun HomeList(
                     ),
                 )
                 HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
-                is NotificationRow -> NotificationPreviewRow(row, animated, previews)
+                is NotificationRow -> NotificationPreviewRow(row, animated.padding(start = previewStart), previews)
                 is CalendarRow -> CalendarCard(row, onOpenEvent, animated)
-                is LiveActivityRow -> LiveActivityCard(row, animated)
+                is LiveActivityRow -> LiveActivityCard(row, icons, animated)
                 is WidgetHomeRow -> if (editing.active) {
                     ReorderableWidget(row, movable, flat.orEmpty(), editing, animated)
                 } else {
