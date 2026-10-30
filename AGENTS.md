@@ -1,6 +1,6 @@
 # Mono
 
-Minimalist Android launcher in the Niagara style: one vertical list of favourites with live rows (now playing) inline, and an alphabetical drawer with search. Built for GrapheneOS. Strict Material 3 Expressive. Battery- and privacy-first: no network permission, zero telemetry, no Google services.
+Minimalist Android launcher in the Niagara style: one vertical list of favourites with live rows (previews, calendar, live activities, widgets) inline, the now-playing player under the clock, and an alphabetical drawer with search. Built for GrapheneOS. Strict Material 3 Expressive. Battery- and privacy-first: no network permission, zero telemetry, no Google services.
 
 ## 1. Non-Negotiable Hard Rules
 
@@ -10,7 +10,7 @@ Minimalist Android launcher in the Niagara style: one vertical list of favourite
 | **No network, ever** | No `INTERNET` permission. A launcher has nothing to fetch; nothing leaves the device. |
 | **`LauncherApps` is the app source** | Apps, profiles, shortcuts, launch, app info: always through `LauncherApps`, so work profiles behave. |
 | **No polling** | React to `LauncherApps.Callback`, broadcasts and listener callbacks; re-check only on `onStart` what has no event. |
-| **Rows, not screens** | The home list is a sealed `HomeRow`; live content (media, widgets) is a row under its app, unless the user placed it (now playing, in edit mode). |
+| **Rows, not screens** | The home list is a sealed `HomeRow`; live content (previews, calendar, live activities, widgets) is a row under its app. Now playing is not a row: it is the player in the glance header, under the clock. |
 | **Strict Material 3 Expressive** | `MaterialExpressiveTheme`, wallpaper dynamic color, motion from `MaterialTheme.motionScheme`, never hand-rolled `spring()`. |
 | **Explicit window insets** | Edge-to-edge needs manual container-edge padding. |
 | **No Google services** | No Play Services, Firebase or GMS fonts. |
@@ -28,7 +28,7 @@ Single module `:app`, package root `com.wander.mono`.
 | --- | --- |
 | `core/apps` | `LauncherApps` catalog, profile callbacks, shortcuts, icon cache, launch / app info / uninstall. |
 | `core/notifications` | `MonoNotificationListener`, per-app notification counts and previews, live activities (ongoing timers, navigation, progress), notification-access state; opening, replying and buttons (through the app lock). |
-| `core/media` | Active media sessions (through the listener's grant) and the playing item. |
+| `core/media` | Active media sessions (through the listener's grant), the playing item and opening its app (`PlayerApp`, through the app lock). |
 | `core/calendar` | Opt-in upcoming events (`READ_CALENDAR`) from `CalendarContract.Instances`, observed, re-read only at event boundaries. |
 | `core/system` | Clock tick and next alarm (and dismissing it), battery, from system broadcasts; wallpaper colours and hints; settings pages, web search and text hand-offs, clipboard, gestures. |
 | `core/contacts` | Opt-in contact lookup by name for search (`READ_CONTACTS`), never cached. |
@@ -42,12 +42,12 @@ Single module `:app`, package root `com.wander.mono`.
 | `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, locked apps, home structure (folders, swipes, muted apps, limits, routines), settings (no widgets); optionally encrypted with a passphrase. |
 | `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
-| `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / preview / calendar / prompt rows, quiet and routine filters. |
+| `ui/home` | Glance header with the now-playing player under the clock (`NowPlayingCard`, `HomePlayerSlot`), `HomeRow` assembly, favourite / preview / calendar / prompt rows, the list's position, quiet and routine filters. |
 | `ui/home/live` | Live activity rows: timer, navigation and progress cards under their app. |
 | `ui/home/folders` | Folder rows, their tile, overlays and naming dialog. |
-| `ui/home/media` | Now-playing parts: art, transport shapes, playback clock. |
+| `ui/home/media` | The player's parts: its expansion (collapse on outside tap, back, scroll), head (art morph, words, strip transport), scrub line, blurred backdrop, app chip, expanded controls, transport shapes, playback clock. |
 | `ui/drawer` | Alphabetical list, letter rail, ranked search (calculator, apps, shortcuts, contacts, settings, web hand-off). |
-| `ui/edit` | Edit mode: drag reorder of favourites and widgets, live-row toggles, floating toolbar. |
+| `ui/edit` | Edit mode: drag reorder of favourites and widgets, live-row toggles, floating toolbar (with the list position slider). |
 | `ui/widgets` | Widget picker, widget options and size sheets. |
 | `ui/onboarding` | First-run steps (home, favourites, notification access, calendar) and the one-time swipe hint. |
 | `ui/quiet` | Quiet mode's drawer gate and its view model. |

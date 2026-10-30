@@ -203,7 +203,7 @@
         </activity>
 
         <!--
-          Notification counts (dots) and the media sessions behind the now-playing row. Only reads
+          Notification counts (dots) and the media sessions behind the now-playing player. Only reads
           what the system hands it; nothing leaves the process.
         -->
         <service

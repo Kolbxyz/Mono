@@ -1,5 +1,6 @@
 package com.wander.mono.core.media
 
+import android.app.PendingIntent
 import android.content.Context
 import android.media.MediaMetadata
 import android.media.session.MediaController
@@ -71,6 +72,9 @@ class MediaSessions @Inject constructor(
     fun openOutputSwitcher() {
         current?.let { outputs.openSwitcher(it.packageName) }
     }
+
+    /** The playing app's own screen for this session, when it names one. */
+    fun sessionActivity(): PendingIntent? = current?.sessionActivity
 
     private fun sessions(): Flow<MediaState> = callbackFlow {
         val handler = Handler(Looper.getMainLooper())

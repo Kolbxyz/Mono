@@ -109,6 +109,15 @@ class BackupFormatTest {
     }
 
     @Test
+    fun `a file from before now playing moved under the clock reads, its placement and switch ignored`() {
+        val tree = BackupFormat.encode(backup) + mapOf(
+            "nowPlayingAnchor" to "top",
+            "liveRowsOff" to listOf("now_playing|${mail.encode()}", "notification_preview|${mail.encode()}"),
+        )
+        assertEquals(BackupRead.Read(backup), decode(tree))
+    }
+
+    @Test
     fun `damaged structure makes the whole file malformed`() {
         val damaged = listOf(
             "folders" to listOf(mapOf("id" to "talk", "name" to " ", "apps" to emptyList<String>())),

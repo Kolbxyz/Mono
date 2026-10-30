@@ -1,7 +1,6 @@
 package com.wander.mono.data.backup
 
 import com.wander.mono.data.HomeFolder
-import com.wander.mono.data.NowPlayingAnchor
 import com.wander.mono.data.Routine
 import com.wander.mono.data.SwipeAction
 import com.wander.mono.data.cleanFolderName
@@ -9,7 +8,8 @@ import com.wander.mono.data.cleanFolderName
 /**
  * [HomeStructure]'s fields of the backup file. Each is optional, since files written before they
  * existed lack them: a missing field restores nothing, but one that is there and damaged makes the
- * whole file malformed, as any other field does.
+ * whole file malformed, as any other field does. Files from before now playing moved under the
+ * clock may also hold "nowPlayingAnchor", where it was placed in the list; it is no longer read.
  */
 internal object StructureFormat {
     fun encode(structure: HomeStructure): Map<String, Any> = buildMap<String, Any> {
@@ -28,8 +28,6 @@ internal object StructureFormat {
                 mapOf("start" to routine.start, "end" to routine.end, "apps" to routine.apps.map { it.encode() })
             },
         )
-        // Left out while the card follows its app, as in a file from before it could be placed.
-        structure.nowPlaying?.let { put(NOW_PLAYING, it.encode()) }
     }
 
     fun read(tree: Map<String, Any?>): HomeStructure = HomeStructure(
@@ -41,7 +39,6 @@ internal object StructureFormat {
         dailyLimits = tree.optionalField<Map<*, *>>(LIMITS, emptyMap<Any?, Any?>()).entries
             .associate { (key, minutes) -> appKey(key) to minutes(minutes) },
         routines = tree.optionalField<List<*>>(ROUTINES, emptyList<Any?>()).map(::routine).take(Routine.MAX),
-        nowPlaying = tree[NOW_PLAYING]?.let { NowPlayingAnchor.decode(string(it)) ?: throw MalformedBackup() },
     )
 
     private fun folder(value: Any?): HomeFolder {
@@ -72,7 +69,6 @@ internal object StructureFormat {
     private const val MUTED = "mutedOnHome"
     private const val LIMITS = "dailyLimits"
     private const val ROUTINES = "routines"
-    private const val NOW_PLAYING = "nowPlayingAnchor"
 
     /** A day's worth of minutes: no limit can be longer, and no time of day later. */
     private const val MAX_LIMIT = 24L * 60

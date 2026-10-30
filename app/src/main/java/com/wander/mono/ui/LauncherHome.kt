@@ -14,18 +14,21 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.home.HeroPull
 import com.wander.mono.ui.home.HomeLookViewModel
+import com.wander.mono.ui.home.HomePlayerSlot
 import com.wander.mono.ui.home.HomeScreen
 import com.wander.mono.ui.home.HomeScrimLayer
 import com.wander.mono.ui.home.HomeShellViewModel
 import com.wander.mono.ui.home.HomeViewModel
 import com.wander.mono.ui.home.ScrimEdges
+import com.wander.mono.ui.home.media.collapsesPlayerOutside
+import com.wander.mono.ui.home.rememberHomePlayerExpansion
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.widgets.WidgetsViewModel
 
 /**
  * Home wired to the launcher, the same over the whole window or as the wide layout's left pane.
  * [covered] is true while the drawer or settings hides it, so a just-added favourite pulses only
- * once home is in view again.
+ * once home is in view again, and the player under the clock goes back to how it starts.
  */
 @Composable
 fun LauncherHome(
@@ -54,6 +57,8 @@ fun LauncherHome(
     val shell by shellModel.shell.collectAsStateWithLifecycle()
     val doubleTapLock by gestures.doubleTapLock.collectAsStateWithLifecycle()
     val heroProgress = remember(hero) { { hero.progress } }
+    val player by home.player.collectAsStateWithLifecycle()
+    val expansion = rememberHomePlayerExpansion(listState, covered)
     HomeScreen(
         rows = rows,
         lifted = lifted,
@@ -68,12 +73,6 @@ fun LauncherHome(
         onLaunch = home::launch,
         onLongPress = { sheet.show(it.key) },
         onAppInfo = { sheet.openAppInfo(it.key) },
-        onTogglePlay = home::togglePlayPause,
-        onSkipNext = home::skipNext,
-        onSkipPrevious = home::skipPrevious,
-        onSeek = home::seekTo,
-        onPlayQueueItem = home::playQueueItem,
-        onOpenOutput = home::openOutputSwitcher,
         onGrantAccess = home::openListenerSettings,
         onOpenEvent = home::openEvent,
         onOpenDrawer = { launcher.openDrawer() },
@@ -82,14 +81,17 @@ fun LauncherHome(
         onDoubleTap = if (doubleTapLock) gestures::lockScreen else null,
         onHomeOptions = { launcher.showHomeOptions(true) },
         onClockOptions = { launcher.showClockSheet(true) },
-        onMediaOptions = { launcher.showMediaSheet(true) },
         createWidgetView = widgets::createView,
         onWidgetLongPress = { widgets.showOptions(it.widget.placement.appWidgetId) },
         scrimEdges = scrimEdges,
-        modifier = modifier,
+        // A press anywhere on home outside the expanded player collapses it.
+        modifier = modifier.collapsesPlayerOutside(expansion),
         contentModifier = contentModifier,
         shell = shell,
         hero = heroProgress,
+        nowPlaying = { compact ->
+            HomePlayerSlot(player, expansion, home, icons, compact, onOptions = { launcher.showMediaSheet(true) })
+        },
     )
 }
 
