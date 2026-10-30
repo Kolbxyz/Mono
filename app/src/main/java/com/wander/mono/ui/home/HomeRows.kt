@@ -43,11 +43,12 @@ internal fun assembleHomeRows(
  * user placed it under while that one is still on home; else under the favourite that plays.
  */
 private fun nowPlayingIndex(rows: List<HomeRow>, packageName: String, anchor: NowPlayingAnchor?): Int {
-    if (anchor == NowPlayingAnchor.Top) return 0
-    val placed = (anchor as? NowPlayingAnchor.Under)?.let { under ->
-        rows.indexOfFirst { it is HomeRow.App && it.app.key == under.app }
-    } ?: -1
-    if (placed >= 0) return placed + 1
+    val placed = when (anchor) {
+        NowPlayingAnchor.Top -> 0
+        is NowPlayingAnchor.Under -> rows.indexOfFirst { it is HomeRow.App && it.app.key == anchor.app } + 1
+        null -> 0
+    }
+    if (anchor == NowPlayingAnchor.Top || placed > 0) return placed
     // Sessions are only readable for Mono's own profile, so the owner is a main-profile app.
     return rows.indexOfFirst { it is HomeRow.App && it.app.isMainProfile && it.app.key.packageName == packageName } + 1
 }
