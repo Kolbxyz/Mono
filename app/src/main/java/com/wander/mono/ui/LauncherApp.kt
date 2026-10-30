@@ -113,6 +113,7 @@ fun LauncherApp(
         if (wide && !drawerOpen) {
             drawer.setQuery("")
             drawer.relockHidden()
+            drawer.clearListFilters()
             launcher.drawerClosed()
         }
     }
@@ -165,6 +166,7 @@ fun LauncherApp(
                         // afresh, once the drawer has faded out showing what it showed.
                         onClosed = {
                             drawer.setQuery("")
+                            drawer.clearListFilters()
                             launcher.drawerClosed()
                         },
                     ) {

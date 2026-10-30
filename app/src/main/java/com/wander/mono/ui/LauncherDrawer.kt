@@ -52,6 +52,7 @@ fun LauncherDrawer(
     QuietDrawerGate(quiet = quiet, revealed = revealed, onClose = launcher::closeDrawer) {
         DrawerScreen(
             open = open,
+            listActions = drawer.listActions,
             revealed = revealed,
             query = query,
             state = state,
