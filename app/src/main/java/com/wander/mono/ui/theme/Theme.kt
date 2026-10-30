@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import com.wander.mono.data.settings.IconShape
 import com.wander.mono.data.settings.ThemeMode
 
 /**
@@ -20,12 +21,14 @@ import com.wander.mono.data.settings.ThemeMode
  * what every built-in component and every screen animation reads its springs from; swapping it for
  * [NoMotionScheme] is how reduced motion is honoured in one place. Below Android 12 there is no
  * wallpaper palette, so the Material baseline scheme is used. [amoledBlack] turns the dark
- * surfaces pure black and leaves the accents alone.
+ * surfaces pure black and leaves the accents alone. [iconShape] is what app icons are cut to
+ * ([LocalIconMask]).
  */
 @Composable
 fun MonoTheme(
     darkTheme: Boolean,
     amoledBlack: Boolean,
+    iconShape: IconShape,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
@@ -42,7 +45,11 @@ fun MonoTheme(
         shapes = MonoShapes,
         typography = MonoTypography,
     ) {
-        CompositionLocalProvider(LocalReducedMotion provides reduceMotion, content = content)
+        CompositionLocalProvider(
+            LocalReducedMotion provides reduceMotion,
+            LocalIconMask provides iconShape.toMask(),
+            content = content,
+        )
     }
 }
 
