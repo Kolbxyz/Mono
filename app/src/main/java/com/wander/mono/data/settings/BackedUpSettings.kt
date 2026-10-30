@@ -10,10 +10,12 @@ import androidx.datastore.preferences.core.Preferences
 val backedUpSettings: List<Setting<*>> = listOf(
     ThemeSettings.Mode,
     ThemeSettings.AmoledBlack,
+    ThemeSettings.BlackWallpaper,
     HomeLookSettings.TextShadow,
     AccessibilitySettings.HighContrastText,
     IconSettings.Mode,
     IconSettings.Pack,
+    IconSettings.Shape,
     BadgeSettings.ShowCounts,
     PreviewSettings.ShowPreviews,
     CalendarSettings.Enabled,
