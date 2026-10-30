@@ -6,6 +6,7 @@ import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.core.notifications.PreviewExpansion
 import com.wander.mono.core.notifications.Redaction
 import com.wander.mono.data.LiveRowKind
 import org.junit.Assert.assertEquals
@@ -29,6 +30,7 @@ class LiveRowAvailabilityTest {
         autoCancel = true,
         isClearable = true,
         reply = null,
+        expansion = PreviewExpansion(emptyList(), emptyList(), emptyList()),
     )
 
     private fun agenda(events: Int) = CalendarAgenda(

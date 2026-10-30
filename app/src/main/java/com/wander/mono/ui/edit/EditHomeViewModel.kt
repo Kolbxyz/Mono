@@ -17,7 +17,9 @@ import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.LiveRowRef
 import com.wander.mono.data.WidgetPrefs
+import com.wander.mono.data.settings.HomeLookSettings
 import com.wander.mono.data.settings.PreviewSettings
+import com.wander.mono.data.settings.RowDensity
 import com.wander.mono.data.settings.SettingsStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -26,16 +28,17 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Edit mode's changes to the home list: order, removal, additions, per-app live rows and widgets. */
+/** Edit mode's changes to the home list: order, removal, additions, per-app live rows, widgets and row density. */
 @HiltViewModel
 class EditHomeViewModel @Inject constructor(
     catalog: AppCatalog,
     media: MediaSessions,
     previews: NotificationPreviews,
-    settings: SettingsStore,
+    private val settings: SettingsStore,
     calendar: CalendarEvents,
     private val prefs: LauncherPrefs,
     private val liveRows: LiveRowPrefs,
@@ -59,6 +62,10 @@ class EditHomeViewModel @Inject constructor(
         liveRowToggles(shown, available, hidden)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
 
+    /** How roomy the favourite rows are, which the toolbar's Density button names. */
+    val density: StateFlow<RowDensity> = settings[HomeLookSettings.Density]
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeLookSettings.Density.default)
+
     /** Saves a drag: the favourites' new order, then each widget under the favourite now above it. */
     fun arrange(arrangement: HomeArrangement) = launch {
         prefs.reorderFavorites(arrangement.favorites)
@@ -76,6 +83,11 @@ class EditHomeViewModel @Inject constructor(
     fun resizeWidget(appWidgetId: Int, size: WidgetSize) = launch { widgets.resize(appWidgetId, size) }
 
     fun removeWidget(appWidgetId: Int) = launch { widgets.remove(appWidgetId) }
+
+    /** The next row density, so the user sees each in place (spec 4.6). */
+    fun cycleDensity() = launch {
+        settings.set(HomeLookSettings.Density, settings[HomeLookSettings.Density].first().next())
+    }
 
     private fun launch(change: suspend () -> Unit) {
         viewModelScope.launch { change() }
@@ -96,7 +108,7 @@ private class LiveSources(
 private fun liveSources(
     media: MediaSessions,
     previews: NotificationPreviews,
-    settings: SettingsStore,
+    private val settings: SettingsStore,
     calendar: CalendarEvents,
 ): Flow<LiveSources> = combine(
     media.state,
