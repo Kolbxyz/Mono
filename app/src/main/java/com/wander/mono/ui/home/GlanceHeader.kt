@@ -6,7 +6,7 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -55,8 +55,12 @@ fun GlanceContent(glance: Glance, taps: GlanceTaps?, modifier: Modifier = Modifi
     val look = glance.look
     val lines = look.lines
     val centred = look.alignment == ClockAlignment.Center
+    // Lines and chips come and go (an alarm set, quiet started): the header resizes on the motion
+    // scheme instead of in one frame, and the list under it follows.
     Column(
-        modifier.padding(top = if (compact) 8.dp else 48.dp, bottom = if (compact) 16.dp else 32.dp),
+        modifier
+            .padding(top = if (compact) 8.dp else 48.dp, bottom = if (compact) 16.dp else 32.dp)
+            .roomyContentSize(MaterialTheme.motionScheme.defaultSpatialSpec(), SHADOW_ROOM),
         horizontalAlignment = if (centred) Alignment.CenterHorizontally else Alignment.Start,
     ) {
         ClockText(
@@ -100,7 +104,12 @@ fun GlanceContent(glance: Glance, taps: GlanceTaps?, modifier: Modifier = Modifi
         val battery = glance.battery?.takeIf { lines.battery }
         val quiet = glance.quiet
         if (battery != null || quiet != null) {
-            Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Wraps at large font sizes rather than pushing the last chip off the screen.
+            FlowRow(
+                Modifier.padding(top = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 quiet?.let { QuietChip(it, timeSkeleton, taps?.onEndQuiet, taps?.onExtendQuiet) }
                 battery?.let { BatteryChip(it) }
             }
@@ -137,3 +146,6 @@ private fun Modifier.tapTo(onTap: (() -> Unit)?, @StringRes label: Int): Modifie
 }
 
 private const val ALARM_DAY_SKELETON = "EEE"
+
+/** Room past the header's edges for the text shadow or halo, which a size animation's clip would cut. */
+private val SHADOW_ROOM = 16.dp
