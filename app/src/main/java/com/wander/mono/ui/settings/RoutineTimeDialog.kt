@@ -1,12 +1,14 @@
 package com.wander.mono.ui.settings
 
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimeInput
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.wander.mono.R
 import com.wander.mono.data.Routine
@@ -25,6 +27,7 @@ internal fun RoutineTimeDialog(minute: Int, onSet: (Int) -> Unit, onDismiss: () 
     )
     AlertDialog(
         onDismissRequest = onDismiss,
+        icon = { Icon(painterResource(R.drawable.sym_schedule), contentDescription = null) },
         title = { Text(stringResource(R.string.settings_routine_time_title)) },
         text = { TimeInput(state) },
         confirmButton = {

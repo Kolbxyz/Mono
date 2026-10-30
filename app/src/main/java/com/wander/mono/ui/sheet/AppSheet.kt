@@ -36,9 +36,8 @@ import com.wander.mono.ui.home.folders.FolderViewModel
 /**
  * Long-press options for one app: its icon, name (a small lock after it while locked) and today's
  * use, then "Open" as a split button with the app's shortcuts in its menu, then its actions as one
- * button group (Wanda's context menu): home in or out first, the rest in pairs, the headphones and
- * lock toggles, home's structure (folder, swipe left, notifications on home, daily limit), the
- * moves as icons, uninstall at the foot. A structure choice opens its page in place.
+ * button group (Wanda's context menu, ordered in [appActions]). A structure choice (folder, swipe
+ * left, daily limit) opens its page in place of the actions.
  */
 @Composable
 fun AppSheet(
@@ -156,9 +155,11 @@ fun AppSheet(
 }
 
 /**
- * The sheet's buttons. Each slides the sheet away after it runs, except the moves and the
- * headphones and lock toggles, which keep it open to be seen changing, and rename, which runs
- * after: its caller drops the sheet at once to open the rename dialog.
+ * The sheet's buttons, "Open" above them being its one filled action: home in or out and App info
+ * as the tall pair, the moves as icons, then rename and hide, the choices that open a page, the
+ * on/off switches together, and uninstall at the foot. Each slides the sheet away after it runs,
+ * except the moves and the switches, which keep it open to be seen changing, and rename, which
+ * runs after: its caller drops the sheet at once to open the rename dialog.
  */
 @Suppress("LongParameterList")
 private fun appActions(
@@ -178,11 +179,11 @@ private fun appActions(
     val key = state.app.key
     return buildList {
         if (state.isFavorite) {
-            add(MenuAction(R.drawable.sym_remove_circle, R.string.sheet_remove_from_home, ActionEmphasis.Primary) {
+            add(MenuAction(R.drawable.sym_remove_circle, R.string.sheet_remove_from_home, ActionEmphasis.Secondary) {
                 onRemoveFromHome(key)
             }.thenDismiss(dismiss))
         } else if (state.canGoOnHome) {
-            add(MenuAction(R.drawable.sym_keep, R.string.sheet_add_to_home, ActionEmphasis.Primary) {
+            add(MenuAction(R.drawable.sym_keep, R.string.sheet_add_to_home, ActionEmphasis.Secondary) {
                 onAddToHome(key)
             }.thenDismiss(dismiss))
         }
@@ -193,7 +194,10 @@ private fun appActions(
         add(MenuAction(R.drawable.sym_edit, R.string.sheet_rename) { onRename(key) }.afterDismiss(dismiss))
         val hideLabel = if (state.isHidden) R.string.sheet_unhide else R.string.sheet_hide
         add(MenuAction(R.drawable.sym_visibility, hideLabel) { onSetHidden(key, !state.isHidden) }.thenDismiss(dismiss))
-        addAll(more)
+        // Choices that open a page first, then every on/off switch together.
+        val (switches, pages) = more.partition { it.selected != null }
+        addAll(pages)
+        addAll(switches)
         state.liftsWithHeadphones?.let { lifts ->
             add(MenuAction(R.drawable.sym_headphones, R.string.sheet_headphones_top, selected = lifts) {
                 onSetLiftsWithHeadphones(key, !lifts)
