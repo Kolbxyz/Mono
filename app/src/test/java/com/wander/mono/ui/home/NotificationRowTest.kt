@@ -41,6 +41,7 @@ class NotificationRowTest {
             is HomeRow.App -> it.app.label + if (it.app.isMainProfile) "" else " (work)"
             is NotificationRow -> "preview:" + it.preview.text
             is HomeRow.NowPlaying -> "now"
+            HomeRow.NowPlayingSpot -> "spot"
             HomeRow.ListenerPrompt -> "prompt"
             is CalendarRow -> "calendar"
             is LiveActivityRow -> "live"
@@ -72,7 +73,7 @@ class NotificationRowTest {
                 progress = null,
                 upNext = emptyList(),
                 output = null,
-                collapseAtMs = null,
+                pausedAtMs = null,
             ),
         )
         val base = assembleHomeRows(listOf(phalanx.key), listOf(phalanx), emptyMap(), media, showCounts = true)

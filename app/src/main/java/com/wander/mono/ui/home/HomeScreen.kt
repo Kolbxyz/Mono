@@ -61,8 +61,10 @@ import com.wander.mono.ui.theme.LocalHighContrast
  * over the dock), the rows anchored to the bottom so favourites sit in the thumb zone, and the
  * search dock under them. [hero] is how far the hero pull has grown the clock. Drags anywhere
  * (past the end of the list when it scrolls) go to [gestureScroll]: up pulls the drawer, down
- * opens the notification shade. Long-pressing the clock or an empty spot opens the home options and
+ * opens the notification shade. Long-pressing an empty spot opens the home options and
  * double-tapping one runs [onDoubleTap]; rows consume their own presses, so they never reach them.
+ * Long-pressing the clock opens its own sheet ([onClockOptions]), the now-playing card its own
+ * ([onMediaOptions]).
  * The favourite [pulse] keys, just added, pulses once, then [onPulsed] clears it.
  * The [lifted] favourites go first while headphones are connected, outside edit mode only.
  *
@@ -96,6 +98,8 @@ fun HomeScreen(
     gestureScroll: NestedScrollConnection,
     onDoubleTap: (() -> Unit)?,
     onHomeOptions: () -> Unit,
+    onClockOptions: () -> Unit,
+    onMediaOptions: () -> Unit,
     createWidgetView: (Context, Int) -> MonoWidgetHostView,
     onWidgetLongPress: (WidgetHomeRow) -> Unit,
     modifier: Modifier = Modifier,
@@ -119,8 +123,10 @@ fun HomeScreen(
     val editDim = animateFloatAsState(if (editing.active) EDIT_DIM else 0f, motion.defaultEffectsSpec())
     val editPadding = animateDpAsState(if (editing.active) EditToolbarClearance else 16.dp, motion.defaultSpatialSpec())
     val scrimAlpha = homeScrimAlpha(legibleAlpha, look.textShadow, look.highContrast)
-    val shadow = wallpaperTextShadow(look.textShadow)
-    val reach = with(density) { SCRIM_REACH.toPx() }
+    val scrimStrength = windowFocusStrength()
+    val shadow = wallpaperTextShadow(look.textShadow, halo = scrimStrength.value)
+    val reach = with(density) { ScrimReach.toPx() }
+    val taper = with(density) { ScrimTaper.toPx() }
 
     // Without onSurface as the content colour, the clock and favourites would fall back to black.
     CompositionLocalProvider(
@@ -134,10 +140,12 @@ fun HomeScreen(
                 .fillMaxSize()
                 .homeScrim(
                     color = scheme.surface.copy(alpha = scrimAlpha),
+                    strength = { scrimStrength.value },
                     // Reachable, the header is under the list: one scrim rising from the rows covers both.
                     headerBottom = { if (shell.reachable) -reach else scrimEdges.headerBottom },
                     listTop = { scrimEdges.listTop + listState.contentTop() },
                     reach = reach,
+                    taper = taper,
                 )
                 .drawBehind { drawRect(scheme.surface.copy(alpha = editDim.value)) }
                 .pointerInput(onHomeOptions, onDoubleTap) {
@@ -168,7 +176,15 @@ fun HomeScreen(
                     .padding(horizontal = gutter),
             ) {
                 val header = @Composable {
-                    HomeGlanceSlot(glance, shell, compactHeader, hero, scrimEdges::onHeader, onHomeOptions)
+                    HomeGlanceSlot(
+                        glance,
+                        shell,
+                        compactHeader,
+                        hero,
+                        scrimEdges::onHeader,
+                        onHomeOptions,
+                        onClockOptions,
+                    )
                 }
                 if (!shell.reachable) header()
                 val listModifier = Modifier
@@ -196,6 +212,7 @@ fun HomeScreen(
                         onSeek = onSeek,
                         onPlayQueueItem = onPlayQueueItem,
                         onOpenOutput = onOpenOutput,
+                        onMediaOptions = onMediaOptions,
                         onGrantAccess = onGrantAccess,
                         onOpenEvent = onOpenEvent,
                         onOpenDrawer = onOpenDrawer,
@@ -224,14 +241,5 @@ fun HomeScreen(
     }
 }
 
-/** Where the first row starts inside the list viewport: 0 once the list is scrolled or full. */
-private fun LazyListState.contentTop(): Float {
-    val first = layoutInfo.visibleItemsInfo.firstOrNull() ?: return 0f
-    return if (first.index == 0) (first.offset - layoutInfo.viewportStartOffset).toFloat().coerceAtLeast(0f) else 0f
-}
-
 /** How much edit mode dims the wallpaper, with the surface colour (spec 4.6). */
 private const val EDIT_DIM = 0.6f
-
-/** How far the scrim eases out into the empty space past the header and before the list. */
-private val SCRIM_REACH = 120.dp

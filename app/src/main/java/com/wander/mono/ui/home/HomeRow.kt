@@ -28,6 +28,14 @@ sealed interface HomeRow {
         override val key: String get() = "now-playing"
     }
 
+    /**
+     * Edit mode's stand-in for the now-playing card, there whether or not anything plays, so the
+     * card can be placed ahead of time. Never on home outside edit mode.
+     */
+    data object NowPlayingSpot : HomeRow {
+        override val key: String get() = "now-playing-spot"
+    }
+
     /** Notification access is missing, so there are no dots and no now-playing row. */
     data object ListenerPrompt : HomeRow {
         override val key: String get() = "listener-prompt"

@@ -2,6 +2,7 @@ package com.wander.mono.ui.home
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -26,30 +28,31 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.core.notifications.NotificationPreview
-import com.wander.mono.core.notifications.Redaction
+import com.wander.mono.ui.components.PreviewLine
+import com.wander.mono.ui.components.previewText
 import com.wander.mono.ui.theme.isLargeFontScale
 import com.wander.mono.ui.theme.secondaryTextColor
 import kotlinx.coroutines.launch
 
 /**
- * The latest notification under its favourite: "title · text" on at most two quiet lines. Tap
- * expands it to its conversations and actions (swiping its favourite right does too), a sideways
- * swipe dismisses it (when the shade would let it), and Reply opens an inline field when the
- * notification takes text. Hidden content only says there is something new. For TalkBack the
- * swipe is a Dismiss action and opening an Open action on the text, the row's focusable node.
+ * The latest notification under its favourite, Niagara style: one small [PreviewLine] tucked under
+ * the name. Tap expands it to "title · text" on two lines, its conversations and actions, and Reply
+ * when the notification takes text (swiping its favourite right expands it too); a sideways swipe
+ * dismisses it (when the shade would let it). Hidden content only says there is something new. For
+ * TalkBack the swipe is a Dismiss action and opening an Open action on the text, the focusable node.
  */
 @Composable
 fun NotificationPreviewRow(
@@ -75,10 +78,12 @@ fun NotificationPreviewRow(
         add(CustomAccessibilityAction(openLabel) { previews.open(row).let { true } })
         if (row.preview.isClearable) add(CustomAccessibilityAction(dismissLabel) { previews.dismiss(row) })
     }
+    // Pulled up by the favourite's own bottom padding, the line sits right under the name.
+    val tuck = favoriteRowMetrics(LocalRowDensity.current).verticalPadding
     SwipeToDismissBox(
         state = swipe,
         backgroundContent = {},
-        modifier = modifier,
+        modifier = modifier.tuckUp(tuck),
         gesturesEnabled = row.preview.isClearable && !expanded,
         onDismiss = { if (!previews.dismiss(row)) scope.launch { swipe.reset() } },
     ) {
@@ -115,31 +120,25 @@ private fun PreviewContent(
     more: @Composable () -> Unit,
 ) {
     val motion = MaterialTheme.motionScheme
-    val stacked = isLargeFontScale()
+    val open = showsMore || expanded
     val toggleLabel = stringResource(if (showsMore) R.string.preview_collapse else R.string.preview_expand)
-    Column(Modifier.fillMaxWidth().padding(bottom = 8.dp)) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                previewText(preview),
-                style = MaterialTheme.typography.bodyMedium.onWallpaper(),
-                color = secondaryTextColor(),
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f)
-                    .heightIn(min = MIN_TOUCH)
-                    .clip(MaterialTheme.shapes.small)
-                    .clickable(onClickLabel = toggleLabel, onClick = onToggleMore)
-                    .semantics { customActions = actions }
-                    .wrapContentHeight(Alignment.CenterVertically)
-                    .padding(vertical = 4.dp),
-            )
-            if (!stacked) ReplyButton(preview, expanded, onReplyToggle)
+    val toggle = Modifier
+        .clip(MaterialTheme.shapes.small)
+        .clickable(onClickLabel = toggleLabel, onClick = onToggleMore)
+        .semantics { customActions = actions }
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(bottom = if (open) 8.dp else 4.dp)
+            .animateContentSize(motion.defaultSpatialSpec()),
+    ) {
+        if (open) {
+            PreviewHeadline(preview, expanded, onReplyToggle, toggle)
+        } else {
+            ProvideTextStyle(TextStyle().onWallpaper()) {
+                PreviewLine(preview, toggle.fillMaxWidth().padding(vertical = 2.dp))
+            }
         }
-        if (stacked) ReplyButton(preview, expanded, onReplyToggle, Modifier.align(Alignment.End))
         AnimatedVisibility(
             visible = showsMore,
             enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.fastEffectsSpec()),
@@ -157,6 +156,39 @@ private fun PreviewContent(
     }
 }
 
+/** The open preview's "title · text" on up to two lines, with Reply beside it (under it at large font scales). */
+@Composable
+private fun PreviewHeadline(
+    preview: NotificationPreview,
+    expanded: Boolean,
+    onReplyToggle: () -> Unit,
+    toggle: Modifier,
+) {
+    val stacked = isLargeFontScale()
+    Column {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                previewText(preview),
+                style = MaterialTheme.typography.bodyMedium.onWallpaper(),
+                color = secondaryTextColor(),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = MIN_TOUCH)
+                    .then(toggle)
+                    .wrapContentHeight(Alignment.CenterVertically)
+                    .padding(vertical = 4.dp),
+            )
+            if (!stacked) ReplyButton(preview, expanded, onReplyToggle)
+        }
+        if (stacked) ReplyButton(preview, expanded, onReplyToggle, Modifier.align(Alignment.End))
+    }
+}
+
 @Composable
 private fun ReplyButton(
     preview: NotificationPreview,
@@ -170,17 +202,11 @@ private fun ReplyButton(
     }
 }
 
-@Composable
-private fun previewText(preview: NotificationPreview) = buildAnnotatedString {
-    if (preview.redaction == Redaction.Hidden) {
-        append(stringResource(R.string.preview_hidden))
-        return@buildAnnotatedString
-    }
-    preview.title?.let { title ->
-        withStyle(SpanStyle(color = MaterialTheme.colorScheme.onSurface)) { append(title) }
-        if (preview.text != null) append(" · ")
-    }
-    preview.text?.let(::append)
+/** Moves the row up by [by], giving the space back, so it reads as part of the row above. */
+private fun Modifier.tuckUp(by: Dp): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints)
+    val pull = by.roundToPx().coerceAtMost(placeable.height)
+    layout(placeable.width, placeable.height - pull) { placeable.place(0, -pull) }
 }
 
 private val MIN_TOUCH = 48.dp

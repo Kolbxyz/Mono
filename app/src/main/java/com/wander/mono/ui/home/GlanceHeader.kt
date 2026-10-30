@@ -25,6 +25,7 @@ import android.text.format.DateFormat as AndroidDateFormat
  * setting, styled and filtered by the user's clock settings. Each line opens what it names.
  * [compact] (a phone in landscape) trades the airy spacing and display size for list room;
  * [reachable] sits it low, over the search dock. [hero] is how far the hero pull has grown it.
+ * A long press on the clock runs [onClockOptions].
  */
 @Composable
 fun GlanceHeader(
@@ -34,16 +35,18 @@ fun GlanceHeader(
     reachable: Boolean = false,
     simple: Boolean = false,
     hero: () -> Float = { 0f },
+    onClockOptions: (() -> Unit)? = null,
     actions: GlanceActionsViewModel = viewModel(),
     alarms: AlarmDismissViewModel = viewModel(),
 ) {
     val taps = remember(actions) { actions.taps() }
-    GlanceContent(glance, taps, modifier, compact, reachable, simple, hero, alarms::dismissNext)
+    GlanceContent(glance, taps, modifier, compact, reachable, simple, hero, alarms::dismissNext, onClockOptions)
 }
 
 /**
  * The header itself; [taps] null (the settings preview) makes every line plain text. The large,
  * simple preset ([simple]) keeps only the clock and date; the hero's summary brings in the rest.
+ * With [onClockOptions], a long press on the clock is the clock's own and never home's options.
  */
 @Composable
 fun GlanceContent(
@@ -55,6 +58,7 @@ fun GlanceContent(
     simple: Boolean = false,
     hero: () -> Float = { 0f },
     onDismissAlarm: (() -> Unit)? = null,
+    onClockOptions: (() -> Unit)? = null,
 ) {
     val locale = LocalConfiguration.current.locales[0]
     // Re-read on every minute tick; flipping the setting also sends ACTION_TIME_CHANGED.
@@ -82,7 +86,7 @@ fun GlanceContent(
             compact,
             Modifier
                 .heroGrow(hero, centred)
-                .tapTo(taps?.onTime, R.string.glance_open_clock),
+                .clockPresses(taps?.onTime, onClockOptions),
         )
         // Lines and chips come and go (an alarm set, quiet started): the header resizes on the
         // motion scheme instead of in one frame, and the list under it follows.

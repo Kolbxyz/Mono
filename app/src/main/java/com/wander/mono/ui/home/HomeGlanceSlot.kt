@@ -10,9 +10,10 @@ import androidx.compose.ui.semantics.semantics
 import com.wander.mono.R
 
 /**
- * The glance header in home's column, above the list or, [shell] reachable, below it. Its long
- * press (home options) is home's own, so TalkBack gets it here as a named action. [onPlaced]
- * reports where it sits, for the scrim.
+ * The glance header in home's column, above the list or, [shell] reachable, below it. A long press
+ * on the clock opens its sheet ([onClockOptions]); elsewhere on the header it is home's own (home
+ * options), so TalkBack gets that here as a named action. [onPlaced] reports where it sits, for
+ * the scrim.
  */
 @Composable
 internal fun HomeGlanceSlot(
@@ -22,6 +23,7 @@ internal fun HomeGlanceSlot(
     hero: () -> Float,
     onPlaced: (LayoutCoordinates) -> Unit,
     onHomeOptions: () -> Unit,
+    onClockOptions: () -> Unit,
 ) {
     val optionsLabel = stringResource(R.string.action_home_options)
     GlanceHeader(
@@ -30,6 +32,7 @@ internal fun HomeGlanceSlot(
         reachable = shell.reachable,
         simple = shell.simple,
         hero = hero,
+        onClockOptions = onClockOptions,
         modifier = Modifier
             .onGloballyPositioned(onPlaced)
             .semantics {
