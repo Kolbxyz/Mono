@@ -9,9 +9,12 @@ import androidx.lifecycle.viewModelScope
 import com.wander.mono.R
 import com.wander.mono.core.apps.ActionResult
 import com.wander.mono.core.apps.AppActions
+import com.wander.mono.core.calendar.CalendarAccess
 import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.system.HomeRole
 import com.wander.mono.data.OnboardingPrefs
+import com.wander.mono.data.settings.CalendarSettings
+import com.wander.mono.data.settings.SettingsStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,8 +35,8 @@ data class OnboardingUi(
 
 /**
  * First-run setup. The step the user is on survives rotation and process death; whether Mono is
- * default home and has notification access is read from the system, again whenever Mono returns
- * to the front, so a step done in a system screen is passed over on the way back.
+ * default home and has notification and calendar access is read from the system, again whenever
+ * Mono returns to the front, so a step done in a system screen is passed over on the way back.
  */
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
@@ -41,6 +44,8 @@ class OnboardingViewModel @Inject constructor(
     private val prefs: OnboardingPrefs,
     private val homeRole: HomeRole,
     private val listenerAccess: ListenerAccess,
+    private val calendarAccess: CalendarAccess,
+    private val settings: SettingsStore,
     private val actions: AppActions,
 ) : ViewModel() {
     /** Null until read from disk, so home never flashes the setup pane, nor the reverse. */
@@ -51,22 +56,28 @@ class OnboardingViewModel @Inject constructor(
     private val requested = savedState.getStateFlow(STEP, OnboardingStep.Welcome)
     private val askedForAccess = savedState.getStateFlow(ASKED_FOR_ACCESS, false)
 
+    private val setupFacts: StateFlow<SetupFacts> = combine(
+        isDefaultHome,
+        listenerAccess.granted,
+        combine(settings[CalendarSettings.Enabled], calendarAccess.granted) { on, granted -> on && granted },
+        ::SetupFacts,
+    ).stateIn(viewModelScope, SharingStarted.Eagerly, SetupFacts(homeRole.isHeld(), listenerAccess.granted.value))
+
     private val facts: SetupFacts
-        get() = SetupFacts(isDefaultHome.value, listenerAccess.granted.value)
+        get() = setupFacts.value
 
     val ui: StateFlow<OnboardingUi> = combine(
         requested,
-        isDefaultHome,
-        listenerAccess.granted,
+        setupFacts,
         askedForAccess,
         error,
-    ) { requested, isHome, granted, asked, error ->
-        val facts = SetupFacts(isHome, granted)
+    ) { requested, facts, asked, error ->
         val step = stepToShow(requested, facts)
         OnboardingUi(
             step = step,
             canGoBack = stepBefore(step, facts) != null,
-            showRestrictedHelp = asked && !granted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
+            showRestrictedHelp = asked && !facts.hasNotificationAccess &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU,
             error = error,
         )
     }.stateIn(viewModelScope, SharingStarted.Eagerly, OnboardingUi(OnboardingStep.Welcome, false, false, null))
@@ -97,6 +108,22 @@ class OnboardingViewModel @Inject constructor(
     }
 
     fun openAppInfo() = report(actions.openOwnAppInfo())
+
+    /** Whether the calendar step can switch events on at once, without asking Android first. */
+    fun hasCalendarAccess(): Boolean = calendarAccess.granted.value
+
+    /**
+     * The calendar prompt answered, or access was already there: events go on only when granted.
+     * A refusal says where to turn them on later; Android stops asking after two.
+     */
+    fun onCalendarAccess(granted: Boolean) {
+        calendarAccess.recheck()
+        if (granted) {
+            viewModelScope.launch { settings.set(CalendarSettings.Enabled, true) }
+        } else {
+            error.value = R.string.onboarding_calendar_denied
+        }
+    }
 
     private fun finish() {
         viewModelScope.launch { prefs.markDone() }

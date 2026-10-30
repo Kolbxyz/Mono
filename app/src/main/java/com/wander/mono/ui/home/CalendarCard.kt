@@ -29,7 +29,8 @@ import java.time.ZoneId
 import java.util.Locale
 
 /**
- * The next few events, one calm line each: when, then what. Tapping a line opens that event. Above
+ * The next few events, one calm line each: when, then what. Tapping a line opens that event; the
+ * next one may also offer Join (a meeting link) and Map (its location) as tonal chips. Above
  * 1.5× font scale the time goes above the title, which then keeps the full width.
  */
 @Composable
@@ -40,7 +41,11 @@ fun CalendarCard(row: CalendarRow, onOpen: (CalendarEvent) -> Unit, modifier: Mo
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Column(Modifier.padding(vertical = 8.dp)) {
-            row.events.forEach { event -> EventLine(event, row.at, onOpen) }
+            row.events.forEachIndexed { index, event ->
+                EventLine(event, row.at, onOpen)
+                // Only the next event offers Join and Map, so the card stays calm.
+                if (index == 0) CalendarEventActions(event, row.canOpenMaps)
+            }
         }
     }
 }

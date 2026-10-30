@@ -5,9 +5,13 @@ import com.wander.mono.R
 import com.wander.mono.data.settings.ThemeMode
 import com.wander.mono.data.settings.ThemeSettings
 
-/** Light, dark or following the system, and pure black for OLED screens. */
+/**
+ * Light, dark or following the system, and pure black for OLED screens; with pure black, the
+ * wallpaper itself can go black too.
+ */
 @Composable
 fun ThemeSection(settings: SettingsViewModel) {
+    val amoled = settings.collect(ThemeSettings.AmoledBlack)
     SettingsGroup(R.string.settings_theme) {
         ChoiceSetting(settings, ThemeSettings.Mode, R.string.settings_theme_mode, R.drawable.sym_dark_mode) { mode ->
             when (mode) {
@@ -22,5 +26,14 @@ fun ThemeSection(settings: SettingsViewModel) {
             title = R.string.settings_amoled_black,
             icon = R.drawable.sym_invert_colors,
         )
+        if (amoled == true) {
+            SwitchSetting(
+                settings,
+                ThemeSettings.BlackWallpaper,
+                title = R.string.settings_black_wallpaper,
+                summary = R.string.settings_black_wallpaper_short,
+                icon = R.drawable.sym_contrast,
+            )
+        }
     }
 }

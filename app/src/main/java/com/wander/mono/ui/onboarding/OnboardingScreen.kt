@@ -6,7 +6,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -42,22 +43,33 @@ import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
+import com.wander.mono.core.calendar.CalendarAccess
 import com.wander.mono.ui.components.readableColumn
 
 /**
- * First-run setup over home, until finished or skipped. Until it is known whether setup was done,
- * a plain surface covers home, so a first run never shows home a moment before setup; the cover
- * fades out on every later start, as setup itself does when finished.
+ * First-run setup over home, until finished or skipped. Until it is known whether setup was done
+ * nothing is drawn: covering home then would flash a surface on every cold start, for a read that
+ * takes a few milliseconds. Setup appears at once when the read finds it not done, and fades out
+ * when finished.
  */
 @Composable
 fun Onboarding(onboarding: OnboardingViewModel = viewModel()) {
     val done by onboarding.done.collectAsStateWithLifecycle()
-    Crossfade(done, animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(), label = "onboarding") {
-        when (it) {
-            null -> Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {}
-            false -> OnboardingPanes(onboarding)
-            true -> Unit
-        }
+    val motion = MaterialTheme.motionScheme
+    AnimatedContent(
+        targetState = done,
+        transitionSpec = {
+            val fade = if (initialState == null) {
+                EnterTransition.None togetherWith ExitTransition.None
+            } else {
+                fadeIn(motion.defaultEffectsSpec()) togetherWith fadeOut(motion.defaultEffectsSpec())
+            }
+            // No size animation: setup fills the screen and leaves nothing behind it.
+            fade.using(null)
+        },
+        label = "onboarding",
+    ) {
+        if (it == false) OnboardingPanes(onboarding)
     }
 }
 
@@ -66,12 +78,19 @@ fun Onboarding(onboarding: OnboardingViewModel = viewModel()) {
  * thumb, like the home list.
  */
 @Composable
-private fun OnboardingPanes(onboarding: OnboardingViewModel) {
+private fun OnboardingPanes(
+    onboarding: OnboardingViewModel,
+    picker: FavoritePickerViewModel = viewModel(),
+) {
     val ui by onboarding.ui.collectAsStateWithLifecycle()
     val motion = MaterialTheme.motionScheme
     val homeRequest = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         onboarding.recheck()
     }
+    val calendarRequest = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+        onboarding::onCalendarAccess,
+    )
 
     LifecycleStartEffect(onboarding) {
         onboarding.recheck()
@@ -87,9 +106,25 @@ private fun OnboardingPanes(onboarding: OnboardingViewModel) {
         }
     }
 
+    fun addFavorites() {
+        picker.save()
+        onboarding.next()
+    }
+
+    // Granted already in App info: nothing to ask, the setting just goes on.
+    fun showCalendar() {
+        if (onboarding.hasCalendarAccess()) {
+            onboarding.onCalendarAccess(true)
+        } else {
+            calendarRequest.launch(CalendarAccess.PERMISSION)
+        }
+    }
+
     val primary: () -> Unit = when (ui.step) {
         OnboardingStep.DefaultHome -> ::requestHome
+        OnboardingStep.Favorites -> ::addFavorites
         OnboardingStep.NotificationAccess -> onboarding::openAccessSettings
+        OnboardingStep.Calendar -> ::showCalendar
         OnboardingStep.Welcome, OnboardingStep.Done -> onboarding::next
     }
 
@@ -107,7 +142,11 @@ private fun OnboardingPanes(onboarding: OnboardingViewModel) {
                 transitionSpec = { fadeIn(motion.defaultEffectsSpec()) togetherWith fadeOut(motion.fastEffectsSpec()) },
                 label = "onboarding step",
             ) { step ->
-                StepBody(step, ui.showRestrictedHelp, onboarding::openAppInfo)
+                if (step == OnboardingStep.Favorites) {
+                    FavoritePicker(picker)
+                } else {
+                    StepBody(step, ui.showRestrictedHelp, onboarding::openAppInfo)
+                }
             }
             // The error grows in and out instead of pushing the buttons down in one frame.
             AnimatedContent(
@@ -170,28 +209,3 @@ private fun StepBody(step: OnboardingStep, showRestrictedHelp: Boolean, onOpenAp
         }
     }
 }
-
-@StringRes
-private fun primaryLabel(step: OnboardingStep, retry: Boolean): Int = when (step) {
-    OnboardingStep.Welcome -> R.string.onboarding_continue
-    OnboardingStep.DefaultHome -> R.string.onboarding_home_action
-    OnboardingStep.NotificationAccess ->
-        if (retry) R.string.onboarding_access_retry else R.string.onboarding_access_action
-    OnboardingStep.Done -> R.string.onboarding_done_action
-}
-
-private val OnboardingStep.title: Int
-    @StringRes get() = when (this) {
-        OnboardingStep.Welcome -> R.string.onboarding_welcome_title
-        OnboardingStep.DefaultHome -> R.string.onboarding_home_title
-        OnboardingStep.NotificationAccess -> R.string.onboarding_access_title
-        OnboardingStep.Done -> R.string.onboarding_done_title
-    }
-
-private val OnboardingStep.body: Int
-    @StringRes get() = when (this) {
-        OnboardingStep.Welcome -> R.string.onboarding_welcome_body
-        OnboardingStep.DefaultHome -> R.string.onboarding_home_body
-        OnboardingStep.NotificationAccess -> R.string.onboarding_access_body
-        OnboardingStep.Done -> R.string.onboarding_done_body
-    }
