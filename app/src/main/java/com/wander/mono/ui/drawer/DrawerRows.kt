@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -34,9 +35,9 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.AppLabel
 
 /**
- * An app in the drawer or in search results: icon and name. Tap opens, long-press shows options.
- * A new app ends in a small tertiary dot; an archived one is greyed with a cloud, and opening it
- * has the system restore it first.
+ * An app in the drawer or in search results: icon and name, with what search matched in [name]
+ * highlighted. Tap opens, long-press shows options. A new app ends in a small tertiary dot; an
+ * archived one is greyed with a cloud, and opening it has the system restore it first.
  */
 @Composable
 fun DrawerAppRow(
@@ -47,6 +48,7 @@ fun DrawerAppRow(
     modifier: Modifier = Modifier,
     iconSize: Dp = 40.dp,
     labelStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    name: AnnotatedString = AnnotatedString(entry.app.label),
 ) {
     Row(
         modifier
@@ -65,7 +67,7 @@ fun DrawerAppRow(
         val archived = entry.app.archived
         val dim = Modifier.alpha(if (archived) ARCHIVED_ALPHA else 1f)
         AppIcon(entry.app.key, icons, dim, size = iconSize)
-        AppLabel(entry.app, entry.badge, style = labelStyle, modifier = dim.weight(1f, fill = false))
+        AppLabel(entry.app, entry.badge, style = labelStyle, name = name, modifier = dim.weight(1f, fill = false))
         if (archived) {
             Icon(
                 painterResource(R.drawable.sym_archive),
@@ -121,7 +123,7 @@ fun ShortcutRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    hit.label,
+                    rememberHighlighted(hit.label, hit.matched),
                     style = labelStyle,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,

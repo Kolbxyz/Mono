@@ -15,6 +15,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,7 @@ import com.wander.mono.ui.theme.secondaryTextColor
 /**
  * An app's name, its work-profile badge and its notification badge, shared by home and drawer rows.
  * When another app has the same name, the [LaunchableApp.detail] that tells them apart goes underneath.
+ * [name] is the app's label as drawn, styled in parts where search highlights what matched.
  */
 @Composable
 fun AppLabel(
@@ -32,6 +34,7 @@ fun AppLabel(
     badge: AppBadge,
     style: TextStyle,
     modifier: Modifier = Modifier,
+    name: AnnotatedString = AnnotatedString(app.label),
 ) {
     val badgeState = when (badge) {
         AppBadge.None -> null
@@ -39,7 +42,7 @@ fun AppLabel(
         is AppBadge.Count -> pluralStringResource(R.plurals.state_notification_count, badge.count, badge.count)
     }
     Column(modifier.semantics { badgeState?.let { stateDescription = it } }) {
-        NameRow(app, badge, style)
+        NameRow(app, name, badge, style)
         app.detail?.let {
             Text(
                 it,
@@ -53,13 +56,13 @@ fun AppLabel(
 }
 
 @Composable
-private fun NameRow(app: LaunchableApp, badge: AppBadge, style: TextStyle) {
+private fun NameRow(app: LaunchableApp, name: AnnotatedString, badge: AppBadge, style: TextStyle) {
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            app.label,
+            name,
             style = style,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
