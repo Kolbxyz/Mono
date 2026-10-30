@@ -26,5 +26,4 @@
     <!-- Errors -->
     <string name="error_no_maps_app">No app can show this place</string>
     <string name="error_meeting_link">No app can open this meeting link</string>
-    <string name="error_no_clock_dismiss">No clock app can dismiss this alarm</string>
 </resources>

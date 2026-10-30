@@ -5,6 +5,4 @@
     <string name="edit_widget_kind">Widget · %1$s</string>
     <string name="edit_live_row_shown">Live row · shown</string>
     <string name="edit_live_row_hidden">Live row · hidden</string>
-    <!-- An app shortcut in the long-press options: just its own label. -->
-    <string name="sheet_shortcut" translatable="false">%1$s</string>
 </resources>
