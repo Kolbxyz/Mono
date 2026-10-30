@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.data.settings.SwipeUpAction
 import com.wander.mono.ui.components.AppIcons
+import com.wander.mono.ui.components.SheetBack
 import com.wander.mono.ui.components.rememberCredentialPrompt
 import com.wander.mono.ui.components.rememberPullUpConnection
 import com.wander.mono.ui.drawer.DrawerViewModel
@@ -63,8 +64,7 @@ fun LauncherApp(
     val swipeUp by gestures.swipeUp.collectAsStateWithLifecycle()
     val swipeDown by gestures.swipeDown.collectAsStateWithLifecycle()
     val settingsOpen by launcher.settingsOpen.collectAsStateWithLifecycle()
-    val homeOptionsOpen by launcher.homeOptionsOpen.collectAsStateWithLifecycle()
-    val sheetOpen = sheet.state.collectAsStateWithLifecycle().value != null || homeOptionsOpen
+    val sheetOpen = anySheetOpen(launcher, sheet, rename, widgets)
     val overlaysAnimate by launcher.overlaysAnimate.collectAsStateWithLifecycle()
     val rows by home.rows.collectAsStateWithLifecycle()
     val query by drawer.query.collectAsStateWithLifecycle()
@@ -99,6 +99,7 @@ fun LauncherApp(
         if (sheetOpen) 1f else 0f,
         if (sheetOpen) motion.defaultSpatialSpec() else motion.fastSpatialSpec(),
     )
+    val sheetBack = remember { SheetBack() }
 
     val reducedMotion = LocalReducedMotion.current
     LaunchedEffect(launcher, reducedMotion) {
@@ -113,6 +114,7 @@ fun LauncherApp(
         if (wide && !drawerOpen) {
             drawer.setQuery("")
             drawer.relockHidden()
+            drawer.clearListFilters()
             launcher.drawerClosed()
         }
     }
@@ -141,7 +143,7 @@ fun LauncherApp(
         )
     }
     Box(Modifier.fillMaxSize().onSizeChanged { drawerMotion.travel = it.height * TRAVEL_FRACTION }) {
-        Box(Modifier.fillMaxSize().recede({ sheetCover }, OverlayLevel.Sheet)) {
+        Box(Modifier.fillMaxSize().recede({ coverOf(sheetCover, sheetBack.progress) }, OverlayLevel.Sheet)) {
             Box(Modifier.fillMaxSize().recede(settings::cover, OverlayLevel.Screen, overlayScrim())) {
                 if (wide) {
                     Row(Modifier.fillMaxSize()) {
@@ -165,6 +167,7 @@ fun LauncherApp(
                         // afresh, once the drawer has faded out showing what it showed.
                         onClosed = {
                             drawer.setQuery("")
+                            drawer.clearListFilters()
                             launcher.drawerClosed()
                         },
                     ) {
@@ -199,6 +202,6 @@ fun LauncherApp(
             modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
-    LauncherSheets(launcher, sheet, rename, quiet, widgets, homeIcons)
+    LauncherSheets(launcher, sheet, rename, quiet, widgets, homeIcons, sheetBack)
     AppLockGate()
 }

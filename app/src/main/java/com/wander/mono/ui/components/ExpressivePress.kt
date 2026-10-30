@@ -81,14 +81,5 @@ private fun rememberPressProgress(interactionSource: InteractionSource): State<F
     )
 }
 
-/**
- * [expressivePress] without a shape change, kept so existing callers keep compiling until the
- * sweep moves them over.
- */
-@Deprecated("One press response for all of Mono", ReplaceWith("expressivePress(interaction, pressedScale = pressed)"))
-@Composable
-fun Modifier.pressShrink(interaction: InteractionSource, pressed: Float = ROW_PRESSED_SCALE): Modifier =
-    expressivePress(interaction, pressedScale = pressed)
-
 /** How far a pressed row shrinks; small, as rows are wide. */
 const val ROW_PRESSED_SCALE = 0.96f

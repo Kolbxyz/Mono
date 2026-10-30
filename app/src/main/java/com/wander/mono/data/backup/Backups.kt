@@ -41,6 +41,7 @@ class Backups @Inject constructor(
     private val quietApps: QuietApps,
     private val headphoneApps: HeadphoneApps,
     private val lockedApps: LockedApps,
+    private val structure: StructureStores,
     private val settings: SettingsStore,
     private val quietMode: QuietMode,
     private val profiles: Profiles,
@@ -100,6 +101,7 @@ class Backups @Inject constructor(
         quietApps.replace(backup.quietApps)
         headphoneApps.replace(backup.headphoneApps)
         lockedApps.replace(backup.lockedApps)
+        structure.restore(backup.structure)
         settings.restore(backup.settings)
         quietMode.setLinksDoNotDisturb(quietMode.linksDoNotDisturb.first())
         ActionResult.Done
@@ -117,6 +119,7 @@ class Backups @Inject constructor(
         headphoneApps = headphoneApps.apps.first(),
         settings = settings.snapshot(backedUpSettings),
         lockedApps = lockedApps.apps.first(),
+        structure = structure.current(),
     )
 
     private fun toThisPhone(backup: Backup): Backup {
