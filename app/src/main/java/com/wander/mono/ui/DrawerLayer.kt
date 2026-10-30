@@ -66,11 +66,15 @@ fun DrawerLayer(
     }
 }
 
-/** Home behind the drawer: it fades and shrinks back a little as the drawer rises. */
-fun Modifier.behindDrawer(motion: DrawerMotion): Modifier = graphicsLayer {
-    val shown = motion.shown
-    alpha = 1f - shown
-    val scale = lerp(1f, HOME_SCALE, shown)
+/**
+ * Home behind the drawer fades out as the drawer rises; applied to all of home, scrim included, so
+ * the wallpaper is never left bare at its edges.
+ */
+fun Modifier.fadeBehindDrawer(motion: DrawerMotion): Modifier = graphicsLayer { alpha = 1f - motion.shown }
+
+/** Home's content behind the drawer shrinks back a little as the drawer rises; its scrim does not. */
+fun Modifier.shrinkBehindDrawer(motion: DrawerMotion): Modifier = graphicsLayer {
+    val scale = lerp(1f, HOME_SCALE, motion.shown)
     scaleX = scale
     scaleY = scale
 }

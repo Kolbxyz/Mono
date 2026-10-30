@@ -145,7 +145,8 @@ fun LauncherApp(
             onHomeOptions = { launcher.showHomeOptions(true) },
             createWidgetView = widgets::createView,
             onWidgetLongPress = { widgets.showOptions(it.widget.placement.appWidgetId) },
-            modifier = Modifier.behindDrawer(drawerMotion),
+            modifier = Modifier.fadeBehindDrawer(drawerMotion),
+            contentModifier = Modifier.shrinkBehindDrawer(drawerMotion),
         )
         DrawerLayer(
             motion = drawerMotion,
