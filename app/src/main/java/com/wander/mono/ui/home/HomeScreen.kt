@@ -186,7 +186,7 @@ fun HomeScreen(
                         pulse = pulse,
                         onPulsed = onPulsed,
                         // In edit mode the floating toolbar covers the list's foot: keep the last row clear of it.
-                        contentPadding = PaddingValues(bottom = editPadding.value),
+                        contentPadding = PaddingValues(bottom = editPadding.value.coerceAtLeast(0.dp)),
                         onLaunch = onLaunch,
                         onLongPress = onLongPress,
                         onAppInfo = onAppInfo,
