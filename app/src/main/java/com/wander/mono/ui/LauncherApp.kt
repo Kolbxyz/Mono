@@ -63,6 +63,7 @@ fun LauncherApp(
     val overlaysAnimate by launcher.overlaysAnimate.collectAsStateWithLifecycle()
     val rows by home.rows.collectAsStateWithLifecycle()
     val lifted by home.lifted.collectAsStateWithLifecycle()
+    val justAdded by home.justAdded.collectAsStateWithLifecycle()
     val glance by home.glance.collectAsStateWithLifecycle()
     val homeLook by homeLookModel.look.collectAsStateWithLifecycle()
     val query by drawer.query.collectAsStateWithLifecycle()
@@ -129,6 +130,9 @@ fun LauncherApp(
             listState = homeList,
             icons = homeIcons,
             editing = editing,
+            // Pulses once home is in view again, not behind the drawer it was added from.
+            pulse = justAdded.takeUnless { drawerOpen || settingsOpen },
+            onPulsed = home::pulsed,
             onLaunch = home::launch,
             onLongPress = { sheet.show(it.key) },
             onAppInfo = { sheet.openAppInfo(it.key) },
