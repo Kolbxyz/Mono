@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App sheet: the short words under its icon buttons; TalkBack reads the full labels. -->
+    <string name="sheet_short_add_home">Add</string>
+    <string name="sheet_short_remove_home">Remove</string>
+    <string name="sheet_short_app_info">Info</string>
+    <string name="sheet_short_hide">Hide</string>
+    <string name="sheet_short_unhide">Show</string>
+    <string name="sheet_short_folder">Folder</string>
+    <string name="sheet_short_take_out">Take out</string>
+    <string name="sheet_short_swipe_left">Swipe</string>
+    <string name="sheet_short_daily_limit">Limit</string>
+    <string name="sheet_short_mute">Mute</string>
+    <string name="sheet_short_headphones">Headphones</string>
+    <string name="sheet_short_lock">Lock</string>
+</resources>

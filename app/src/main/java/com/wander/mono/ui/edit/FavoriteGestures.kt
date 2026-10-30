@@ -18,9 +18,10 @@ import kotlin.math.abs
 
 /**
  * Tap, swipes, hold, and hold-then-drag on one favourite. A tap launches; a swipe right before
- * the hold shows its notifications, a swipe left runs the action the user chose for it; holding
- * then letting go opens its options; holding then moving (or just holding, in edit mode) lifts it
- * and drags it. A drag of the list before the hold timeout is a scroll and is left to the list.
+ * the hold shows its notifications, a swipe left runs the action the user chose for it; the hold
+ * opens its options at once, under the finger; moving on from the hold closes them again and lifts
+ * the row into a drag (in edit mode the hold alone lifts it). A drag of the list before the hold
+ * timeout is a scroll and is left to the list.
  */
 internal suspend fun PointerInputScope.detectFavoriteGestures(
     interactions: MutableInteractionSource,
@@ -60,11 +61,15 @@ internal suspend fun PointerInputScope.detectFavoriteGestures(
         }
     }
     callbacks.value.onHeld()
-    val movedBy = if (callbacks.value.editing) 0f else awaitMoveAfterHold(down.id, callbacks)
+    // Outside edit mode the options open now; the options' window leaves this touch to home.
+    val options = !callbacks.value.editing
+    if (options) callbacks.value.onHold()
+    val movedBy = if (options) awaitMoveAfterHold(down.id) else 0f
     if (movedBy == null) {
         interactions.tryEmit(PressInteraction.Release(press))
         return@awaitEachGesture
     }
+    if (options) callbacks.value.onHoldCancelled()
     interactions.tryEmit(PressInteraction.Cancel(press))
     callbacks.value.onLift()
     callbacks.value.onDrag(movedBy)
@@ -94,27 +99,17 @@ internal suspend fun PointerInputScope.detectHandleDrag(callbacks: State<Favorit
 
 /**
  * After a hold outside edit mode: the vertical distance moved once the finger passes the touch
- * slop (a drag), or null when it lifts first (the options).
+ * slop (a drag), or null when it lifts first (the options stay open).
  */
-private suspend fun AwaitPointerEventScope.awaitMoveAfterHold(
-    id: PointerId,
-    callbacks: State<FavoriteGestureCallbacks>,
-): Float? {
+private suspend fun AwaitPointerEventScope.awaitMoveAfterHold(id: PointerId): Float? {
     var total = Offset.Zero
-    var released = false
-    while (!released && total.getDistance() <= viewConfiguration.touchSlop) {
+    while (total.getDistance() <= viewConfiguration.touchSlop) {
         val change = awaitPointerEvent().changes.firstOrNull { it.id == id }
         change?.consume()
-        when {
-            change == null -> released = true
-            !change.pressed -> {
-                released = true
-                callbacks.value.onHold()
-            }
-            else -> total += change.positionChange()
-        }
+        if (change == null || !change.pressed) return null
+        total += change.positionChange()
     }
-    return if (released) null else total.y
+    return total.y
 }
 
 private suspend fun AwaitPointerEventScope.dragUntilUp(id: PointerId, callbacks: State<FavoriteGestureCallbacks>) {

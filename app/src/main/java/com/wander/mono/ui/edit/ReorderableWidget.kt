@@ -45,6 +45,7 @@ fun ReorderableWidget(
             onSwipeLeft = null,
             onHeld = { haptics.longPress() },
             onHold = {},
+            onHoldCancelled = {},
             onLift = { reorder.start(row.key, siblings) },
             onDrag = { dy -> if (reorder.dragBy(dy)) haptics.segment() },
             onDrop = {

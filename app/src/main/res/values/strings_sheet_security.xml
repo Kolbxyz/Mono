@@ -1,9 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- App sheet: the split button's menu half, its state, and the app lock. -->
-    <string name="sheet_shortcuts">Shortcuts</string>
-    <string name="sheet_shortcuts_shown">Shown</string>
-    <string name="sheet_shortcuts_hidden">Hidden</string>
+    <!-- App sheet: the app lock. -->
     <string name="sheet_lock">Lock with screen lock</string>
     <!-- Spoken for the small lock after a locked app's name. -->
     <string name="sheet_locked">Locked</string>
