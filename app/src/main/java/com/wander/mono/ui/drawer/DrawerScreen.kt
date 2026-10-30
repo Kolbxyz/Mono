@@ -40,8 +40,9 @@ import com.wander.mono.ui.components.readableColumn
  * All apps, alphabetical, with the letter rail and the work profile and private space at the bottom;
  * or, while a query is typed, the ranked results, the two cross-fading. Drawn on the background the
  * user chose, its blur following how far the drawer is [revealed]. With [focusSearch] (opened from
- * home's search bar) the search field takes focus and the keyboard opens; once no longer [open], the
- * keyboard goes. Dragging it closed is handled by its container.
+ * home's search bar or a search gesture), or on every opening when the user asked for the keyboard
+ * on open, the search field takes focus and the keyboard opens; so does a second swipe up the list.
+ * Once no longer [open], the keyboard goes. Dragging it closed is handled by its container.
  */
 @Composable
 fun DrawerScreen(
@@ -72,12 +73,13 @@ fun DrawerScreen(
     val searchFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    LaunchedEffect(open, focusSearch) {
+    val focusOnOpen = focusSearch || state.keyboardOnOpen
+    LaunchedEffect(open, focusOnOpen) {
         if (!open) {
             // Closing: the keyboard leaves with the drawer instead of staying up over home.
             keyboard?.hide()
             focusManager.clearFocus()
-        } else if (focusSearch) {
+        } else if (focusOnOpen) {
             // The field can only take focus once it is laid out, a frame after the drawer first composes.
             withFrameNanos { }
             searchFocus.requestFocus()
@@ -132,6 +134,10 @@ fun DrawerScreen(
                         onLongPress,
                         bottom,
                         appListState,
+                        onPullUp = {
+                            searchFocus.requestFocus()
+                            keyboard?.show()
+                        },
                     )
                 } else {
                     SearchResultList(

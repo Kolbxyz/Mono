@@ -30,12 +30,14 @@ internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = whe
     SettingsCategory.Notifications -> listOf(
         { BadgeSection(it) },
         { PreviewSection(it) },
+        { LiveActivitySection(it) },
         { QuietSection() },
     )
     SettingsCategory.Gestures -> listOf(
         { GestureSection(it) },
     )
     SettingsCategory.PrivacyAbout -> listOf(
+        { PrivacySection() },
         { HiddenAppsSection() },
         { UsageSection(it) },
         { BackupSection() },

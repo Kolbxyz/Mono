@@ -3,6 +3,7 @@ package com.wander.mono.core.media
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.PlaybackState
+import android.os.SystemClock
 import androidx.compose.ui.graphics.asImageBitmap
 
 /** Whether the session has something to show at all: a session without a title gets no row. */
@@ -41,6 +42,7 @@ internal fun playingMedia(controller: MediaController, art: ArtMemo, output: Aud
         },
         upNext = controller.upNext(),
         output = output,
+        collapseAtMs = playback?.let { collapseAt(it.state, it.lastPositionUpdateTime, SystemClock.elapsedRealtime()) },
     )
 }
 

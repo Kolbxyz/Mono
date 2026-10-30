@@ -21,6 +21,8 @@ data class NotificationPreview(
     /** False for notifications the user cannot swipe away in the shade either. */
     val isClearable: Boolean,
     val reply: ReplyAction?,
+    /** What the row shows once expanded. */
+    val expansion: PreviewExpansion,
 )
 
 /** A notification action that takes free-form text, such as a messenger's "Reply". */

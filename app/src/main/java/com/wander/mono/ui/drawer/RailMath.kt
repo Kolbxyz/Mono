@@ -9,7 +9,8 @@ import kotlin.math.cos
 /**
  * Geometry of the letter rail. The letters' column, [top] down the rail and [height] tall, is split
  * into one equal slot per letter, a letter drawn at the centre of its slot; a finger at [y] (from the
- * rail's top) is over the slot it falls in.
+ * rail's top) is over the slot it falls in. The rail's first entry is ★, the top of the list; the
+ * letters follow it, so rail entry `i` is the list's letter item `i - 1`.
  */
 internal object RailMath {
     /** How many letters on each side of the finger the wave reaches before it is flat again. */
@@ -69,6 +70,32 @@ internal object RailMath {
         if (count <= 0 || height <= 0f) return 1
         return ceil(minSlot * count / height).toInt().coerceAtLeast(1)
     }
+
+    /** The list item rail entry [railIndex] jumps to: ★ and the first letter both go to the top. */
+    fun listItemFor(railIndex: Int): Int = (railIndex - 1).coerceAtLeast(0)
+
+    /**
+     * The rail entry for a list scrolled to [firstItem], [firstOffset] pixels into it: ★ only at the
+     * very top, else the letter at the top of the screen; the cards after the letters (work, private
+     * space) count as the last of [letters].
+     */
+    fun railIndexFor(firstItem: Int, firstOffset: Int, letters: Int): Int = when {
+        firstItem == 0 && firstOffset == 0 -> 0
+        else -> (firstItem + 1).coerceAtMost(letters)
+    }
+
+    /**
+     * Which way the list lies from the rail, in screen pixels: 1f when the rail is on the right (the
+     * end edge left to right, the start edge right to left), so letters bow out leftward; -1f on the left.
+     */
+    fun mirror(rtl: Boolean, atStart: Boolean): Float = if (rtl == atStart) 1f else -1f
+
+    /**
+     * Where a bubble [size] wide sits across from the rail's edge nearest the list, as a screen x
+     * offset: [gap] clear of the letter under the finger, which has bowed out by [bow], on the list's
+     * side ([mirror] as above).
+     */
+    fun bubbleX(mirror: Float, gap: Float, size: Float, bow: Float): Float = -mirror * (gap + size + bow)
 
     private const val HALF = 0.5f
 }

@@ -147,7 +147,7 @@ After installing, set Mono as your home app; first-run onboarding walks you thro
 
 ## Building from Source
 
-Requires **JDK 17** and **Android SDK 37** (compileSdk 37, minSdk 26).
+Requires **JDK 25** (the build targets Java 17) and **Android SDK 37** (compileSdk 37, minSdk 26).
 
 ```bash
 # Build debug APK (installs as com.wander.mono.debug)

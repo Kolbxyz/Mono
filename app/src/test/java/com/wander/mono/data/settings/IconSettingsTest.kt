@@ -2,6 +2,7 @@ package com.wander.mono.data.settings
 
 import androidx.datastore.preferences.core.mutablePreferencesOf
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class IconSettingsTest {
@@ -19,5 +20,38 @@ class IconSettingsTest {
         assertEquals(IconMode.Colour, IconSettings.Mode.decode(null))
         assertEquals(IconMode.Colour, IconSettings.Mode.decode("TextOnly"))
         assertEquals(IconMode.TextOnly, IconSettings.Mode.decode("text_only"))
+    }
+
+    @Test
+    fun `every icon shape survives a write and read and the system shape is the default`() {
+        IconShape.entries.forEach { shape ->
+            val prefs = mutablePreferencesOf()
+            IconSettings.Shape.write(prefs, shape)
+            assertEquals(shape, IconSettings.Shape.read(prefs))
+        }
+        assertEquals(IconShape.System, IconSettings.Shape.decode(null))
+        assertEquals(IconShape.System, IconSettings.Shape.decode("blob"))
+    }
+
+    @Test
+    fun `every themed tint survives a write and read and neutral is the default`() {
+        ThemedIconTint.entries.forEach { tint ->
+            val prefs = mutablePreferencesOf()
+            IconSettings.ThemedTint.write(prefs, tint)
+            assertEquals(tint, IconSettings.ThemedTint.read(prefs))
+        }
+        assertEquals(ThemedIconTint.Neutral, IconSettings.ThemedTint.decode(null))
+        assertEquals(ThemedIconTint.Neutral, IconSettings.ThemedTint.decode("Primary"))
+    }
+
+    @Test
+    fun `icon theming starts at the look before it existed`() {
+        assertEquals(IconTheming(ThemedIconTint.Neutral, tintRows = false), IconTheming.Default)
+    }
+
+    @Test
+    fun `the new icon settings are backed up`() {
+        assertTrue(IconSettings.ThemedTint in backedUpSettings)
+        assertTrue(IconSettings.TintRows in backedUpSettings)
     }
 }

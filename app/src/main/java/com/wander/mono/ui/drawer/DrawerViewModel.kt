@@ -14,7 +14,6 @@ import com.wander.mono.core.apps.IconCache
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.apps.PrivateSpace
 import com.wander.mono.core.apps.ShortcutIcons
-import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.apps.WorkProfile
 import com.wander.mono.core.apps.WorkProfiles
 import com.wander.mono.core.contacts.Contact
@@ -57,7 +56,6 @@ class DrawerViewModel @Inject constructor(
     catalog: AppCatalog,
     prefs: LauncherPrefs,
     settings: SettingsStore,
-    shortcuts: ShortcutRepository,
     counts: NotificationCounts,
     previews: NotificationPreviews,
     phalanx: PhalanxRooms,
@@ -87,12 +85,13 @@ class DrawerViewModel @Inject constructor(
         }
     }
 
-    /** What search looks in besides the apps themselves. */
+    /** What search looks in besides the apps themselves; sources switched off come in empty. */
     private val searchable = combine(
-        shortcuts.all,
+        sources.shortcuts(),
         sources.contacts(query),
         sources.tracks(query),
         sources.pages(),
+        sources.quickAnswers(),
         ::Searchable,
     )
 
@@ -120,7 +119,7 @@ class DrawerViewModel @Inject constructor(
             sections = sectionsOf(lists.apps.map { it.app.label }),
             results = SearchResults.assemble(
                 q,
-                sources.actions(q),
+                sources.actions(q, extra.quickAnswers),
                 hidden.searchableApps(searchableApps(all, work)),
                 hidden.searchableShortcuts(searchableShortcuts(extra.shortcuts, work)),
                 extra.contacts.itemsFor(q),
@@ -138,6 +137,9 @@ class DrawerViewModel @Inject constructor(
         )
     }
         .combine(privateSpace.state) { state, space -> state.copy(privateSpace = space) }
+        .combine(
+            combine(settings[DrawerSettings.KeyboardOnOpen], settings[DrawerSettings.RailAtStart], ::Pair),
+        ) { state, (keyboard, railAtStart) -> state.copy(keyboardOnOpen = keyboard, railAtStart = railAtStart) }
         .combine(
             combine(previews.conversations, phalanx.unread, settings[BadgeSettings.ShowCounts], ::ShortcutUnread),
         ) { state, unread ->
@@ -205,6 +207,7 @@ class DrawerViewModel @Inject constructor(
         val contacts: QueryResults<Contact>,
         val tracks: QueryResults<WandaTrack>,
         val pages: List<SettingsPage>,
+        val quickAnswers: Boolean,
     )
 
     fun unlockHidden() = hiddenLock.unlock()
