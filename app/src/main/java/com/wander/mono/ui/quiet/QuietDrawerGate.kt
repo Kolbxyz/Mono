@@ -39,11 +39,12 @@ import com.wander.mono.ui.drawer.drawerBackdrop
 /**
  * In quiet mode the drawer opens on a pause instead of the app list: all apps show only after an
  * explicit tap, the pause fading into the drawer. The choice lives as long as this composable, so
- * each opening of the drawer asks again.
+ * each opening of the drawer asks again. Its backdrop follows the drawer as it is [revealed] (0 to 1).
  */
 @Composable
 fun QuietDrawerGate(
     quiet: Boolean,
+    revealed: () -> Float,
     onClose: () -> Unit,
     modes: QuietViewModel = viewModel(),
     drawer: @Composable () -> Unit,
@@ -52,7 +53,7 @@ fun QuietDrawerGate(
     val look by modes.drawerLook.collectAsStateWithLifecycle()
     // Read here, for as long as the drawer is up, not inside the gate: with blur on, the gate leaving
     // after its fade would otherwise switch off the window blur the drawer has just turned on.
-    val backdrop = drawerBackdrop(look)
+    val backdrop = drawerBackdrop(look, revealed)
     Crossfade(
         targetState = !quiet || showAll,
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
