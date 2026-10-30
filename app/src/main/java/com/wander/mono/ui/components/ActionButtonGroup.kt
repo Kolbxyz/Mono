@@ -138,7 +138,7 @@ private fun RowScope.ActionButton(action: MenuAction, baseWeight: Float, isHero:
 }
 
 /** An on/off action reads as a switch to TalkBack, with its state, rather than as a plain button. */
-private fun Modifier.toggleSemantics(on: Boolean): Modifier = semantics {
+internal fun Modifier.toggleSemantics(on: Boolean): Modifier = semantics {
     role = Role.Switch
     toggleableState = ToggleableState(on)
 }
