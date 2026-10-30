@@ -125,7 +125,7 @@
         <intent>
             <action android:name="android.intent.action.SET_ALARM" />
         </intent>
-        <!-- Home: dismissing the next alarm through the clock app (core/system/ClockActions). -->
+        <!-- The glance header's long press on the next alarm (core/system/AlarmDismiss). -->
         <intent>
             <action android:name="android.intent.action.DISMISS_ALARM" />
         </intent>
