@@ -67,9 +67,9 @@ Settings opens from long-pressing the clock or an empty spot on home (`HomeSheet
 3. Register the section with one line in `ui/settings/SettingsSections.kt`, in the hub page it belongs to (the pages are the categories in `ui/settings/SettingsCategory.kt`), and the setting in `backedUpSettings` (`data/settings/BackedUpSettings.kt`) so backups carry it. Read the value elsewhere with `SettingsStore[setting]` (a `Flow`).
 
 ```kotlin
-object GestureSettings { val SwipeDownNotifications = BooleanSetting("swipe_down_notifications", default = true) }
-@Composable fun GestureSection(settings: SettingsViewModel) = SettingsGroup(R.string.settings_gestures) {
-    SwitchSetting(settings, GestureSettings.SwipeDownNotifications, title = R.string.settings_swipe_down)
+object DrawerSettings { val KeyboardOnOpen = BooleanSetting("drawer_keyboard_on_open", default = false) }
+@Composable fun DrawerSection(settings: SettingsViewModel) = SettingsGroup(R.string.drawer_settings_title) {
+    SwitchSetting(settings, DrawerSettings.KeyboardOnOpen, title = R.string.drawer_keyboard_on_open)
 }
 ```
 
