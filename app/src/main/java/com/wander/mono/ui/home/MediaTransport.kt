@@ -22,8 +22,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
@@ -32,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.ui.components.instantPress
+import com.wander.mono.ui.components.rememberMonoHaptics
 import com.wander.mono.ui.home.media.rememberConnectedShape
 import com.wander.mono.ui.home.media.rememberPlayPauseShape
 
@@ -127,7 +126,7 @@ private fun TransportButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val pressed by interaction.collectIsPressedAsState()
     val width by animateDpAsState(
         if (pressed) size.width + PRESSED_GROWTH else size.width,
@@ -136,7 +135,7 @@ private fun TransportButton(
     )
     Surface(
         onClick = {
-            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+            haptics.confirm()
             onClick()
         },
         modifier = modifier.size(width, size.height).instantPress(interaction),

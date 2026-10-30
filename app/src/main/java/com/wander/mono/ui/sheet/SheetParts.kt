@@ -17,7 +17,8 @@ import androidx.compose.ui.unit.dp
 
 /**
  * What a context menu is about, above its buttons, as in Wanda's track sheet: an optional
- * [leading] picture, the [title] and an optional [supporting] line, then a divider.
+ * [leading] picture, the [title] with an optional small [badge] after it, and an optional
+ * [supporting] line, then a divider.
  */
 @Composable
 internal fun SheetHeader(
@@ -25,6 +26,7 @@ internal fun SheetHeader(
     modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
     supporting: (@Composable () -> Unit)? = null,
+    badge: (@Composable () -> Unit)? = null,
 ) {
     Row(
         modifier.padding(horizontal = 24.dp, vertical = 8.dp),
@@ -33,13 +35,16 @@ internal fun SheetHeader(
     ) {
         leading?.invoke()
         Column(Modifier.weight(1f)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.semantics { heading() },
-            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false).semantics { heading() },
+                )
+                badge?.invoke()
+            }
             supporting?.invoke()
         }
     }

@@ -32,7 +32,7 @@ class LauncherViewModel @Inject constructor(
 
     /** The drawer was opened from edit mode to pick an app to add to home. */
     val pickingApp: StateFlow<Boolean> = savedState.getStateFlow(PICKING_APP, false)
-    val messages: SharedFlow<Int> = messages.messages
+    val messages: SharedFlow<UserMessage> = messages.messages
 
     private val mutableOverlaysAnimate = MutableStateFlow(true)
 
@@ -42,15 +42,19 @@ class LauncherViewModel @Inject constructor(
     private val mutableScrollToTop = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val scrollToTop: SharedFlow<Unit> = mutableScrollToTop.asSharedFlow()
 
-    fun openDrawer(focusSearch: Boolean = false) {
+    fun openDrawer(focusSearch: Boolean = false, picking: Boolean = false) {
         savedState[FOCUS_SEARCH] = focusSearch
+        savedState[PICKING_APP] = picking
         setAnimated(DRAWER_OPEN, true)
     }
 
-    fun closeDrawer() {
+    /** Closes the drawer; what it was opened for stays until [drawerClosed], so it fades out unchanged. */
+    fun closeDrawer() = setAnimated(DRAWER_OPEN, false)
+
+    /** The drawer has finished closing and is off screen: the next opening starts afresh. */
+    fun drawerClosed() {
         savedState[PICKING_APP] = false
         savedState[FOCUS_SEARCH] = false
-        setAnimated(DRAWER_OPEN, false)
     }
 
     fun setEditing(editing: Boolean) {
@@ -59,10 +63,7 @@ class LauncherViewModel @Inject constructor(
     }
 
     /** Opens the drawer so the next app tapped is added to home instead of launched. */
-    fun pickApp() {
-        savedState[PICKING_APP] = true
-        openDrawer()
-    }
+    fun pickApp() = openDrawer(picking = true)
 
     fun openSettings() {
         savedState[HOME_OPTIONS_OPEN] = false

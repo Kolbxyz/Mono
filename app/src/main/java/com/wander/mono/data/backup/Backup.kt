@@ -6,7 +6,8 @@ import com.wander.mono.data.settings.SettingValue
 
 /**
  * Everything a backup file restores: the home list, hidden apps, custom names, switched-off live
- * rows, quiet apps, headphone apps and settings. Widgets are not in it: their ids are bound to this phone's host.
+ * rows, quiet apps, headphone apps, home's [structure], settings and locked apps. Widgets are not
+ * in it: their ids are bound to this phone's host.
  * [mainSerial] is the serial of the profile the backup was made in, so keys can be moved to
  * another phone's profiles with [remapped].
  */
@@ -19,10 +20,14 @@ data class Backup(
     val quietApps: Set<AppKey>,
     val headphoneApps: Set<AppKey>,
     val settings: List<SettingValue<*>>,
+    val lockedApps: Set<AppKey> = emptySet(),
+    val structure: HomeStructure = HomeStructure(),
 ) {
     /** Every profile serial the backup's app keys name. */
     val serials: Set<Long>
         get() = (favorites + hidden + labels.keys + liveRowsOff.map { it.app } + quietApps + headphoneApps)
+            .plus(lockedApps)
+            .plus(structure.keys)
             .mapTo(mutableSetOf()) { it.userSerial }
 
     /** The same backup with each key moved to the serial [serialOf] gives; keys it maps to null are dropped. */
@@ -38,6 +43,8 @@ data class Backup(
             },
             quietApps = quietApps.mapNotNullTo(mutableSetOf()) { it.moved() },
             headphoneApps = headphoneApps.mapNotNullTo(mutableSetOf()) { it.moved() },
+            lockedApps = lockedApps.mapNotNullTo(mutableSetOf()) { it.moved() },
+            structure = structure.remapped { it.moved() },
         )
     }
 }

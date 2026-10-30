@@ -24,8 +24,9 @@ import kotlinx.coroutines.launch
 /**
  * How far the drawer is open, 0 to 1, following the finger while dragged and springing to open or
  * closed when released (by fling velocity, or past [THRESHOLD] of its travel). Whether it is open
- * belongs to [LauncherViewModel]: a release that changes it calls [onSettle], and the view model's
- * own changes (tap, launch, home press, back) come in through [follow].
+ * belongs to [LauncherViewModel]: a release that changes it calls [onSettle], and [onSettled] once
+ * the drawer has come to rest there; the view model's own changes (tap, launch, home press, back)
+ * come in through [follow].
  */
 @Stable
 class DrawerMotion internal constructor(
@@ -50,6 +51,7 @@ class DrawerMotion internal constructor(
     internal var flingVelocity = 0f
     internal var onSettle: (Boolean) -> Unit = {}
     internal var onArm: () -> Unit = {}
+    internal var onSettled: () -> Unit = {}
 
     private var target = open
     private var dragging = false
@@ -76,11 +78,13 @@ class DrawerMotion internal constructor(
             openVelocity < -flingVelocity -> false
             else -> if (armed(progress)) !target else target
         }
-        if (open != target) {
+        val changed = open != target
+        if (changed) {
             target = open
             onSettle(open)
         }
-        animateTo(open, openVelocity / travel)
+        // Springing back to where the drag started is no new state to mark.
+        animateTo(open, openVelocity / travel, onEnd = if (changed) onSettled else null)
     }
 
     /** The view model opened or closed the drawer; a release that already did so is left to finish. */
@@ -107,11 +111,13 @@ class DrawerMotion internal constructor(
     /** Whether letting go now would change the state the drag started from. */
     private fun armed(value: Float): Boolean = if (target) value < 1f - THRESHOLD else value > THRESHOLD
 
-    private fun animateTo(open: Boolean, velocity: Float) {
+    /** [onEnd] runs only if the animation finishes; a drag or another change cancels it first. */
+    private fun animateTo(open: Boolean, velocity: Float, onEnd: (() -> Unit)? = null) {
         animation?.cancel()
         val spec = if (open) openSpec else closeSpec
         animation = scope.launch {
             animate(progress, if (open) 1f else 0f, velocity, spec) { value, _ -> progress = value }
+            onEnd?.invoke()
         }
     }
 
@@ -140,6 +146,7 @@ fun rememberDrawerMotion(open: Boolean, onSettle: (Boolean) -> Unit): DrawerMoti
         motion.flingVelocity = fling
         motion.onSettle = onSettle
         motion.onArm = { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) }
+        motion.onSettled = { haptics.performHapticFeedback(HapticFeedbackType.GestureEnd) }
     }
     return motion
 }

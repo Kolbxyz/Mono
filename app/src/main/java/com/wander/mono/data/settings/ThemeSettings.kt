@@ -15,10 +15,25 @@ object ThemeSettings {
 
     /** Pure black surfaces in dark theme, for OLED screens; accents keep the wallpaper colours. */
     val AmoledBlack = BooleanSetting("theme_amoled_black", default = false)
+
+    /** With [AmoledBlack] in dark theme, the window is black instead of the wallpaper. */
+    val BlackWallpaper = BooleanSetting("theme_black_wallpaper", default = false)
 }
 
-/** What `MonoTheme` needs, read together so the theme changes in one step. */
-data class ThemeChoice(val mode: ThemeMode, val amoledBlack: Boolean)
+/** What `MonoTheme` and the window need, read together so the theme changes in one step. */
+data class ThemeChoice(
+    val mode: ThemeMode,
+    val amoledBlack: Boolean,
+    val blackWallpaper: Boolean,
+    val iconShape: IconShape,
+    val iconTheming: IconTheming,
+)
 
-fun SettingsStore.themeChoice(): Flow<ThemeChoice> =
-    combine(this[ThemeSettings.Mode], this[ThemeSettings.AmoledBlack], ::ThemeChoice)
+fun SettingsStore.themeChoice(): Flow<ThemeChoice> = combine(
+    this[ThemeSettings.Mode],
+    this[ThemeSettings.AmoledBlack],
+    this[ThemeSettings.BlackWallpaper],
+    this[IconSettings.Shape],
+    combine(this[IconSettings.ThemedTint], this[IconSettings.TintRows], ::IconTheming),
+    ::ThemeChoice,
+)

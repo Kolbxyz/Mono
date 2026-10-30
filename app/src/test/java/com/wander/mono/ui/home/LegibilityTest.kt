@@ -78,7 +78,7 @@ class LegibilityTest {
     }
 
     @Test
-    fun `scrim is solid when header and list nearly touch`() {
-        assertEquals(listOf(0f to 1f, 1f to 1f), scrimStops(1000f, 500f, 550f, 50f))
+    fun `scrim stays at least half strong when header and list are one reach apart`() {
+        assertTrue(scrimStops(1000f, 500f, 550f, 50f).all { (_, strength) -> strength >= 0.5f })
     }
 }

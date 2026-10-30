@@ -50,6 +50,15 @@ class SearchLayoutTest {
     }
 
     @Test
+    fun `opening and sharing pasted text are one group`() {
+        val link = SearchHit.Link("https://maps.org")
+        val results = listOf(app("Maps"), link, person("Mia"), SearchHit.ShareText("maps.org"))
+        val layout = SearchLayout.of(results)
+        assertEquals(listOf(ResultKind.HandOff, ResultKind.Contacts), layout.groups.map { it.kind })
+        assertEquals(listOf(results[1], results[3]), layout.groups[0].hits)
+    }
+
+    @Test
     fun `a shortcut on top is not repeated in its group`() {
         val results = listOf(shortcut("Call mum"), shortcut("Call dad"))
         val layout = SearchLayout.of(results)

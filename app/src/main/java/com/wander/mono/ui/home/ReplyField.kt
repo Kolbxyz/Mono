@@ -1,9 +1,11 @@
 package com.wander.mono.ui.home
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.KeyboardActions
@@ -20,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -29,21 +32,28 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import com.wander.mono.R
+import kotlinx.coroutines.flow.first
 
 /**
- * The inline reply: focused as soon as it opens, and kept above the keyboard as it slides in (the
- * home list pads the IME through `safeDrawing`; this scrolls the field into the freed space).
+ * The inline reply: focused as soon as it opens, and brought into view once the keyboard has
+ * settled (home pads the IME while a reply is open; this scrolls the field into the freed space).
+ * Once, not on every frame of the keyboard's slide, so the list does not jitter after it.
  * [onSend] returns true once sent, which clears the text.
  */
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 fun ReplyField(hint: String?, onSend: (String) -> Boolean, modifier: Modifier = Modifier) {
     var text by rememberSaveable { mutableStateOf("") }
     val focus = remember { FocusRequester() }
     val bringIntoView = remember { BringIntoViewRequester() }
-    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
-    LaunchedEffect(Unit) { focus.requestFocus() }
-    LaunchedEffect(imeBottom) { if (imeBottom > 0) bringIntoView.bringIntoView() }
+    val ime = WindowInsets.ime
+    val imeTarget = WindowInsets.imeAnimationTarget
+    val density = LocalDensity.current
+    LaunchedEffect(Unit) {
+        focus.requestFocus()
+        snapshotFlow { ime.getBottom(density).let { it > 0 && it == imeTarget.getBottom(density) } }.first { it }
+        bringIntoView.bringIntoView()
+    }
 
     val send = {
         if (text.isNotBlank() && onSend(text.trim())) text = ""

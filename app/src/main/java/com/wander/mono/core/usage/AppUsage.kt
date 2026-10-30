@@ -49,22 +49,33 @@ class AppUsage @Inject constructor(@ApplicationContext private val context: Cont
     /** Milliseconds [app] was in front since midnight; null without access or for another profile. */
     suspend fun todayMillis(app: LaunchableApp): Long? {
         if (!app.isMainProfile || !isGranted()) return null
-        return withContext(Dispatchers.IO) {
-            val end = System.currentTimeMillis()
-            val start = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            foregroundMillis(marks(app.key.packageName, start, end), start, end)
-        }
+        val packageName = app.key.packageName
+        return todayByPackage { it == packageName }[packageName] ?: 0L
     }
 
-    private fun marks(packageName: String, start: Long, end: Long): List<ActivityMark> {
+    /** Milliseconds each app of Mono's own profile was in front since midnight; null without access. */
+    suspend fun todayMillisByPackage(): Map<String, Long>? = if (isGranted()) todayByPackage { true } else null
+
+    private suspend fun todayByPackage(wanted: (String) -> Boolean): Map<String, Long> = withContext(Dispatchers.IO) {
+        val end = System.currentTimeMillis()
+        val start = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        marks(start, end, wanted).mapValues { (_, marks) -> foregroundMillis(marks, start, end) }
+    }
+
+    /** The activity marks of each [wanted] package between [start] and [end], in time order. */
+    private fun marks(start: Long, end: Long, wanted: (String) -> Boolean): Map<String, List<ActivityMark>> {
         val events = stats.queryEvents(start, end)
         val event = UsageEvents.Event()
-        val marks = mutableListOf<ActivityMark>()
+        val marks = mutableMapOf<String, MutableList<ActivityMark>>()
         while (events.getNextEvent(event)) {
-            if (event.packageName != packageName) continue
-            when (event.eventType) {
-                RESUMED -> marks += ActivityMark(event.className.orEmpty(), resumed = true, event.timeStamp)
-                PAUSED -> marks += ActivityMark(event.className.orEmpty(), resumed = false, event.timeStamp)
+            val resumed = when (event.eventType) {
+                RESUMED -> true
+                PAUSED -> false
+                else -> null
+            }
+            if (resumed != null && wanted(event.packageName)) {
+                val mark = ActivityMark(event.className.orEmpty(), resumed, event.timeStamp)
+                marks.getOrPut(event.packageName) { mutableListOf() } += mark
             }
         }
         return marks

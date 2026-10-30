@@ -10,7 +10,12 @@ import androidx.core.app.NotificationCompat
  * (or the sender, one to one) over its latest message; anything else shows its title and text.
  * Replying is only offered when the full content is shown.
  */
-internal fun previewOf(sbn: StatusBarNotification, owner: PackageUser, redaction: Redaction): NotificationPreview {
+internal fun previewOf(
+    sbn: StatusBarNotification,
+    owner: PackageUser,
+    redaction: Redaction,
+    expansion: PreviewExpansion,
+): NotificationPreview {
     val notification = sbn.notification
     val (title, text) = when (redaction) {
         Redaction.Full -> contentOf(notification)
@@ -27,6 +32,7 @@ internal fun previewOf(sbn: StatusBarNotification, owner: PackageUser, redaction
         autoCancel = notification.flags and Notification.FLAG_AUTO_CANCEL != 0,
         isClearable = sbn.isClearable,
         reply = if (redaction == Redaction.Full) replyActionOf(notification) else null,
+        expansion = expansion,
     )
 }
 
@@ -63,7 +69,8 @@ private fun plainContentOf(notification: Notification): Pair<String?, String?> {
         (extras.text(Notification.EXTRA_TEXT) ?: extras.text(Notification.EXTRA_BIG_TEXT))
 }
 
-private fun android.os.Bundle.text(key: String): String? = getCharSequence(key)?.toString()?.takeIf { it.isNotBlank() }
+/** The extra [key] as text, null when absent or blank. */
+internal fun android.os.Bundle.text(key: String): String? = getCharSequence(key)?.toString()?.takeIf { it.isNotBlank() }
 
 /** The action taking free-form text, preferring the one the app marks as "reply". */
 private fun replyActionOf(notification: Notification): ReplyAction? {

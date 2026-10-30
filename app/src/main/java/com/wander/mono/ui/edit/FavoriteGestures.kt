@@ -2,21 +2,25 @@ package com.wander.mono.ui.edit
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.runtime.State
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
+import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.isOutOfBounds
 import androidx.compose.ui.input.pointer.positionChange
+import kotlin.math.abs
 
 /**
- * Tap, hold, and hold-then-drag on one favourite. A tap launches; holding then letting go opens
- * its options; holding then moving (or just holding, in edit mode) lifts it and drags it. A drag
- * of the list before the hold timeout is a scroll and is left to the list.
+ * Tap, swipes, hold, and hold-then-drag on one favourite. A tap launches; a swipe right before
+ * the hold shows its notifications, a swipe left runs the action the user chose for it; holding
+ * then letting go opens its options; holding then moving (or just holding, in edit mode) lifts it
+ * and drags it. A drag of the list before the hold timeout is a scroll and is left to the list.
  */
 internal suspend fun PointerInputScope.detectFavoriteGestures(
     interactions: MutableInteractionSource,
@@ -26,20 +30,34 @@ internal suspend fun PointerInputScope.detectFavoriteGestures(
     down.consume()
     val press = PressInteraction.Press(down.position)
     interactions.tryEmit(press)
-    var up: PointerInputChange? = null
-    val beforeHold = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
-        up = waitForUpOrCancellation()
-    }
-    if (beforeHold != null) {
-        val tapped = up
-        if (tapped != null) {
-            tapped.consume()
+    val editing = callbacks.value.editing
+    val swipes = Swipes(
+        right = !editing && callbacks.value.onSwipeRight != null,
+        left = !editing && callbacks.value.onSwipeLeft != null,
+    )
+    val beforeHold = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) { awaitTapOrSwipe(down.id, swipes) }
+    when (beforeHold) {
+        null -> Unit
+        is BeforeHold.Tap -> {
+            beforeHold.up.consume()
             interactions.tryEmit(PressInteraction.Release(press))
             if (!callbacks.value.editing) callbacks.value.onTap()
-        } else {
-            interactions.tryEmit(PressInteraction.Cancel(press))
+            return@awaitEachGesture
         }
-        return@awaitEachGesture
+        BeforeHold.SwipedRight -> {
+            interactions.tryEmit(PressInteraction.Cancel(press))
+            callbacks.value.onSwipeRight?.invoke()
+            return@awaitEachGesture
+        }
+        BeforeHold.SwipedLeft -> {
+            interactions.tryEmit(PressInteraction.Cancel(press))
+            callbacks.value.onSwipeLeft?.invoke()
+            return@awaitEachGesture
+        }
+        BeforeHold.Cancelled -> {
+            interactions.tryEmit(PressInteraction.Cancel(press))
+            return@awaitEachGesture
+        }
     }
     callbacks.value.onHeld()
     val movedBy = if (callbacks.value.editing) 0f else awaitMoveAfterHold(down.id, callbacks)
@@ -110,3 +128,58 @@ private suspend fun AwaitPointerEventScope.dragUntilUp(id: PointerId, callbacks:
         change.consume()
     }
 }
+
+/** How a press ended before the hold timeout. */
+private sealed interface BeforeHold {
+    class Tap(val up: PointerInputChange) : BeforeHold
+
+    data object SwipedRight : BeforeHold
+
+    data object SwipedLeft : BeforeHold
+
+    /** Taken by someone else (the list scrolling) or gone out of the row. */
+    data object Cancelled : BeforeHold
+}
+
+/** Which horizontal swipes a favourite answers to right now. */
+private class Swipes(val right: Boolean, val left: Boolean)
+
+/**
+ * `waitForUpOrCancellation`, also ending as a swipe once the finger has moved past the touch slop
+ * sideways more than vertically, in a direction [swipes] allows. A vertical drag is the list's: it
+ * consumes it.
+ */
+private suspend fun AwaitPointerEventScope.awaitTapOrSwipe(id: PointerId, swipes: Swipes): BeforeHold {
+    var moved = Offset.Zero
+    while (true) {
+        val event = awaitPointerEvent()
+        val change = event.changes.firstOrNull { it.id == id }
+        val ended = when {
+            change == null -> BeforeHold.Cancelled
+            event.changes.all { it.changedToUp() } -> BeforeHold.Tap(change)
+            event.changes.any { it.isConsumed || it.isOutOfBounds(size, extendedTouchPadding) } -> BeforeHold.Cancelled
+            else -> {
+                moved += change.positionChange()
+                swipeOf(moved, swipes)?.also { change.consume() } ?: scrolledAway()
+            }
+        }
+        if (ended != null) return ended
+    }
+}
+
+/** A swipe once [moved] passes the touch slop sideways more than vertically, in a direction [swipes] allows. */
+private fun AwaitPointerEventScope.swipeOf(moved: Offset, swipes: Swipes): BeforeHold? {
+    val sideways = abs(moved.x) > viewConfiguration.touchSlop && abs(moved.x) > abs(moved.y)
+    return when {
+        !sideways -> null
+        moved.x > 0 -> BeforeHold.SwipedRight.takeIf { swipes.right }
+        else -> BeforeHold.SwipedLeft.takeIf { swipes.left }
+    }
+}
+
+/**
+ * Cancelled once the list has taken the drag: it consumes its scroll after this row's pass, so the
+ * final pass sees it.
+ */
+private suspend fun AwaitPointerEventScope.scrolledAway(): BeforeHold? =
+    BeforeHold.Cancelled.takeIf { awaitPointerEvent(PointerEventPass.Final).changes.any { it.isConsumed } }

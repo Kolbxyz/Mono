@@ -7,9 +7,11 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -21,7 +23,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * The drawer over home, rising with [motion] and fading in as it comes: composed while it is
  * [open] or any part of it shows. Dragging down past the top of its list, or on anything that does
  * not scroll, pulls it back down with the finger; predictive back lets it give way before closing
- * through [onBack].
+ * through [onBack]. [onClosed] runs once it has closed and nothing of it shows, so whatever it was
+ * showing stays put while it fades out.
  */
 @Composable
 fun DrawerLayer(
@@ -29,10 +32,14 @@ fun DrawerLayer(
     open: Boolean,
     backEnabled: Boolean,
     onBack: () -> Unit,
+    onClosed: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val showing by remember(motion) { derivedStateOf { motion.progress > 0f } }
-    if (!open && !showing) return
+    val closed = !open && !showing
+    val currentOnClosed by rememberUpdatedState(onClosed)
+    LaunchedEffect(closed) { if (closed) currentOnClosed() }
+    if (closed) return
     val pullDown = rememberPullDownConnection(motion)
     // The search field and headers do not scroll; this lets drags on them reach pullDown too.
     val stillDrag = rememberScrollableState { 0f }
@@ -59,11 +66,18 @@ fun DrawerLayer(
     }
 }
 
-/** Home behind the drawer: it fades and shrinks back a little as the drawer rises. */
-fun Modifier.behindDrawer(motion: DrawerMotion): Modifier = graphicsLayer {
-    val shown = motion.shown
-    alpha = 1f - shown
-    val scale = lerp(1f, HOME_SCALE, shown)
+/**
+ * Home behind the drawer fades out as the drawer rises; applied to all of home, scrim included, so
+ * the wallpaper is never left bare at its edges.
+ */
+fun Modifier.fadeBehindDrawer(motion: DrawerMotion): Modifier = graphicsLayer { alpha = 1f - motion.shown }
+
+/**
+ * Home's content behind the drawer shrinks back as the drawer rises, as far as under any
+ * full-screen overlay ([OverlayLevel.Screen]); its scrim does not.
+ */
+fun Modifier.shrinkBehindDrawer(motion: DrawerMotion): Modifier = graphicsLayer {
+    val scale = lerp(1f, OverlayLevel.Screen.scale, motion.shown)
     scaleX = scale
     scaleY = scale
 }
@@ -73,5 +87,3 @@ fun Modifier.behindDrawer(motion: DrawerMotion): Modifier = graphicsLayer {
  * must use the same share so a drag maps to exactly that distance.
  */
 const val TRAVEL_FRACTION = 1f / 3f
-
-private const val HOME_SCALE = 0.92f

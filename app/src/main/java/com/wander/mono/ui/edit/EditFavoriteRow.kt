@@ -1,6 +1,6 @@
 package com.wander.mono.ui.edit
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,7 +44,6 @@ internal fun EditFavoriteRow(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
             .liftScale(lift),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Row(
             Modifier
@@ -72,8 +71,12 @@ internal fun EditFavoriteRow(
                 )
             }
         }
-        toggles.forEach { toggle ->
-            LiveRowPlaceholder(toggle, onSetLiveRow, Modifier.padding(start = PLACEHOLDER_INDENT))
+        // A live row becoming available slides its placeholder in. Only this part resizes: the
+        // size animation clips, and the card above draws its lift shadow past its bounds.
+        Column(Modifier.animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec())) {
+            toggles.forEach { toggle ->
+                LiveRowPlaceholder(toggle, onSetLiveRow, Modifier.padding(start = PLACEHOLDER_INDENT, top = 4.dp))
+            }
         }
     }
 }

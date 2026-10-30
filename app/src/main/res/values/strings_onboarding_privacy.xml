@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Onboarding -->
+    <string name="onboarding_skip">Skip</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="onboarding_welcome_title">A calm home for your phone</string>
+    <string name="onboarding_welcome_body">One short list of the apps you use, everything else a swipe up away. Nothing you do here leaves your phone.</string>
+    <string name="onboarding_home_title">Make Mono your home screen</string>
+    <string name="onboarding_home_body">Android will ask you to confirm. If you say no, you can change it later in Settings, Apps, Default apps.</string>
+    <string name="onboarding_home_action">Set as home app</string>
+    <string name="onboarding_access_title">Music and notification counts</string>
+    <string name="onboarding_access_body">With notification access, Mono shows what is playing and how many notifications each app has, next to the app. Mono only reads them; nothing is sent anywhere.</string>
+    <string name="onboarding_access_action">Allow notification access</string>
+    <string name="onboarding_access_retry">Try again</string>
+    <string name="onboarding_restricted_title">Is the switch greyed out?</string>
+    <string name="onboarding_restricted_body">Android blocks this for apps installed outside an app store. It is an Android safety step, not something Mono asks for.</string>
+    <string name="onboarding_restricted_step1">1. Open Mono\'s App info</string>
+    <string name="onboarding_restricted_step2">2. Tap ⋮ in the top corner, then Allow restricted settings, and confirm</string>
+    <string name="onboarding_restricted_step3">3. Come back here and tap Try again</string>
+    <string name="onboarding_restricted_action">Open App info</string>
+    <string name="onboarding_done_title">You are set</string>
+    <string name="onboarding_done_body">Swipe up for all apps. Long-press an app to add it to home.</string>
+    <string name="onboarding_done_action">Start</string>
+
+    <!-- Onboarding: favourites and calendar -->
+    <string name="onboarding_favorites_title">Pick your favourites</string>
+    <string name="onboarding_favorites_body">They go on home, in the order you tick them. Change them any time.</string>
+    <string name="onboarding_favorites_calm">Fewer is calmer. Everything else is a swipe up away.</string>
+    <string name="onboarding_favorites_action">Add to home</string>
+    <string name="onboarding_calendar_title">Your next events</string>
+    <string name="onboarding_calendar_body">Shows your next events under the clock. Mono only reads your calendar; nothing leaves your phone.</string>
+    <string name="onboarding_calendar_action">Show my events</string>
+    <string name="onboarding_calendar_denied">Calendar access was not given. You can turn events on later in Settings.</string>
+
+    <!-- What Mono can see -->
+    <string name="privacy_title">What Mono can see</string>
+    <string name="privacy_no_internet">No internet permission</string>
+    <string name="privacy_no_internet_body">Nothing leaves the device. Mono cannot send anything anywhere.</string>
+    <string name="privacy_state_allowed">Allowed</string>
+    <string name="privacy_state_off">Not allowed</string>
+    <string name="privacy_open_settings">Open Android settings</string>
+    <string name="privacy_notifications">Notification access</string>
+    <string name="privacy_notifications_use">Reads notifications for dots, previews and what is playing</string>
+    <string name="privacy_usage">Usage access</string>
+    <string name="privacy_usage_use">Reads today\'s time in an app when you long-press it</string>
+    <string name="privacy_calendar">Calendar</string>
+    <string name="privacy_calendar_use">Reads your next events for home</string>
+    <string name="privacy_contacts">Contacts</string>
+    <string name="privacy_contacts_use">Finds people by name while you search, never stored</string>
+    <string name="privacy_dnd">Do Not Disturb access</string>
+    <string name="privacy_dnd_use">Switches Mono\'s own mode with quiet mode</string>
+    <string name="privacy_gestures">Gesture service</string>
+    <string name="privacy_gestures_use">Accessibility service that only locks the screen and opens the shade; it reads nothing</string>
+    <string name="privacy_hidden_profiles">Private space</string>
+    <string name="privacy_hidden_profiles_use">Lists private space apps; Android allows it only while Mono is the home app</string>
+
+    <!-- Appearance: solid black and icon shape -->
+    <string name="settings_black_wallpaper">Solid black wallpaper</string>
+    <string name="settings_black_wallpaper_short">Black instead of the wallpaper in dark theme</string>
+    <string name="settings_icon_shape">Icon shape</string>
+    <string name="settings_icon_shape_system">System</string>
+    <string name="settings_icon_shape_circle">Circle</string>
+    <string name="settings_icon_shape_squircle">Squircle</string>
+    <string name="settings_icon_shape_cookie">Cookie</string>
+    <string name="settings_icon_shape_clover">Clover</string>
+</resources>

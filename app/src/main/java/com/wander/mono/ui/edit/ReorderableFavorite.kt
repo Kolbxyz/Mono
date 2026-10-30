@@ -9,29 +9,35 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.zIndex
 import com.wander.mono.R
+import com.wander.mono.core.apps.LaunchSource
 import com.wander.mono.ui.components.AppIcons
-import com.wander.mono.ui.components.pressShrink
+import com.wander.mono.ui.components.PressMorph
+import com.wander.mono.ui.components.expressivePress
+import com.wander.mono.ui.components.rememberMonoHaptics
+import com.wander.mono.ui.components.rememberRowAccent
 import com.wander.mono.ui.home.FavoriteRow
+import com.wander.mono.ui.home.HomeCardCorner
 import com.wander.mono.ui.home.HomeRow
+import com.wander.mono.ui.home.LocalRowDensity
+import com.wander.mono.ui.home.favoriteRowMetrics
+import com.wander.mono.ui.home.rememberLaunchOrigin
 
 /**
  * A favourite on home, in or out of edit mode. The gestures live here, around both looks, so a
  * hold-and-drag that starts edit mode carries on as the row turns into its edit form.
  * [siblings] are the movable rows' keys (favourites and, in edit mode, widgets) in shown order:
- * what a drag moves among.
+ * what a drag moves among. [onShowPreview] expands the favourite's notification preview, null
+ * when it has none; [swipeLeft] is what the user chose for a swipe left, null for nothing.
+ * [overLimit] dims it: today's time in the app is past its daily limit.
  */
 @Composable
 fun ReorderableFavorite(
@@ -40,47 +46,72 @@ fun ReorderableFavorite(
     siblings: List<String>,
     rows: List<HomeRow>,
     editing: HomeEditing,
-    onLaunch: () -> Unit,
+    onLaunch: (LaunchSource?) -> Unit,
     onLongPress: () -> Unit,
     onAppInfo: () -> Unit,
+    onShowPreview: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    swipeLeft: SwipeLeft? = null,
+    overLimit: Boolean = false,
 ) {
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val interactions = remember { MutableInteractionSource() }
+    // With "Tint rows with app colour", the press ripples in the app's colour; else the theme's.
+    val accent = rememberRowAccent(row.app.key, icons, favoriteRowMetrics(LocalRowDensity.current).iconSize)
     val reorder = editing.reorder
     val lifted = reorder.dragging == row.key
+    val settle = rememberDropSettle()
+    val settleSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
+    // The app's window grows out of this row (spec 7.4.4).
+    val origin = rememberLaunchOrigin()
+    val launch = { onLaunch(origin.source()) }
+    val actions = FavoriteActions(launch, onLongPress, onAppInfo, onShowPreview, swipeLeft)
     val callbacks = rememberUpdatedState(
         FavoriteGestureCallbacks(
             editing = editing.active,
-            onTap = onLaunch,
-            onHeld = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
+            onTap = launch,
+            onSwipeRight = onShowPreview?.let { show ->
+                {
+                    haptics.threshold()
+                    show()
+                }
+            },
+            onSwipeLeft = swipeLeft?.let { swipe ->
+                {
+                    haptics.threshold()
+                    swipe.run()
+                }
+            },
+            onHeld = { haptics.longPress() },
             onHold = onLongPress,
             onLift = {
                 if (!editing.active) editing.onEnter()
                 reorder.start(row.key, siblings)
             },
-            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) },
+            onDrag = { dy -> if (reorder.dragBy(dy)) haptics.segment() },
             onDrop = {
                 if (reorder.dragging == row.key) {
-                    haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                    haptics.gestureEnd()
+                    settle.release(reorder.displacement, settleSpec)
                     editing.drop(rows)
                 }
             },
         ),
     )
-    val placed = if (lifted) {
+    // The edit form draws its own container and lift shadow, which the press's clip would cut off.
+    val press = if (editing.active) {
         Modifier
-            .zIndex(1f)
-            .graphicsLayer { translationY = reorder.displacement }
     } else {
-        modifier
+        Modifier.expressivePress(interactions, PressMorph.squarer(HomeCardCorner))
     }
     Box(
-        placed
-            .favoriteSemantics(row, siblings, rows, editing, onLaunch, onLongPress, onAppInfo)
-            // The edit form draws its own container and lift shadow, which a clip would cut off.
-            .then(if (editing.active) Modifier else Modifier.pressShrink(interactions).clip(MaterialTheme.shapes.large))
-            .indication(interactions, if (editing.active) null else ripple())
+        Modifier
+            .reorderLift(lifted, reorder, settle)
+            .then(modifier)
+            .then(origin.modifier)
+            .favoriteSemantics(row, siblings, rows, editing, actions)
+            .then(press)
+            .indication(interactions, if (editing.active) null else ripple(color = accent ?: Color.Unspecified))
             .pointerInput(row.key) { detectFavoriteGestures(interactions, callbacks) },
     ) {
         if (editing.active) {
@@ -94,16 +125,17 @@ fun ReorderableFavorite(
                 handle = Modifier.pointerInput(row.key) { detectHandleDrag(callbacks) },
             )
         } else {
-            FavoriteRow(row, icons)
+            FavoriteRow(row, icons, overLimit = overLimit)
         }
     }
 }
 
 /**
- * Outside edit mode the row is one button (open, options) offering App info and the moves among
- * the favourites as custom actions, so TalkBack can reorder without entering edit mode. In edit
- * mode its buttons and switches stay separate nodes, and the row offers TalkBack the moves a drag
- * does, among favourites and widgets alike.
+ * Outside edit mode the row is one button (open, options) offering App info, Show notifications
+ * (the swipe right), the swipe left's action and the moves among the favourites as custom
+ * actions, so TalkBack can reorder without entering edit mode. In edit mode its buttons and
+ * switches stay separate nodes, and the row offers TalkBack the moves a drag does, among
+ * favourites and widgets alike.
  */
 @Composable
 private fun Modifier.favoriteSemantics(
@@ -111,9 +143,7 @@ private fun Modifier.favoriteSemantics(
     siblings: List<String>,
     rows: List<HomeRow>,
     editing: HomeEditing,
-    onLaunch: () -> Unit,
-    onLongPress: () -> Unit,
-    onAppInfo: () -> Unit,
+    actions: FavoriteActions,
 ): Modifier {
     if (editing.active) return moveSemantics(row.key, siblings, rows, editing)
     val openLabel = stringResource(R.string.action_open)
@@ -121,14 +151,17 @@ private fun Modifier.favoriteSemantics(
     val moveUp = stringResource(R.string.sheet_move_up)
     val moveDown = stringResource(R.string.sheet_move_down)
     val appInfo = stringResource(R.string.sheet_app_info)
+    val showPreview = stringResource(R.string.favorite_show_notifications)
     val favorites = rows.filterIsInstance<HomeRow.App>()
     val index = favorites.indexOfFirst { it.key == row.key }
     val key = row.app.key
     return semantics(mergeDescendants = true) {
-        onClick(openLabel) { onLaunch().let { true } }
-        onLongClick(optionsLabel) { onLongPress().let { true } }
+        onClick(openLabel) { actions.onLaunch().let { true } }
+        onLongClick(optionsLabel) { actions.onLongPress().let { true } }
         customActions = buildList {
-            add(CustomAccessibilityAction(appInfo) { onAppInfo().let { true } })
+            add(CustomAccessibilityAction(appInfo) { actions.onAppInfo().let { true } })
+            actions.onShowPreview?.let { show -> add(CustomAccessibilityAction(showPreview) { show().let { true } }) }
+            actions.swipeLeft?.let { swipe -> add(CustomAccessibilityAction(swipe.label) { swipe.run().let { true } }) }
             if (index > 0) add(CustomAccessibilityAction(moveUp) { editing.onMove(key, -1).let { true } })
             if (index in 0 until favorites.lastIndex) {
                 add(CustomAccessibilityAction(moveDown) { editing.onMove(key, 1).let { true } })
@@ -136,3 +169,12 @@ private fun Modifier.favoriteSemantics(
         }
     }
 }
+
+/** What TalkBack can do with a favourite outside edit mode. */
+private class FavoriteActions(
+    val onLaunch: () -> Unit,
+    val onLongPress: () -> Unit,
+    val onAppInfo: () -> Unit,
+    val onShowPreview: (() -> Unit)?,
+    val swipeLeft: SwipeLeft?,
+)
