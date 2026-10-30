@@ -43,6 +43,7 @@ class NotificationRowTest {
             is HomeRow.NowPlaying -> "now"
             HomeRow.ListenerPrompt -> "prompt"
             is CalendarRow -> "calendar"
+            is LiveActivityRow -> "live"
             is WidgetHomeRow -> "widget"
         }
     }
