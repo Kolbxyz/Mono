@@ -1,16 +1,27 @@
 package com.wander.mono.ui.onboarding
 
 /** First-run setup, in order. Every step can be skipped; Mono works with none of them done. */
-enum class OnboardingStep { Welcome, DefaultHome, NotificationAccess, Done }
+enum class OnboardingStep { Welcome, DefaultHome, Favorites, NotificationAccess, Calendar, Done }
 
-/** What the system already says is set up, read again each time Mono comes back to the front. */
-data class SetupFacts(val isDefaultHome: Boolean, val hasNotificationAccess: Boolean)
+/**
+ * What the system already says is set up, read again each time Mono comes back to the front.
+ * [showsCalendar]: the calendar setting is on and the permission granted.
+ */
+data class SetupFacts(
+    val isDefaultHome: Boolean,
+    val hasNotificationAccess: Boolean,
+    val showsCalendar: Boolean = false,
+)
 
-/** A step whose job the system reports done needs no screen: Mono is already home, access already granted. */
+/**
+ * A step whose job the system reports done needs no screen: Mono is already home, access already
+ * granted. Favourites are a choice, never done for the user, so their step always shows.
+ */
 private fun OnboardingStep.satisfiedBy(facts: SetupFacts): Boolean = when (this) {
     OnboardingStep.DefaultHome -> facts.isDefaultHome
     OnboardingStep.NotificationAccess -> facts.hasNotificationAccess
-    OnboardingStep.Welcome, OnboardingStep.Done -> false
+    OnboardingStep.Calendar -> facts.showsCalendar
+    OnboardingStep.Welcome, OnboardingStep.Favorites, OnboardingStep.Done -> false
 }
 
 /**
