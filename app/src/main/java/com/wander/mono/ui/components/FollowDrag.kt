@@ -44,11 +44,13 @@ fun rememberPullUpConnection(drag: FollowDrag, onPullDown: (() -> Unit)?): Neste
 
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 if (source != NestedScrollSource.UserInput) return Offset.Zero
-                if (available.y < 0f) {
+                val taken = if (available.y < 0f) {
                     drag.dragBy(available.y)
-                    return Offset(0f, available.y)
+                    available.y
+                } else {
+                    pullDownBy(available.y, consumed.y)
                 }
-                return Offset(0f, pullDownBy(available.y, consumed.y))
+                return Offset(0f, taken)
             }
 
             /**
