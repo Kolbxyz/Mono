@@ -52,19 +52,6 @@ class ClockActions @Inject constructor(@ApplicationContext private val context: 
         R.string.error_no_clock_app,
     )
 
-    /** Resolves an intent, so not on the main thread. */
-    fun canDismissAlarm(): Boolean = handles(AlarmClock.ACTION_DISMISS_ALARM)
-
-    /**
-     * Asks the clock app to dismiss its next alarm. The clock app decides and confirms on its own
-     * screen; Android offers no way to skip another app's alarm silently.
-     */
-    fun dismissNextAlarm(): ActionResult = start(
-        Intent(AlarmClock.ACTION_DISMISS_ALARM)
-            .putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_NEXT),
-        R.string.error_no_clock_dismiss,
-    )
-
     private fun handles(action: String): Boolean =
         context.packageManager.resolveActivity(Intent(action), PackageManager.MATCH_DEFAULT_ONLY) != null
 
