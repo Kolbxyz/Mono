@@ -17,10 +17,12 @@ object MediaSettings {
 
 /** How long a paused session keeps its card; [millis] null keeps it until the session goes away. */
 enum class PausedHide(override val stored: String, val millis: Long?) : StoredEnum {
-    FiveMinutes("5m", 5 * MINUTE_MS),
-    TenMinutes("10m", 10 * MINUTE_MS),
-    ThirtyMinutes("30m", 30 * MINUTE_MS),
+    FiveMinutes("5m", FIVE_MINUTES_MS),
+    TenMinutes("10m", TEN_MINUTES_MS),
+    ThirtyMinutes("30m", THIRTY_MINUTES_MS),
     Never("never", null),
 }
 
-private const val MINUTE_MS = 60_000L
+private const val FIVE_MINUTES_MS = 300_000L
+private const val TEN_MINUTES_MS = 600_000L
+private const val THIRTY_MINUTES_MS = 1_800_000L

@@ -35,25 +35,7 @@ internal fun appActions(
 ): List<MenuAction> {
     val key = state.app.key
     return buildList {
-        if (state.isFavorite) {
-            add(
-                MenuAction(
-                    R.drawable.sym_remove_circle,
-                    R.string.sheet_remove_from_home,
-                    group = ROW_APP,
-                    shortLabel = R.string.sheet_short_remove_home,
-                ) { onRemoveFromHome(key) }.thenDismiss(dismiss),
-            )
-        } else if (state.canGoOnHome) {
-            add(
-                MenuAction(
-                    R.drawable.sym_keep,
-                    R.string.sheet_add_to_home,
-                    group = ROW_APP,
-                    shortLabel = R.string.sheet_short_add_home,
-                ) { onAddToHome(key) }.thenDismiss(dismiss),
-            )
-        }
+        homeAction(state, dismiss, onAddToHome, onRemoveFromHome)?.let(::add)
         add(
             MenuAction(
                 R.drawable.sym_info,
@@ -99,5 +81,30 @@ internal fun appActions(
                 shortLabel = R.string.sheet_short_lock,
             ) { onSetLocked(key, !state.isLocked) },
         )
+    }
+}
+
+/** Home in or out: out for a favourite, in for an app that can go on home, nothing otherwise. */
+private fun homeAction(
+    state: AppSheetState,
+    dismiss: SheetDismiss,
+    onAddToHome: (AppKey) -> Unit,
+    onRemoveFromHome: (AppKey) -> Unit,
+): MenuAction? {
+    val key = state.app.key
+    return when {
+        state.isFavorite -> MenuAction(
+            R.drawable.sym_remove_circle,
+            R.string.sheet_remove_from_home,
+            group = ROW_APP,
+            shortLabel = R.string.sheet_short_remove_home,
+        ) { onRemoveFromHome(key) }.thenDismiss(dismiss)
+        state.canGoOnHome -> MenuAction(
+            R.drawable.sym_keep,
+            R.string.sheet_add_to_home,
+            group = ROW_APP,
+            shortLabel = R.string.sheet_short_add_home,
+        ) { onAddToHome(key) }.thenDismiss(dismiss)
+        else -> null
     }
 }
