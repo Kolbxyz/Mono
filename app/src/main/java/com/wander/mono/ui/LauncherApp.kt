@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.data.settings.SwipeUpAction
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.rememberCredentialPrompt
 import com.wander.mono.ui.components.rememberPullUpConnection
@@ -56,7 +57,8 @@ fun LauncherApp(
     val drawerOpen by launcher.drawerOpen.collectAsStateWithLifecycle()
     val focusSearch by launcher.focusSearch.collectAsStateWithLifecycle()
     val doubleTapLock by gestures.doubleTapLock.collectAsStateWithLifecycle()
-    val swipeDownNotifications by gestures.swipeDownNotifications.collectAsStateWithLifecycle()
+    val swipeUp by gestures.swipeUp.collectAsStateWithLifecycle()
+    val swipeDown by gestures.swipeDown.collectAsStateWithLifecycle()
     val settingsOpen by launcher.settingsOpen.collectAsStateWithLifecycle()
     val overlaysAnimate by launcher.overlaysAnimate.collectAsStateWithLifecycle()
     val rows by home.rows.collectAsStateWithLifecycle()
@@ -84,11 +86,11 @@ fun LauncherApp(
         launcher.closeDrawer()
     }
     val drawerMotion = rememberDrawerMotion(drawerOpen) { open ->
-        if (open) launcher.openDrawer() else launcher.closeDrawer()
+        if (open) launcher.openDrawer(focusSearch = swipeUp == SwipeUpAction.Search) else launcher.closeDrawer()
     }
     val homeGestures = rememberPullUpConnection(
         drawerMotion,
-        onPullDown = if (swipeDownNotifications) gestures::openNotifications else null,
+        onPullDown = gestures.pullDownFor(swipeDown) { launcher.openDrawer(focusSearch = true) },
     )
 
     val afterHit: (HitOutcome) -> Unit = { outcome ->
