@@ -35,6 +35,7 @@ fun LauncherDrawer(
 ) {
     val query by drawer.query.collectAsStateWithLifecycle()
     val state by drawer.state.collectAsStateWithLifecycle()
+    val recentSearches by drawer.recentSearches.collectAsStateWithLifecycle()
     val focusSearch by launcher.focusSearch.collectAsStateWithLifecycle()
     val pickingApp by launcher.pickingApp.collectAsStateWithLifecycle()
     val privateActions = remember(drawer) { PrivateSpaceActions(drawer::setPrivateLocked, drawer::openPrivateSettings) }
@@ -52,6 +53,7 @@ fun LauncherDrawer(
     QuietDrawerGate(quiet = quiet, revealed = revealed, onClose = launcher::closeDrawer) {
         DrawerScreen(
             open = open,
+            listActions = drawer.listActions,
             revealed = revealed,
             query = query,
             state = state,
@@ -68,6 +70,9 @@ fun LauncherDrawer(
             onUnlockHidden = unlockHidden,
             privateActions = privateActions,
             onSetWorkPaused = drawer::setWorkPaused,
+            recentSearches = recentSearches,
+            onForgetRecent = drawer::forgetRecent,
+            onReach = { hit, how -> afterHit(drawer.reach(hit, how)) },
             modifier = modifier,
             pickingApp = pickingApp,
             focusSearch = focusSearch,

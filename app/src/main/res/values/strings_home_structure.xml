@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Folders on home -->
+    <string name="state_folder_open">Open folder</string>
+    <string name="state_folder_closed">Folder</string>
+    <string name="action_open_folder">Show apps</string>
+    <string name="action_close_folder">Hide apps</string>
+    <string name="action_folder_options">Folder options</string>
+    <string name="folder_rename">Rename</string>
+    <!-- Removes the folder; its apps stay on home. -->
+    <string name="folder_ungroup">Ungroup</string>
+    <plurals name="folder_app_count">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <string name="folder_new_title">New folder</string>
+    <string name="folder_rename_title">Rename folder</string>
+    <string name="folder_name_field">Folder name</string>
+    <string name="folder_create">Create</string>
+
+    <!-- App options: home's structure -->
+    <string name="sheet_add_to_folder">Add to folder…</string>
+    <!-- %1$s is the folder's name. -->
+    <string name="sheet_take_out_of_folder">Take out of %1$s</string>
+    <string name="sheet_swipe_left">Swipe left…</string>
+    <string name="sheet_mute_on_home">Hide notifications on home</string>
+    <string name="sheet_daily_limit">Daily limit…</string>
+    <string name="sheet_page_folder">Add to folder</string>
+    <string name="sheet_page_swipe_left">Swipe left</string>
+    <string name="sheet_page_daily_limit">Daily limit</string>
+    <string name="sheet_new_folder">New folder</string>
+    <!-- A choice named by the user or an app: a folder, a shortcut, a time. -->
+    <string name="sheet_choice" translatable="false">%1$s</string>
+    <string name="swipe_nothing">Nothing</string>
+    <string name="limit_none">No limit</string>
+    <string name="limit_minutes">%1$d min</string>
+    <string name="limit_hours">%1$d h</string>
+    <string name="limit_hours_minutes">%1$d h %2$d min</string>
+
+    <!-- Favourites on home -->
+    <!-- TalkBack, on a favourite past its daily limit. -->
+    <string name="favorite_limit_reached">Daily limit reached</string>
+    <!-- TalkBack action for a swipe left that opens a shortcut; %1$s is the app's name. -->
+    <string name="swipe_shortcut_action">Open %1$s shortcut</string>
+    <string name="swipe_shortcut_gone">That shortcut is no longer available</string>
+
+    <!-- Settings: routines -->
+    <string name="settings_routines">Routines</string>
+    <string name="settings_routines_on">Use routines</string>
+    <string name="settings_routines_summary">Favourites you pick go first at set times</string>
+    <string name="settings_routine_add">Add routine</string>
+    <string name="settings_routine_title">Routine %1$d</string>
+    <string name="settings_routine_remove">Remove routine %1$d</string>
+    <!-- Between the two times of a routine: "07:00 to 09:00". -->
+    <string name="settings_routine_to">to</string>
+    <string name="settings_routine_from">Starts at %1$s</string>
+    <string name="settings_routine_until">Ends at %1$s</string>
+    <string name="settings_routine_no_favorites">Add favourites to home to pick them here</string>
+    <string name="settings_routine_time_title">Set time</string>
+
+    <!-- Settings: screen time -->
+    <string name="settings_screen_time">Screen time</string>
+    <string name="settings_screen_time_nudge">Fade apps past their daily limit</string>
+    <string name="settings_screen_time_short">Set a limit from a favourite\'s options</string>
+</resources>

@@ -12,8 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -21,12 +19,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.media.QueueEntry
+import com.wander.mono.ui.components.rememberMonoHaptics
 import com.wander.mono.ui.theme.textAlpha
 
 /** The next few items of the session's queue; tapping one jumps playback to it. */
 @Composable
 internal fun UpNextList(entries: List<QueueEntry>, onPlay: (id: Long) -> Unit, modifier: Modifier = Modifier) {
-    val haptics = LocalHapticFeedback.current
+    val haptics = rememberMonoHaptics()
     val playLabel = stringResource(R.string.media_play_this)
     val secondary = LocalContentColor.current.copy(alpha = textAlpha(SECONDARY_ALPHA))
     Column(modifier.fillMaxWidth()) {
@@ -42,10 +41,10 @@ internal fun UpNextList(entries: List<QueueEntry>, onPlay: (id: Long) -> Unit, m
                     .heightIn(min = 48.dp)
                     .clip(MaterialTheme.shapes.small)
                     .clickable(onClickLabel = playLabel) {
-                        haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                        haptics.confirm()
                         onPlay(entry.id)
                     }
-                    .padding(vertical = 6.dp),
+                    .padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
