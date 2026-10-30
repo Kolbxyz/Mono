@@ -3,7 +3,6 @@ package com.wander.mono.ui.edit
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarAgenda
-import com.wander.mono.core.media.MediaState
 import com.wander.mono.core.notifications.LiveActivity
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.PackageUser
@@ -27,17 +26,6 @@ internal fun liveRowToggles(
         val row = LiveRowRef(app.key, kind)
         LiveRowToggle(row, shown = row !in hidden)
     }
-}
-
-/**
- * Which favourites have a now-playing row to switch: those of the playing app. Sessions are only
- * readable for Mono's own profile, so only main-profile entries own one.
- */
-internal fun nowPlayingAvailability(media: MediaState, favorites: List<LaunchableApp>): Map<AppKey, Set<LiveRowKind>> {
-    if (media !is MediaState.Active) return emptyMap()
-    return favorites
-        .filter { it.isMainProfile && it.key.packageName == media.media.packageName }
-        .associate { it.key to setOf(LiveRowKind.NowPlaying) }
 }
 
 /** Which favourites have a notification preview row to switch: those with a notification now. */

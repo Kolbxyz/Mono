@@ -7,7 +7,7 @@ internal data class LiveTraits(
     val category: String?,
     val isOngoing: Boolean,
     val isGroupSummary: Boolean,
-    /** It carries a media session: the now-playing row already shows it. */
+    /** It carries a media session: the player under the clock already shows it. */
     val isMedia: Boolean,
     val showsChronometer: Boolean,
     /** Posted by an app that takes timers (the clock app), whose ongoing notifications are timers. */
@@ -19,7 +19,7 @@ internal data class LiveTraits(
 
 /**
  * The live row an active notification becomes, null for none. Only ongoing notifications qualify,
- * never media (the now-playing row) or calls. Navigation goes by its category; a Live Update with a
+ * never media (the player under the clock) or calls. Navigation goes by its category; a Live Update with a
  * progress is a progress row even when it also runs a chronometer; a chronometer, the stopwatch
  * category or the clock app make a timer; anything else needs a determinate progress (or the
  * progress category, or to be a Live Update) to count as under way.
@@ -71,5 +71,5 @@ internal fun chooseLive(candidates: List<LiveCandidate>): List<LiveCandidate> = 
         group.minWith(compareByDescending<LiveCandidate> { it.ticking }.thenBy { it.startedAt }.thenBy { it.key })
     }
 
-/** Media transport (the now-playing row) and calls are never live rows. */
+/** Media transport (the player under the clock) and calls are never live rows. */
 private val NOT_LIVE = setOf(NotificationCompat.CATEGORY_TRANSPORT, NotificationCompat.CATEGORY_CALL)

@@ -25,7 +25,7 @@ import android.text.format.DateFormat as AndroidDateFormat
  * setting, styled and filtered by the user's clock settings. Each line opens what it names.
  * [compact] (a phone in landscape) trades the airy spacing and display size for list room;
  * [reachable] sits it low, over the search dock. [hero] is how far the hero pull has grown it.
- * A long press on the clock runs [onClockOptions].
+ * A long press on the clock runs [onClockOptions]. [player] goes under it all: the player under the clock.
  */
 @Composable
 fun GlanceHeader(
@@ -36,11 +36,12 @@ fun GlanceHeader(
     simple: Boolean = false,
     hero: () -> Float = { 0f },
     onClockOptions: (() -> Unit)? = null,
+    player: @Composable () -> Unit = {},
     actions: GlanceActionsViewModel = viewModel(),
     alarms: AlarmDismissViewModel = viewModel(),
 ) {
     val taps = remember(actions) { actions.taps() }
-    GlanceContent(glance, taps, modifier, compact, reachable, simple, hero, alarms::dismissNext, onClockOptions)
+    GlanceContent(glance, taps, modifier, compact, reachable, simple, hero, alarms::dismissNext, onClockOptions, player)
 }
 
 /**
@@ -59,6 +60,7 @@ fun GlanceContent(
     hero: () -> Float = { 0f },
     onDismissAlarm: (() -> Unit)? = null,
     onClockOptions: (() -> Unit)? = null,
+    player: @Composable () -> Unit = {},
 ) {
     val locale = LocalConfiguration.current.locales[0]
     // Re-read on every minute tick; flipping the setting also sends ACTION_TIME_CHANGED.
@@ -98,6 +100,7 @@ fun GlanceContent(
             GlanceChips(glance, lines.battery, timeSkeleton, taps)
         }
         HeroSummary(glance, summaryLines(lines), hero, timeSkeleton, taps, onDismissAlarm, centred)
+        player()
     }
 }
 

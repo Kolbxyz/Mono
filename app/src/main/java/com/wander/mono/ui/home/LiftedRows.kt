@@ -4,7 +4,7 @@ import com.wander.mono.core.apps.AppKey
 
 /**
  * Home with the [lifted] favourites first (headphones are connected, a routine is on): each one moves with
- * the live rows under it (now playing, preview, calendar, widgets), and the lifted ones keep the
+ * the live rows under it (preview, calendar, live activities, widgets), and the lifted ones keep the
  * user's order among themselves, as do the rest. A folder goes first when any of its favourites
  * does. Rows above the first favourite stay first and the access prompt stays last. Only the
  * shown order changes; the saved one is untouched.

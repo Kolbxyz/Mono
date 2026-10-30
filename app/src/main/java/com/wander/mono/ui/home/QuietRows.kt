@@ -5,9 +5,9 @@ import com.wander.mono.core.quiet.QuietState
 import com.wander.mono.ui.components.AppBadge
 
 /**
- * Home in quiet mode: only the quiet favourites, without badges, the playing media (the user
- * started it) and, under a kept favourite, its running timer or directions: useful, not
- * distracting. Every other live row (progress, previews, prompts, and any added later) is left out.
+ * Home in quiet mode: only the quiet favourites, without badges and, under a kept favourite, its
+ * running timer or directions: useful, not distracting. The player under the clock stays (the user
+ * started it). Every other live row (progress, previews, prompts, and any added later) is left out.
  */
 internal fun quietHomeRows(rows: List<HomeRow>, quiet: QuietState): List<HomeRow> {
     if (!quiet.enabled) return rows
@@ -15,7 +15,6 @@ internal fun quietHomeRows(rows: List<HomeRow>, quiet: QuietState): List<HomeRow
     return rows.mapNotNull { row ->
         when (row) {
             is HomeRow.App -> row.takeIf { it.app.key in kept }?.copy(badge = AppBadge.None)
-            is HomeRow.NowPlaying -> row
             is LiveActivityRow -> row.takeIf { it.app.key in kept && it.activity.kind in QUIET_LIVE_KINDS }
             else -> null
         }

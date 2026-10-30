@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 /**
- * Wanda's own "up next", in true playback order, for the now-playing card when Wanda plays and its
+ * Wanda's own "up next", in true playback order, for the player under the clock when Wanda plays and its
  * session publishes no usable queue. Wanda's provider is watched only while that is the case.
  */
 @Singleton

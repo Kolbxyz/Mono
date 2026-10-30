@@ -10,8 +10,8 @@ data class WidgetHomeRow(val widget: PlacedWidget) : HomeRow {
 
 /**
  * Puts the widgets into the assembled home list: each one under its favourite, after that
- * favourite's own live rows (now playing, notification preview, calendar, live activities) so they stay right under
- * their app; widgets placed above the first favourite go first.
+ * favourite's own live rows (notification preview, calendar, live activities) so they stay right
+ * under their app; widgets placed above the first favourite go first.
  */
 internal fun withWidgetRows(rows: List<HomeRow>, widgets: List<PlacedWidget>): List<HomeRow> {
     if (widgets.isEmpty()) return rows
@@ -34,4 +34,4 @@ internal fun withWidgetRows(rows: List<HomeRow>, widgets: List<PlacedWidget>): L
 
 /** Live rows that sit right under the favourite they belong to. */
 private fun HomeRow.belongsToAppAbove(): Boolean =
-    this is HomeRow.NowPlaying || this is NotificationRow || this is CalendarRow || this is LiveActivityRow
+    this is NotificationRow || this is CalendarRow || this is LiveActivityRow

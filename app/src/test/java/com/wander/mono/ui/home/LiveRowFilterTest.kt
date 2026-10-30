@@ -49,7 +49,7 @@ class LiveRowFilterTest {
 
     @Test
     fun `previews stay when nothing of their kind is off`() {
-        assertSame(previews, previews.unlessHidden(setOf(LiveRowRef(signal, LiveRowKind.NowPlaying))))
+        assertSame(previews, previews.unlessHidden(setOf(LiveRowRef(signal, LiveRowKind.Calendar))))
     }
 
     @Test
