@@ -2,15 +2,8 @@ package com.wander.mono.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -19,7 +12,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.platform.LocalResources
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
@@ -42,13 +34,9 @@ import com.wander.mono.ui.home.HomeViewModel
 import com.wander.mono.ui.quiet.QuietDrawerGate
 import com.wander.mono.ui.quiet.QuietViewModel
 import com.wander.mono.ui.settings.SettingsScreen
-import com.wander.mono.ui.sheet.AppSheet
 import com.wander.mono.ui.sheet.AppSheetViewModel
-import com.wander.mono.ui.sheet.HomeSheet
-import com.wander.mono.ui.sheet.RenameDialog
 import com.wander.mono.ui.sheet.RenameViewModel
 import com.wander.mono.ui.theme.LocalReducedMotion
-import com.wander.mono.ui.widgets.WidgetSheets
 import com.wander.mono.ui.widgets.WidgetsViewModel
 
 /** Home, with the drawer and settings sliding over it, the long-press sheets and the error snackbar. */
@@ -70,7 +58,6 @@ fun LauncherApp(
     val doubleTapLock by gestures.doubleTapLock.collectAsStateWithLifecycle()
     val swipeDownNotifications by gestures.swipeDownNotifications.collectAsStateWithLifecycle()
     val settingsOpen by launcher.settingsOpen.collectAsStateWithLifecycle()
-    val homeOptionsOpen by launcher.homeOptionsOpen.collectAsStateWithLifecycle()
     val overlaysAnimate by launcher.overlaysAnimate.collectAsStateWithLifecycle()
     val rows by home.rows.collectAsStateWithLifecycle()
     val lifted by home.lifted.collectAsStateWithLifecycle()
@@ -78,10 +65,8 @@ fun LauncherApp(
     val homeLook by homeLookModel.look.collectAsStateWithLifecycle()
     val query by drawer.query.collectAsStateWithLifecycle()
     val drawerState by drawer.state.collectAsStateWithLifecycle()
-    val sheetState by sheet.state.collectAsStateWithLifecycle()
     val editingOn by launcher.editing.collectAsStateWithLifecycle()
     val pickingApp by launcher.pickingApp.collectAsStateWithLifecycle()
-    val sheetUsage by sheet.usageToday.collectAsStateWithLifecycle()
     val quietOn by quiet.enabled.collectAsStateWithLifecycle()
     val unlockHidden = rememberCredentialPrompt(
         R.string.hidden_unlock_title,
@@ -98,8 +83,6 @@ fun LauncherApp(
         edit.add(app.key)
         launcher.closeDrawer()
     }
-    val snackbar = remember { SnackbarHostState() }
-    val resources = LocalResources.current
     val drawerMotion = rememberDrawerMotion(drawerOpen) { open ->
         if (open) launcher.openDrawer() else launcher.closeDrawer()
     }
@@ -116,22 +99,19 @@ fun LauncherApp(
         }
     }
 
-    LaunchedEffect(launcher) { launcher.messages.collect { snackbar.showSnackbar(resources.getString(it)) } }
     val reducedMotion = LocalReducedMotion.current
     LaunchedEffect(launcher, reducedMotion) {
         launcher.scrollToTop.collect {
             if (reducedMotion) homeList.scrollToItem(0) else homeList.animateScrollToItem(0)
         }
     }
-    // Every way of closing the drawer (back, swipe, launch, home press) starts the next search afresh.
-    LaunchedEffect(drawerOpen) { if (!drawerOpen) drawer.setQuery("") }
     // Taps, launches, home presses and back move the drawer here; drags and flings move it themselves.
     LaunchedEffect(drawerOpen) { drawerMotion.follow(drawerOpen, overlaysAnimate) }
     EditEffects(editing, rows, homeList)
-    // Back on home has nothing to go back to; it only ever closes what is open.
+    // Back on home has nothing to go back to; it only ever closes what is open. Settings, the drawer
+    // and the sheets take back first with their own predictive handlers.
     BackHandler {
         when {
-            settingsOpen -> launcher.closeSettings()
             drawerOpen && query.isNotEmpty() -> drawer.setQuery("")
             drawerOpen -> launcher.closeDrawer()
             editingOn -> launcher.setEditing(false)
@@ -173,17 +153,25 @@ fun LauncherApp(
             // Settings over the drawer and a typed query each take back first.
             backEnabled = !settingsOpen && query.isEmpty(),
             onBack = launcher::closeDrawer,
+            // Every way of closing (back, swipe, launch, home press) starts the next opening afresh,
+            // once the drawer has faded out showing what it showed.
+            onClosed = {
+                drawer.setQuery("")
+                launcher.drawerClosed()
+            },
         ) {
             // Hidden apps unlocked for this opening only.
             DisposableEffect(Unit) { onDispose(drawer::relockHidden) }
             QuietDrawerGate(quiet = quietOn, onClose = launcher::closeDrawer) {
                 DrawerScreen(
+                    open = drawerOpen,
+                    revealed = { drawerMotion.shown },
                     query = query,
                     state = drawerState,
                     loadIcon = drawer::icon,
                     loadShortcutIcon = drawer::shortcutIcon,
                     onQueryChange = drawer::setQuery,
-                    onSubmit = { afterHit(drawer.launchTopResult()) },
+                    onSubmit = { drawer.launchTopResult(afterHit) },
                     onLaunchApp = { if (pickingApp) pick(it) else if (drawer.launch(it)) launcher.closeDrawer() },
                     onLaunchHit = { hit ->
                         if (pickingApp && hit is SearchHit.App) pick(hit.entry.app) else afterHit(drawer.launch(hit))
@@ -198,7 +186,7 @@ fun LauncherApp(
                 )
             }
         }
-        SettingsLayer(open = settingsOpen, animateExit = overlaysAnimate) {
+        SettingsLayer(open = settingsOpen, animateExit = overlaysAnimate, onBack = launcher::closeSettings) {
             SettingsScreen(onBack = launcher::closeSettings)
         }
         EditToolbar(
@@ -209,50 +197,12 @@ fun LauncherApp(
             onOpenSettings = launcher::openSettings,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
-        SnackbarHost(
-            snackbar,
-            Modifier
-                .align(Alignment.BottomCenter)
-                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)),
+        LauncherSnackbar(
+            launcher,
+            overlayOpen = drawerOpen || settingsOpen,
+            editing = editingOn,
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
     }
-
-    if (homeOptionsOpen) {
-        HomeSheet(
-            quiet = quietOn,
-            onDismiss = { launcher.showHomeOptions(false) },
-            onSetQuiet = {
-                launcher.showHomeOptions(false)
-                quiet.setEnabled(it)
-            },
-            onOpenSettings = launcher::openSettings,
-            onAddWidget = {
-                launcher.showHomeOptions(false)
-                widgets.openPicker()
-            },
-            onEditHome = { launcher.setEditing(true) },
-        )
-    }
-    WidgetSheets(widgets)
-    sheetState?.let { state ->
-        AppSheet(
-            state = state,
-            icons = homeIcons,
-            usageToday = sheetUsage,
-            onDismiss = sheet::dismiss,
-            onShortcut = sheet::launchShortcut,
-            onAddToHome = sheet::addToHome,
-            onRemoveFromHome = sheet::removeFromHome,
-            onMove = sheet::move,
-            onSetHidden = sheet::setHidden,
-            onSetLiftsWithHeadphones = sheet::setLiftsWithHeadphones,
-            onRename = {
-                sheet.dismiss()
-                rename.show(it)
-            },
-            onAppInfo = sheet::openAppInfo,
-            onUninstall = sheet::uninstall,
-        )
-    }
-    RenameDialog(rename)
+    LauncherSheets(launcher, sheet, rename, quiet, widgets, homeIcons)
 }
