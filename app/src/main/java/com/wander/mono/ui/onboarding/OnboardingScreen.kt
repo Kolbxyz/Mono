@@ -6,13 +6,15 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,13 +45,28 @@ import com.wander.mono.R
 import com.wander.mono.ui.components.readableColumn
 
 /**
- * First-run setup over home, until finished or skipped. One step per pane, each with one main
- * action and Skip; text sits low, near the thumb, like the home list.
+ * First-run setup over home, until finished or skipped. Until it is known whether setup was done,
+ * a plain surface covers home, so a first run never shows home a moment before setup; the cover
+ * fades out on every later start, as setup itself does when finished.
  */
 @Composable
 fun Onboarding(onboarding: OnboardingViewModel = viewModel()) {
     val done by onboarding.done.collectAsStateWithLifecycle()
-    if (done != false) return
+    Crossfade(done, animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(), label = "onboarding") {
+        when (it) {
+            null -> Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {}
+            false -> OnboardingPanes(onboarding)
+            true -> Unit
+        }
+    }
+}
+
+/**
+ * The setup steps, one per pane, each with one main action and Skip; text sits low, near the
+ * thumb, like the home list.
+ */
+@Composable
+private fun OnboardingPanes(onboarding: OnboardingViewModel) {
     val ui by onboarding.ui.collectAsStateWithLifecycle()
     val motion = MaterialTheme.motionScheme
     val homeRequest = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -91,28 +109,44 @@ fun Onboarding(onboarding: OnboardingViewModel = viewModel()) {
             ) { step ->
                 StepBody(step, ui.showRestrictedHelp, onboarding::openAppInfo)
             }
-            ui.error?.let {
-                Text(
-                    stringResource(it),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(top = 16.dp),
-                )
+            // The error grows in and out instead of pushing the buttons down in one frame.
+            AnimatedContent(
+                targetState = ui.error,
+                transitionSpec = {
+                    (fadeIn(motion.defaultEffectsSpec()) togetherWith fadeOut(motion.fastEffectsSpec()))
+                        .using(SizeTransform { _, _ -> motion.defaultSpatialSpec() })
+                },
+                label = "onboarding error",
+            ) { error ->
+                if (error != null) {
+                    Text(
+                        stringResource(error),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 16.dp),
+                    )
+                }
             }
-            Row(
+            // Wraps onto two lines at large font sizes rather than pushing the main action off screen.
+            FlowRow(
                 Modifier.fillMaxWidth().padding(top = 24.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (ui.step != OnboardingStep.Done) {
-                    TextButton(onClick = onboarding::next) { Text(stringResource(R.string.onboarding_skip)) }
+                    TextButton(onClick = onboarding::next) { ButtonLabel(R.string.onboarding_skip) }
                 } else {
                     Spacer(Modifier)
                 }
-                Button(onClick = primary) { Text(stringResource(primaryLabel(ui.step, ui.showRestrictedHelp))) }
+                Button(onClick = primary) { ButtonLabel(primaryLabel(ui.step, ui.showRestrictedHelp)) }
             }
         }
     }
+}
+
+@Composable
+private fun ButtonLabel(@StringRes label: Int) {
+    Text(stringResource(label), maxLines = 2, overflow = TextOverflow.Ellipsis)
 }
 
 @Composable
