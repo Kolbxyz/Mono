@@ -1,6 +1,5 @@
 package com.wander.mono.ui.settings
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -91,7 +90,7 @@ private fun PaletteChip(palette: ThemePalette, dark: Boolean, selected: Boolean,
             contentAlignment = Alignment.Center,
         ) {
             Swatch(scheme)
-            AnimatedVisibility(
+            androidx.compose.animation.AnimatedVisibility(
                 visible = selected,
                 enter = scaleIn(motion.fastSpatialSpec()) + fadeIn(motion.fastEffectsSpec()),
                 exit = scaleOut(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
