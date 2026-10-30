@@ -9,7 +9,6 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchSource
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarActions
-import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.calendar.CalendarEvents
 import com.wander.mono.core.media.ListeningDevices
@@ -27,17 +26,22 @@ import com.wander.mono.core.system.Battery
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.HeadphoneApps
+import com.wander.mono.data.HomeFolders
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.LiveRowPrefs
+import com.wander.mono.data.MutedApps
+import com.wander.mono.data.Routines
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.ClockSettings
 import com.wander.mono.data.settings.HeadphoneSettings
 import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.QuietSettings
+import com.wander.mono.data.settings.RoutineSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.clockLook
 import com.wander.mono.data.settings.liveActivityKinds
 import com.wander.mono.ui.UserMessages
+import com.wander.mono.ui.home.folders.withFolders
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -70,51 +74,77 @@ class HomeViewModel @Inject constructor(
     widgets: Widgets,
     listening: ListeningDevices,
     headphoneApps: HeadphoneApps,
+    folders: HomeFolders,
+    muted: MutedApps,
+    routines: Routines,
     private val media: MediaSessions,
     wandaUpNext: WandaUpNext,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
     private val messages: UserMessages,
 ) : ViewModel() {
-    /** The playing media, unless its row is switched off or it has been paused 10 minutes (spec 7.6). */
+    /**
+     * The playing media, unless its row is switched off, its app's notifications are muted on home
+     * or it has been paused 10 minutes (spec 7.6).
+     */
     private val shownMedia: Flow<MediaState> = combine(
         wandaUpNext.fill(media.state.collapsedWhenPaused(SystemClock::elapsedRealtime)),
         liveRows.hidden,
-    ) { state, hidden -> state.unlessHidden(hidden) }
+        muted.apps,
+    ) { state, hidden, off -> state.unlessHidden(hidden).unlessMuted(off) }
 
-    /** Live updates, timers and routes whose kind is on in settings and whose row is not switched off. */
+    /**
+     * Live updates, timers and routes whose kind is on in settings, whose row is not switched off
+     * and whose app is not muted on home.
+     */
     private val shownLive: Flow<List<LiveActivity>> = combine(
-        liveActivities.activities,
-        liveRows.hidden,
-        settings.liveActivityKinds(),
-        ::liveActivitiesShown,
+        combine(liveActivities.activities, liveRows.hidden, settings.liveActivityKinds(), ::liveActivitiesShown),
+        muted.apps,
+        List<LiveActivity>::unmuted,
     )
 
-    /** Null until the catalog is loaded, so an empty home is never shown by mistake. */
+    /**
+     * Null until the catalog is loaded, so an empty home is never shown by mistake. Apps muted on
+     * home lose their badge and live rows here; folders group the result last.
+     */
     val rows: StateFlow<List<HomeRow>?> = combine(
         prefs.favorites,
         catalog.apps.filterNotNull(),
-        counts.counts,
+        combine(counts.counts, muted.apps) { all, off -> all.unmuted(off) },
         shownMedia,
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
     ).combine(
-        combine(previews.previews, settings[PreviewSettings.ShowPreviews], liveRows.hidden) { all, on, hidden ->
-            if (on) all.unlessHidden(hidden) else emptyMap()
-        },
+        combine(
+            previews.previews,
+            settings[PreviewSettings.ShowPreviews],
+            liveRows.hidden,
+            muted.apps,
+        ) { all, on, hidden, off -> if (on) all.unlessHidden(hidden).unmuted(off) else emptyMap() },
         ::withPreviews,
-    ).combine(combine(calendar.agenda, liveRows.hidden, CalendarAgenda?::unlessHidden), ::withCalendarRow)
-        .combine(shownLive, ::withLiveActivities)
+    ).combine(
+        combine(calendar.agenda, liveRows.hidden, muted.apps) { agenda, hidden, off ->
+            agenda.unlessHidden(hidden).unlessMuted(off)
+        },
+        ::withCalendarRow,
+    ).combine(shownLive, ::withLiveActivities)
         .combine(widgets.placed, ::withWidgetRows)
         .combine(quiet.state, ::quietHomeRows)
+        .combine(folders.folders, ::withFolders)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    /** The favourites to show first: the ones chosen for headphones, while some are connected and the setting is on. */
+    /**
+     * The favourites to show first: the ones chosen for headphones, while some are connected and the
+     * setting is on, and those of the routines on right now.
+     */
     val lifted: StateFlow<Set<AppKey>> = combine(
-        settings[HeadphoneSettings.LiftApps],
-        listening.connected,
-        headphoneApps.apps,
-    ) { on, connected, apps -> if (on && connected) apps else emptySet() }
+        combine(
+            settings[HeadphoneSettings.LiftApps],
+            listening.connected,
+            headphoneApps.apps,
+        ) { on, connected, apps -> if (on && connected) apps else emptySet() },
+        routineApps(settings[RoutineSettings.Enabled], routines.routines, time.changed),
+    ) { headphones, routine -> headphones + routine }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptySet())
 
     /** The clock lines; also where a timed quiet mode ends, on the tick this already receives. */

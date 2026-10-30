@@ -27,22 +27,25 @@ Single module `:app`, package root `com.wander.mono`.
 | Package | Owns |
 | --- | --- |
 | `core/apps` | `LauncherApps` catalog, profile callbacks, shortcuts, icon cache, launch / app info / uninstall. |
-| `core/notifications` | `MonoNotificationListener`, per-app notification counts, notification-access state. |
+| `core/notifications` | `MonoNotificationListener`, per-app notification counts and previews, live activities (ongoing timers, navigation, progress), notification-access state; opening, replying and buttons (through the app lock). |
 | `core/media` | Active media sessions (through the listener's grant) and the playing item. |
 | `core/calendar` | Opt-in upcoming events (`READ_CALENDAR`) from `CalendarContract.Instances`, observed, re-read only at event boundaries. |
-| `core/system` | Clock tick and next alarm, from system broadcasts; wallpaper colours and hints; settings pages, web search hand-off, clipboard. |
+| `core/system` | Clock tick and next alarm (and dismissing it), battery, from system broadcasts; wallpaper colours and hints; settings pages, web search and text hand-offs, clipboard, gestures. |
 | `core/contacts` | Opt-in contact lookup by name for search (`READ_CONTACTS`), never cached. |
 | `core/quiet` | Quiet mode state, its Quick Settings tile and Mono's own Do Not Disturb rule (`AutomaticZenRule`, opt-in policy access). |
-| `core/security` | Hidden-apps lock and app lock (launches held in `AppActions` until the screen lock, unlocked until screen off), in memory only; the passphrase cipher for sealed backups. |
-| `core/tiles` | Quick Settings tiles that act through home: Search, Private space. |
+| `core/security` | Hidden-apps lock and app lock (`AppLock`, `LockedApps`: launches and notification intents held until the screen lock, unlocked until screen off, in memory only); `BackupCipher`, the passphrase cipher for sealed backups. |
+| `core/tiles` | Quick Settings tiles that act through home (`TileRequest`): Search, Private space. |
 | `core/usage` | Opt-in usage access (`UsageStatsManager`): today's foreground time per app, read on demand. |
 | `core/widgets` | The `AppWidgetHost`, widget providers, binding and configure flow, placement and sizes. |
 | `core/siblings` | Wanda and Phalanx providers (signature permission, `docs/design/sibling-contract.md`): up next, library search, per-room unread; absent means hidden. |
-| `data` | DataStore: ordered favourites and hidden apps. |
-| `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, locked apps, settings (no widgets); optionally sealed with a passphrase. |
+| `data` | DataStore, one small file per choice: ordered favourites, hidden apps, names, folders, swipe-left actions, routines, muted apps, daily usage limits, headphone and quiet apps, live rows, widgets; opened new apps and search history (never backed up). Locked apps live in `core/security`. |
+| `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, locked apps, home structure (folders, swipes, muted apps, limits, routines), settings (no widgets); optionally encrypted with a passphrase. |
 | `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
-| `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / prompt rows. |
+| `ui/home` | Glance header, `HomeRow` assembly, favourite / now-playing / preview / calendar / prompt rows, quiet and routine filters. |
+| `ui/home/live` | Live activity rows: timer, navigation and progress cards under their app. |
+| `ui/home/folders` | Folder rows, their tile, overlays and naming dialog. |
+| `ui/home/media` | Now-playing parts: art, transport shapes, playback clock. |
 | `ui/drawer` | Alphabetical list, letter rail, ranked search (calculator, apps, shortcuts, contacts, settings, web hand-off). |
 | `ui/edit` | Edit mode: drag reorder of favourites and widgets, live-row toggles, floating toolbar. |
 | `ui/widgets` | Widget picker, widget options and size sheets. |

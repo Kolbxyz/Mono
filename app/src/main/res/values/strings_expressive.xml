@@ -13,5 +13,4 @@
 
     <!-- Settings › Icons: rows take a touch of their app's colour. -->
     <string name="settings_tint_rows">Tint rows with app colour</string>
-    <string name="settings_tint_rows_short">Each row takes a touch of its icon\'s colour</string>
 </resources>

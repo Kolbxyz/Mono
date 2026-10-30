@@ -11,7 +11,7 @@ import androidx.core.app.NotificationCompat
  * title over its last messages, anything else its title over its full text. Public shows the app's
  * public version, Hidden nothing at all.
  */
-internal fun conversationOf(sbn: StatusBarNotification, redaction: Redaction): PreviewConversation {
+internal fun conversationOf(sbn: StatusBarNotification, owner: PackageUser, redaction: Redaction): PreviewConversation {
     val notification = sbn.notification
     val (title, messages) = when (redaction) {
         Redaction.Full -> messagesOf(notification)
@@ -25,6 +25,7 @@ internal fun conversationOf(sbn: StatusBarNotification, redaction: Redaction): P
         redaction = if (title == null && messages.isEmpty()) Redaction.Hidden else redaction,
         contentIntent = notification.contentIntent,
         autoCancel = notification.flags and Notification.FLAG_AUTO_CANCEL != 0,
+        owner = owner,
     )
 }
 
@@ -39,13 +40,13 @@ internal fun handleOf(sbn: StatusBarNotification) = NotificationHandle(
  * The buttons [notification] offers that work with a plain tap: not those taking input (the reply
  * field covers replying), not the system's contextual suggestions, not mark-as-read (Mark read).
  */
-internal fun buttonsOf(notification: Notification): List<PreviewAction> =
+internal fun buttonsOf(notification: Notification, owner: PackageUser): List<PreviewAction> =
     notification.actions.orEmpty().mapNotNull { action ->
         val intent: PendingIntent = action.actionIntent ?: return@mapNotNull null
         val label = action.title?.toString()?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
         val contextual = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && action.isContextual
         val takesInput = !action.remoteInputs.isNullOrEmpty()
-        if (contextual || takesInput || action.isMarkRead()) null else PreviewAction(label, intent)
+        if (contextual || takesInput || action.isMarkRead()) null else PreviewAction(label, intent, owner)
     }
 
 private fun Notification.Action.isMarkRead(): Boolean =

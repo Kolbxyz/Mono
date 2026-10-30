@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.LargeFlexibleTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,8 +33,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -43,6 +41,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
+import com.wander.mono.ui.components.SegmentGap
+import com.wander.mono.ui.components.groupedListItem
 import com.wander.mono.ui.components.readableColumn
 
 /**
@@ -60,22 +60,27 @@ fun SettingsTwoPane(onBack: () -> Unit, settings: SettingsViewModel = viewModel(
     Row(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         SettingsPage(R.string.settings_title, onBack, Modifier.width(HubWidth).fillMaxHeight()) {
             item(key = "hub") {
+                // The same segmented card as the single-pane hub, the open page's strip filled.
+                val categories = SettingsCategory.entries
                 Column(
-                    Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    Modifier.padding(horizontal = 16.dp, vertical = 8.dp).selectableGroup(),
+                    verticalArrangement = Arrangement.spacedBy(SegmentGap),
                 ) {
-                    SettingsCategory.entries.forEach { category ->
+                    categories.forEachIndexed { index, category ->
                         val selected = category == page
-                        val tint by animateColorAsState(
-                            if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
+                        val strip by animateColorAsState(
+                            if (selected) {
+                                MaterialTheme.colorScheme.secondaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainer
+                            },
                             motion.defaultEffectsSpec(),
                         )
                         SettingsCategoryRow(
                             category,
                             onClick = { page = category },
                             modifier = Modifier
-                                .clip(CircleShape)
-                                .background(tint)
+                                .groupedListItem(index, categories.size, strip)
                                 .semantics { this.selected = selected },
                         )
                     }

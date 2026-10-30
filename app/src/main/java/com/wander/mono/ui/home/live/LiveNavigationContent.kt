@@ -25,20 +25,19 @@ import com.wander.mono.core.notifications.LiveActivity
 import com.wander.mono.ui.theme.secondaryTextColor
 
 /**
- * The next turn, readable at arm's length: the app's turn arrow on a large tonal tile, the
+ * The next turn, readable at arm's length: the app's turn arrow on a large [tone] tile, the
  * distance (the notification's title) as a headline and the street (its text) beneath. An app
  * that draws no arrow gets the plain navigation symbol rather than a made-up turn.
  */
 @Composable
-internal fun LiveNavigationContent(activity: LiveActivity) {
-    val scheme = MaterialTheme.colorScheme
+internal fun LiveNavigationContent(activity: LiveActivity, tone: LiveTone) {
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(GAP),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
-            Modifier.size(TILE).clip(MaterialTheme.shapes.large).background(scheme.primaryContainer),
+            Modifier.size(TILE).clip(MaterialTheme.shapes.large).background(tone.container),
             contentAlignment = Alignment.Center,
         ) {
             val icon = activity.icon
@@ -46,14 +45,14 @@ internal fun LiveNavigationContent(activity: LiveActivity) {
                 Image(
                     icon.image,
                     contentDescription = stringResource(R.string.live_next_turn),
-                    colorFilter = if (icon.tintable) ColorFilter.tint(scheme.onPrimaryContainer) else null,
+                    colorFilter = if (icon.tintable) ColorFilter.tint(tone.content) else null,
                     modifier = Modifier.size(ARROW),
                 )
             } else {
                 Icon(
                     painterResource(R.drawable.sym_navigation),
                     contentDescription = null,
-                    tint = scheme.onPrimaryContainer,
+                    tint = tone.content,
                     modifier = Modifier.size(ARROW),
                 )
             }

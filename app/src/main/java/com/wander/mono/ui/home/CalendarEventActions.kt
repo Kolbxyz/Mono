@@ -35,7 +35,7 @@ internal fun CalendarEventActions(
     if (!join && !map) return
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 4.dp),
+        modifier = Modifier.padding(start = HomeCardInset, end = HomeCardInset, bottom = 4.dp),
     ) {
         if (join) TonalAction(R.string.calendar_action_join, R.drawable.sym_arrow_outward) { actions.join(event) }
         if (map) TonalAction(R.string.calendar_action_map, R.drawable.sym_navigation) { actions.openMap(event) }

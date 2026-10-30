@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.UserHandle
 import com.wander.mono.MainActivity
 import com.wander.mono.R
+import com.wander.mono.core.notifications.NotificationActions
 import com.wander.mono.core.security.AppLock
 import com.wander.mono.core.security.LaunchRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -24,6 +25,7 @@ class AppActions @Inject constructor(
     @ApplicationContext private val context: Context,
     private val profiles: Profiles,
     private val lock: AppLock,
+    private val notifications: NotificationActions,
 ) {
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
 
@@ -66,6 +68,7 @@ class AppActions @Inject constructor(
     fun launch(request: LaunchRequest): ActionResult = when (request) {
         is LaunchRequest.App -> launch(request.key, request.source)
         is LaunchRequest.Shortcut -> launchShortcut(request.shortcut)
+        is LaunchRequest.Notification -> notifications.send(request)
     }
 
     private inline fun inProfile(serial: Long, start: (UserHandle) -> Unit): ActionResult {

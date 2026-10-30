@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Search: result groups -->
+    <string name="search_section_notifications">Notifications</string>
+    <string name="search_section_hand_off">Open or share</string>
+
+    <!-- Search: a pasted link or text, handed to another app -->
+    <string name="search_open_link">Open link</string>
+    <string name="search_share_text">Share text</string>
+    <!-- TalkBack: what tapping the share row does -->
+    <string name="search_share_action">Share</string>
+    <string name="search_error_no_link_app">No app can open this link</string>
+    <string name="search_error_no_share_app">No app can share text</string>
+
+    <!-- Search: a contact's actions, handed to the dialer, messages or mail app -->
+    <string name="search_reach_call">Call</string>
+    <string name="search_reach_message">Message</string>
+    <string name="search_reach_email">Email</string>
+    <!-- TalkBack: %1$s is the action (Call, Message, Email), %2$s the contact's name -->
+    <string name="search_reach_spoken">%1$s %2$s</string>
+    <string name="search_error_no_dialer">No phone app to call with</string>
+    <string name="search_error_no_messages">No messaging app to text with</string>
+    <string name="search_error_no_email">No email app to write with</string>
+    <string name="search_error_no_reach">This contact has nothing to reach them by that way</string>
+
+    <!-- Search: recent searches under the empty field -->
+    <string name="search_recent">Recent</string>
+    <!-- TalkBack: %1$s is the remembered query -->
+    <string name="search_recent_forget">Forget %1$s</string>
+
+    <!-- Settings: search -->
+    <string name="search_source_notifications">Notifications</string>
+    <string name="search_source_notifications_summary">Titles and text, with notification access</string>
+    <string name="search_remember_recent">Remember recent searches</string>
+    <string name="search_remember_recent_summary">Kept on this phone only, never in backups</string>
+    <string name="search_clear_history">Clear recent searches</string>
+</resources>

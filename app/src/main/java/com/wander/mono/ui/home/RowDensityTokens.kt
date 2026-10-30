@@ -38,6 +38,19 @@ internal fun favoriteRowMetrics(density: RowDensity): FavoriteRowMetrics = when 
     )
 }
 
+/** A favourite row's inset on both sides, inside the list's gutter. */
+internal val FavoriteRowInset = 4.dp
+
+/** The space between a favourite's icon and its name. */
+internal val FavoriteIconGap = 16.dp
+
+/**
+ * Where a favourite's name starts, so what shows under it (its notification preview) lines up with
+ * the name rather than the icon. With no icons ([iconsShown] false) names start at the row's inset.
+ */
+internal fun FavoriteRowMetrics.labelStart(iconsShown: Boolean): Dp =
+    if (iconsShown) FavoriteRowInset + iconSize + FavoriteIconGap else FavoriteRowInset
+
 @StringRes
 fun densityLabel(density: RowDensity): Int = when (density) {
     RowDensity.Compact -> R.string.density_compact
