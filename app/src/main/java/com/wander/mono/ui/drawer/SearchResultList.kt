@@ -72,7 +72,8 @@ fun SearchResultList(
                         stringResource(R.string.drawer_no_results),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = schemeAnimateItem().padding(16.dp),
+                        // Where a group's label would start, so the empty state lines up with the results.
+                        modifier = schemeAnimateItem().padding(horizontal = 32.dp, vertical = 16.dp),
                     )
                 }
             }
@@ -142,7 +143,7 @@ private fun GroupLabel(@StringRes label: Int, modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.labelLarge,
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier
-            .padding(start = 32.dp, end = 32.dp, top = 16.dp, bottom = 6.dp)
+            .padding(start = 32.dp, end = 32.dp, top = 16.dp, bottom = 8.dp)
             .semantics { heading() },
     )
 }
