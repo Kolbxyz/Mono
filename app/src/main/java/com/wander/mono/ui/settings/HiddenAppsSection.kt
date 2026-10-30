@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
@@ -71,7 +72,7 @@ fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
                         }
                     },
                 ) {
-                    Text(app.label)
+                    Text(app.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

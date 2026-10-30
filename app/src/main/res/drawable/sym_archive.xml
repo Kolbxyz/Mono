@@ -1,0 +1,12 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+  <!-- Material Symbols "cloud" (filled): the app's code lives in the store until a launch restores it. -->
+  <group android:translateY="960">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M260,-160Q169,-160 104.5,-223Q40,-286 40,-377Q40,-455 87,-516Q134,-577 210,-594Q235,-686 310,-743Q385,-800 480,-800Q597,-800 678.5,-718.5Q760,-637 760,-520Q829,-512 874.5,-460.5Q920,-409 920,-340Q920,-265 867.5,-212.5Q815,-160 740,-160L260,-160Z"/>
+  </group>
+</vector>

@@ -44,7 +44,7 @@ internal fun SettingsCategoryRow(category: SettingsCategory, onClick: () -> Unit
             .expressivePress(interaction)
             .instantPress(interaction)
             .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Box(Modifier.size(BadgeSize).background(container, shape), contentAlignment = Alignment.Center) {
             Icon(
@@ -55,7 +55,12 @@ internal fun SettingsCategoryRow(category: SettingsCategory, onClick: () -> Unit
             )
         }
         Column(Modifier.padding(start = 16.dp)) {
-            Text(stringResource(category.title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(category.title),
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text(
                 stringResource(category.subtitle),
                 style = MaterialTheme.typography.bodyMedium,

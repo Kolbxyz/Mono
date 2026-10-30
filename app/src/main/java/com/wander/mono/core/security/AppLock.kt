@@ -35,8 +35,9 @@ import kotlinx.coroutines.launch
 /**
  * App lock: a locked app (and its shortcuts) opens only after the screen lock. Once confirmed it
  * stays open until the screen goes off; that is kept in memory only, so a new process starts with
- * every locked app locked. [AppActions][com.wander.mono.core.apps.AppActions] hands each held
- * launch to [requests], where home asks for the screen lock and runs it.
+ * every locked app locked. [AppActions][com.wander.mono.core.apps.AppActions] and, for the app's
+ * notifications, [NotificationActions][com.wander.mono.core.notifications.NotificationActions] hand
+ * each held launch to [requests], where home asks for the screen lock and runs it.
  */
 @Singleton
 class AppLock @Inject constructor(

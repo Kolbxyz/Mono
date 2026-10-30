@@ -193,6 +193,7 @@ private fun StepBody(step: OnboardingStep, showRestrictedHelp: Boolean, onOpenAp
     // Short steps sit at the bottom; a long one (large font, the restricted-settings card) scrolls.
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.BottomStart) {
         Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            StepBadge(step, Modifier.padding(bottom = 8.dp))
             Text(
                 stringResource(step.title),
                 style = MaterialTheme.typography.displaySmall,

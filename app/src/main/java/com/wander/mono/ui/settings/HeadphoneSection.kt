@@ -13,6 +13,7 @@ fun HeadphoneSection(settings: SettingsViewModel) {
             HeadphoneSettings.LiftApps,
             title = R.string.settings_headphones_lift,
             summary = R.string.settings_headphones_lift_summary,
+            icon = R.drawable.sym_headphones,
         )
     }
 }
