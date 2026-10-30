@@ -37,7 +37,7 @@ data class DrawerUiState(
 
 /** What the drawer is drawn on, and what its scrim needs to keep text legible over the wallpaper. */
 data class DrawerLook(
-    val background: DrawerBackground = DrawerBackground.Scrim,
+    val background: DrawerBackground = DrawerBackground.SoftBlur,
     val tone: WallpaperTone? = null,
     val highContrast: Boolean = false,
 )

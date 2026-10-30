@@ -46,7 +46,8 @@ fun AppLabel(
         app.detail?.let {
             Text(
                 it,
-                style = MaterialTheme.typography.bodySmall,
+                // The name's shadow too, when it is drawn on the wallpaper.
+                style = MaterialTheme.typography.bodySmall.copy(shadow = style.shadow),
                 color = secondaryTextColor(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

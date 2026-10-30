@@ -1,6 +1,7 @@
 package com.wander.mono.ui.drawer
 
 import com.wander.mono.core.apps.AppShortcut
+import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.contacts.Contact
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.siblings.WandaTrack
@@ -46,7 +47,7 @@ internal object SearchResults {
             addAll(people.map { SearchHit.Person(it.item, it.matched) })
             addAll(SearchNotices.find(query, notices, entries))
             // Wanda already matched and ordered them (most played first); its order is kept.
-            addAll(tracks.take(MAX_TRACKS).map { SearchHit.Track(it) })
+            addAll(tracks.take(MAX_TRACKS).map { SearchHit.Track(it, wandaOf(it, entries)) })
             val matchingPages = AppSearch.rankMatched(query, pages, label = { it.label }, aliases = { it.keywords })
             addAll(matchingPages.map { SearchHit.Setting(it.item, it.matched) })
         }
@@ -54,6 +55,10 @@ internal object SearchResults {
         // Sharing is no answer to the query: it never keeps the web search out.
         return preferredFirst(found + handOffs.filterIsInstance<SearchHit.ShareText>(), preferred)
     }
+
+    /** The Wanda build that found [track], among the apps search may show. */
+    private fun wandaOf(track: WandaTrack, entries: List<DrawerEntry>): LaunchableApp? =
+        entries.firstOrNull { it.app.isMainProfile && it.app.key.packageName == track.packageName }?.app
 
     /** [hits] with the one keyed [preferred] moved to the front, when it is among them. */
     fun preferredFirst(hits: List<SearchHit>, preferred: String?): List<SearchHit> {

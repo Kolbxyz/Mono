@@ -34,12 +34,15 @@ sealed interface PrivateSpaceState {
     data class Present(val locked: Boolean, val canOpenSettings: Boolean) : PrivateSpaceState
 }
 
-/** Whether the private space shows and is locked, re-read on each profile event; locking and unlocking it. */
+/**
+ * Whether the private space shows and is locked, re-read on each profile event and checked again
+ * each time Mono comes to the front; locking and unlocking it.
+ */
 @Singleton
 class PrivateSpace @Inject constructor(
     @ApplicationContext private val context: Context,
     private val profiles: Profiles,
-    events: CatalogEvents,
+    private val events: CatalogEvents,
     @AppScope scope: CoroutineScope,
 ) {
     private val userManager = context.getSystemService(UserManager::class.java)
@@ -54,13 +57,22 @@ class PrivateSpace @Inject constructor(
         .stateIn(scope, SharingStarted.Eagerly, PrivateSpaceState.Absent)
 
     private fun read(): PrivateSpaceState = profiles.privateSpace()?.let { user ->
-        val locked = profiles.isLocked(user)
+        // Locked until its apps can be listed, so it never shows open with none of them.
+        val locked = !profiles.isReady(user)
         if (locked && profiles.hidesWhileLocked(user)) {
             null
         } else {
             PrivateSpaceState.Present(locked, canOpenSettings = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA)
         }
     } ?: PrivateSpaceState.Absent
+
+    /**
+     * Back in front: when the private space is no longer as [state] last read it (it became ready with
+     * no event to say so), every profile listener re-reads it, the catalog included. Nothing otherwise.
+     */
+    fun recheck() {
+        if (read() != state.value) events.recheckProfiles()
+    }
 
     /**
      * Unlocking asks for the private space's own lock, shown by the system; the profile broadcast

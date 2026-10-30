@@ -31,6 +31,7 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.SegmentGap
 import com.wander.mono.ui.components.SegmentOuter
 import com.wander.mono.ui.components.groupedListItem
+import com.wander.mono.ui.home.onWallpaper
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
@@ -70,7 +71,7 @@ fun SearchResultList(
                 item(key = "none") {
                     Text(
                         stringResource(R.string.drawer_no_results),
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.bodyLarge.onWallpaper(),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         // Where a group's label would start, so the empty state lines up with the results.
                         modifier = schemeAnimateItem().padding(horizontal = 32.dp, vertical = 16.dp),
@@ -140,7 +141,7 @@ private fun LazyItemScope.GroupedRow(
 private fun GroupLabel(@StringRes label: Int, modifier: Modifier = Modifier) {
     Text(
         stringResource(label),
-        style = MaterialTheme.typography.labelLarge,
+        style = MaterialTheme.typography.labelLarge.onWallpaper(),
         color = MaterialTheme.colorScheme.primary,
         modifier = modifier
             .padding(start = 32.dp, end = 32.dp, top = 16.dp, bottom = 8.dp)
