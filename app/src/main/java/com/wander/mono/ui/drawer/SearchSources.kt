@@ -40,17 +40,20 @@ class SearchSources @Inject constructor(
 ) {
     /**
      * Contacts for each [query], asked of the provider only while the setting is on; a newer query
-     * cancels the lookup still running for the previous one.
+     * cancels the lookup still running for the previous one. Tagged with the query they answer.
      */
-    fun contacts(query: Flow<String>): Flow<List<Contact>> =
-        combine(query, settings[SearchSettings.Contacts]) { text, enabled -> if (enabled) text.trim() else "" }
+    fun contacts(query: Flow<String>): Flow<QueryResults<Contact>> =
+        combine(query.map { it.trim() }, settings[SearchSettings.Contacts], ::Pair)
             .distinctUntilChanged()
-            .mapLatest { text -> if (text.isEmpty()) emptyList() else contactSearch.find(text, PROVIDER_LIMIT) }
+            .mapLatest { (text, enabled) ->
+                val found = if (enabled && text.isNotEmpty()) contactSearch.find(text, PROVIDER_LIMIT) else emptyList()
+                QueryResults(text, found)
+            }
 
     /** Songs from Wanda's library for each [query]; empty when Wanda is absent or not signed like Mono. */
-    fun tracks(query: Flow<String>): Flow<List<WandaTrack>> = query.map { it.trim() }
+    fun tracks(query: Flow<String>): Flow<QueryResults<WandaTrack>> = query.map { it.trim() }
         .distinctUntilChanged()
-        .mapLatest { text -> wandaSearch.find(text, PROVIDER_LIMIT) }
+        .mapLatest { text -> QueryResults(text, wandaSearch.find(text, PROVIDER_LIMIT)) }
 
     /**
      * What [query] asks for ([SearchActions]); a timer or an alarm only when a clock app takes it.

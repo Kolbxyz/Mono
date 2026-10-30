@@ -18,6 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.style.TextOverflow
 import com.wander.mono.R
 
 /**
@@ -39,7 +40,10 @@ fun SearchField(
         modifier = modifier.focusRequester(focusRequester),
         singleLine = true,
         shape = CircleShape,
-        placeholder = { Text(stringResource(R.string.drawer_search_hint)) },
+        // One line, as the field is: at large font sizes the hint ends in an ellipsis instead of wrapping.
+        placeholder = {
+            Text(stringResource(R.string.drawer_search_hint), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        },
         leadingIcon = { Icon(painterResource(R.drawable.sym_search), contentDescription = null) },
         trailingIcon = {
             IconButton(onClick = onOpenSettings) {
