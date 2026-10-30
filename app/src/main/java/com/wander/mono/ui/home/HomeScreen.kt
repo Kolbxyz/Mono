@@ -57,6 +57,7 @@ import com.wander.mono.ui.components.ReadableLayout
 import com.wander.mono.ui.components.readableColumn
 import com.wander.mono.ui.edit.EditToolbarClearance
 import com.wander.mono.ui.edit.HomeEditing
+import com.wander.mono.ui.onboarding.SwipeHint
 import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
@@ -207,6 +208,11 @@ fun HomeScreen(
                         .weight(1f)
                         .fillMaxWidth()
                         .onGloballyPositioned(scrimEdges::onList),
+                )
+                // Once, until the drawer is first opened; the empty state already says the same.
+                SwipeHint(
+                    hidden = editing.active || rows.orEmpty().none { it is HomeRow.App },
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
                 // In edit mode the floating toolbar takes this place; the dock folds away as the
                 // list's clearance grows on the same spec, so the rows never jump.
