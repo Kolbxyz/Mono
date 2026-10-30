@@ -1,6 +1,5 @@
 package com.wander.mono.ui.drawer
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +28,7 @@ fun NoticeRow(hit: SearchHit.Notice, icons: AppIcons, onOpen: () -> Unit, modifi
         modifier
             .fillMaxWidth()
             .heightIn(min = MIN_ROW_HEIGHT)
-            .clickable(onClickLabel = stringResource(R.string.action_open), onClick = onOpen)
+            .rowPress(onClickLabel = stringResource(R.string.action_open), onClick = onOpen)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
