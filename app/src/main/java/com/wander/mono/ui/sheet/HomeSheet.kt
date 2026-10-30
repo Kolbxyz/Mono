@@ -12,7 +12,8 @@ import com.wander.mono.ui.components.MonoSheet
 
 /**
  * Long-press options for home itself (the clock or an empty spot), as opposed to one app's: edit
- * home and add a widget first, then quiet mode (an on/off button) and settings.
+ * home and add a widget first, then quiet mode (an on/off button) and settings. Every action closes
+ * the sheet in its caller, so each runs once the sheet has slid away.
  */
 @Composable
 fun HomeSheet(
@@ -35,7 +36,8 @@ fun HomeSheet(
         MenuAction(R.drawable.sym_quiet, quietLabel, selected = quiet) { onSetQuiet(!quiet) },
         MenuAction(R.drawable.sym_settings, R.string.home_sheet_settings, onClick = onOpenSettings),
     )
-    MonoSheet(onDismissRequest = onDismiss) {
-        ActionButtonGroup(actions, Modifier.padding(top = 8.dp, bottom = 24.dp))
+    MonoSheet(onDismissRequest = onDismiss) { animatedDismiss ->
+        val dismissing = actions.map { it.afterDismiss(animatedDismiss) }
+        ActionButtonGroup(dismissing, Modifier.padding(top = 8.dp, bottom = 24.dp))
     }
 }
