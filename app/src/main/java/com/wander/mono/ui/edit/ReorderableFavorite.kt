@@ -10,7 +10,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -20,7 +19,6 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.zIndex
 import com.wander.mono.R
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.pressShrink
@@ -49,6 +47,8 @@ fun ReorderableFavorite(
     val interactions = remember { MutableInteractionSource() }
     val reorder = editing.reorder
     val lifted = reorder.dragging == row.key
+    val settle = rememberDropSettle()
+    val settleSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val callbacks = rememberUpdatedState(
         FavoriteGestureCallbacks(
             editing = editing.active,
@@ -63,20 +63,16 @@ fun ReorderableFavorite(
             onDrop = {
                 if (reorder.dragging == row.key) {
                     haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                    settle.release(reorder.displacement, settleSpec)
                     editing.drop(rows)
                 }
             },
         ),
     )
-    val placed = if (lifted) {
-        Modifier
-            .zIndex(1f)
-            .graphicsLayer { translationY = reorder.displacement }
-    } else {
-        modifier
-    }
     Box(
-        placed
+        Modifier
+            .reorderLift(lifted, reorder, settle)
+            .then(modifier)
             .favoriteSemantics(row, siblings, rows, editing, onLaunch, onLongPress, onAppInfo)
             // The edit form draws its own container and lift shadow, which a clip would cut off.
             .then(if (editing.active) Modifier else Modifier.pressShrink(interactions).clip(MaterialTheme.shapes.large))
