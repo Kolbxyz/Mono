@@ -23,13 +23,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
+import com.wander.mono.core.contacts.ContactReach
 import com.wander.mono.ui.components.AppIcon
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
- * The top hit, larger than the rows under it: a bigger icon and title for an app or a shortcut; any
- * other result as its usual row.
+ * The top hit, larger than the rows under it: a bigger icon and title for an app or a shortcut, a
+ * contact's actions in a colour that stands out from the card; any other result as its usual row.
  */
 @Composable
 internal fun TopHitRow(
@@ -37,6 +38,7 @@ internal fun TopHitRow(
     icons: AppIcons,
     onLaunch: () -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
+    onReach: ((SearchHit.Person, ContactReach) -> Unit)?,
     other: @Composable () -> Unit,
 ) {
     val title = MaterialTheme.typography.titleLarge
@@ -49,6 +51,7 @@ internal fun TopHitRow(
             modifier = Modifier.padding(vertical = 4.dp),
             iconSize = TOP_ICON,
             labelStyle = title,
+            name = rememberHighlighted(hit.label, hit.matched),
         )
         is SearchHit.Shortcut -> ShortcutRow(
             hit,
@@ -58,6 +61,13 @@ internal fun TopHitRow(
             iconSize = TOP_ICON,
             labelStyle = title,
             ring = MaterialTheme.colorScheme.secondaryContainer,
+        )
+        is SearchHit.Person -> PersonRow(
+            hit,
+            icons,
+            onOpen = onLaunch,
+            onReach = onReach?.let { reach -> { how: ContactReach -> reach(hit, how) } },
+            chipColor = MaterialTheme.colorScheme.surfaceContainerHighest,
         )
         else -> other()
     }
@@ -86,6 +96,7 @@ internal fun AppIconRow(
         items(apps, key = { it.key }) { hit ->
             AppTile(
                 hit.entry.app,
+                hit.matched,
                 icons,
                 onLaunch = { onLaunchHit(hit) },
                 onLongPress = { onLongPress(hit.entry.app) },
@@ -98,6 +109,7 @@ internal fun AppIconRow(
 @Composable
 private fun AppTile(
     app: LaunchableApp,
+    matched: List<IntRange>,
     icons: AppIcons,
     onLaunch: () -> Unit,
     onLongPress: () -> Unit,
@@ -119,7 +131,7 @@ private fun AppTile(
     ) {
         AppIcon(app.key, icons, size = TILE_ICON)
         Text(
-            app.label,
+            rememberHighlighted(app.label, matched),
             style = MaterialTheme.typography.labelMedium,
             textAlign = TextAlign.Center,
             maxLines = 1,
