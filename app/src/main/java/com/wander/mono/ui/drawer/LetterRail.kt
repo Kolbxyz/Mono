@@ -80,6 +80,10 @@ fun LetterRail(
     val currentReducedMotion by rememberUpdatedState(reducedMotion)
 
     var height by remember { mutableIntStateOf(0) }
+    // The letters' own column, inside the pill's end padding: what a finger's y maps onto.
+    var lettersHeight by remember { mutableIntStateOf(0) }
+    val lettersTop = with(LocalDensity.current) { TRACK_PADDING.toPx() }
+    val currentLettersTop by rememberUpdatedState(lettersTop)
     var fingerY by remember { mutableFloatStateOf(0f) }
     var active by remember { mutableIntStateOf(-1) }
     // Unlike [active], kept after release, so the bubble fades out still showing the last letter.
@@ -95,7 +99,7 @@ fun LetterRail(
 
     fun follow(y: Float) {
         fingerY = y
-        val index = RailMath.letterAt(y, height.toFloat(), currentSections.size)
+        val index = RailMath.letterAt(y, currentLettersTop, lettersHeight.toFloat(), currentSections.size)
         if (index < 0 || index == active) return
         active = index
         bubbleLetter = currentSections[index].letter
@@ -155,7 +159,7 @@ fun LetterRail(
             },
     ) {
         // A short rail (landscape) draws every other or third letter; all of them still scrub.
-        val stride = RailMath.labelStride(height.toFloat(), sections.size, minSlot)
+        val stride = RailMath.labelStride(lettersHeight.toFloat(), sections.size, minSlot)
         // The letters sit on a slim tonal pill, so the rail reads as one control.
         Column(
             Modifier
@@ -163,7 +167,8 @@ fun LetterRail(
                 .padding(horizontal = TRACK_INSET)
                 // A shaped background, not a clip: the wave bows letters out past the pill.
                 .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-                .padding(vertical = 8.dp),
+                .padding(vertical = TRACK_PADDING)
+                .onSizeChanged { lettersHeight = it.height },
         ) {
             sections.forEachIndexed { index, section ->
                 val lit = scrubbing && index == active
@@ -179,7 +184,8 @@ fun LetterRail(
                                 MaterialTheme.colorScheme.onSurfaceVariant
                             },
                             modifier = Modifier.graphicsLayer {
-                                val slot = RailMath.fingerSlot(fingerY, height.toFloat(), sections.size)
+                                val slot =
+                                    RailMath.fingerSlot(fingerY, lettersTop, lettersHeight.toFloat(), sections.size)
                                 val bow = pressBow * pressed + dragBow
                                 translationX = -mirror * RailMath.letterOffset(index, slot, bow)
                             },
@@ -192,6 +198,7 @@ fun LetterRail(
             letter = bubbleLetter,
             visible = scrubbing,
             fingerY = { fingerY },
+            railHeight = { height.toFloat() },
             bow = { pressBow * pressed + dragBow },
             modifier = Modifier.align(Alignment.TopStart),
         )
@@ -203,6 +210,9 @@ internal val RAIL_WIDTH = 48.dp
 
 /** Space on each side of the rail's pill, inside its touch area. */
 private val TRACK_INSET = 8.dp
+
+/** Space inside each end of the pill, above the first letter and below the last. */
+private val TRACK_PADDING = 8.dp
 
 /**
  * The furthest the letter under the finger moves out, however far the finger slides toward the list;

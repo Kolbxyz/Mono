@@ -16,18 +16,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.wander.mono.ui.theme.capFontScale
 import kotlin.math.roundToInt
 
 /**
  * The letter being scrubbed, shown large beside the finger, just clear of the bowed letters. It sits
  * on an even twelve-sided cookie that grows in as the scrub starts, turns slowly as the finger moves
- * along the rail, and shrinks back and fades on release.
+ * along the rail, and shrinks back and fades on release. It stays on the rail, [railHeight] tall,
+ * at either end.
  */
 @Composable
 internal fun RailBubble(
     letter: String,
     visible: Boolean,
     fingerY: () -> Float,
+    railHeight: () -> Float,
     bow: () -> Float,
     modifier: Modifier = Modifier,
 ) {
@@ -43,7 +46,7 @@ internal fun RailBubble(
                 val size = BUBBLE_SIZE.toPx()
                 IntOffset(
                     x = -(BUBBLE_GAP.toPx() + size + bow()).roundToInt(),
-                    y = (fingerY() - size / 2).roundToInt(),
+                    y = RailMath.bubbleTop(fingerY(), size, railHeight()).roundToInt(),
                 )
             }
             .size(BUBBLE_SIZE)
@@ -64,13 +67,17 @@ internal fun RailBubble(
         )
         Text(
             letter,
-            style = MaterialTheme.typography.displaySmall,
+            // Capped, so the letter stays inside the cookie at the largest font sizes.
+            style = MaterialTheme.typography.displaySmall.capFontScale(GLYPH_MAX_FONT_SCALE),
             color = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     }
 }
 
 private val BUBBLE_SIZE = 72.dp
+
+/** displaySmall grows with the font scale up to this inside the bubble: still clear of its edges. */
+private const val GLYPH_MAX_FONT_SCALE = 1.3f
 
 /** Space between the bubble and the bowed letter under the finger. */
 private val BUBBLE_GAP = 16.dp
