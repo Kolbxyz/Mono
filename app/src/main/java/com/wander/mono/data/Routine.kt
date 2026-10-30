@@ -16,7 +16,7 @@ data class Routine(val start: Int, val end: Int, val apps: Set<AppKey>) {
     }
 
     /** One line: start, end, then the app keys, comma-separated (keys never hold '|' or ','). */
-    fun encode(): String = "$start$FIELD$end$FIELD${apps.joinToString(APPS) { it.encode() }}"
+    fun encode(): String = "$start$FIELD$end$FIELD${apps.joinToString(APPS.toString()) { it.encode() }}"
 
     companion object {
         /** At most this many routines: enough for morning, day and evening. */

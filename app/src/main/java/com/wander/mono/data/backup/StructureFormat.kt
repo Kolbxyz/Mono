@@ -24,15 +24,14 @@ internal object StructureFormat {
     )
 
     fun read(tree: Map<String, Any?>): HomeStructure = HomeStructure(
-        folders = tree.optionalField<List<*>>(FOLDERS, emptyList()).map(::folder),
-        swipes = tree.optionalField<Map<*, *>>(SWIPES, emptyMap()).entries.associate { (key, action) ->
+        folders = tree.optionalField<List<*>>(FOLDERS, emptyList<Any?>()).map(::folder),
+        swipes = tree.optionalField<Map<*, *>>(SWIPES, emptyMap<Any?, Any?>()).entries.associate { (key, action) ->
             appKey(key) to (SwipeAction.decode(string(action)) ?: throw MalformedBackup())
         },
-        mutedApps = tree.optionalField<List<*>>(MUTED, emptyList()).mapTo(mutableSetOf(), ::appKey),
-        dailyLimits = tree.optionalField<Map<*, *>>(LIMITS, emptyMap()).entries.associate { (key, minutes) ->
-            appKey(key) to minutes(minutes)
-        },
-        routines = tree.optionalField<List<*>>(ROUTINES, emptyList()).map(::routine).take(Routine.MAX),
+        mutedApps = tree.optionalField<List<*>>(MUTED, emptyList<Any?>()).mapTo(mutableSetOf(), ::appKey),
+        dailyLimits = tree.optionalField<Map<*, *>>(LIMITS, emptyMap<Any?, Any?>()).entries
+            .associate { (key, minutes) -> appKey(key) to minutes(minutes) },
+        routines = tree.optionalField<List<*>>(ROUTINES, emptyList<Any?>()).map(::routine).take(Routine.MAX),
     )
 
     private fun folder(value: Any?): HomeFolder {
