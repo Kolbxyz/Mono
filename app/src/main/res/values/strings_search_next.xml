@@ -34,5 +34,4 @@
     <string name="search_remember_recent">Remember recent searches</string>
     <string name="search_remember_recent_summary">Kept on this phone only, never in backups</string>
     <string name="search_clear_history">Clear recent searches</string>
-    <string name="search_clear_history_summary">Forget every search remembered so far</string>
 </resources>
