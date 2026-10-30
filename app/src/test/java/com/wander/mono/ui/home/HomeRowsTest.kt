@@ -51,6 +51,7 @@ class HomeRowsTest {
             HomeRow.ListenerPrompt -> "prompt"
             is NotificationRow -> "notification:" + it.app.label
             is CalendarRow -> "calendar"
+            is LiveActivityRow -> "live"
             is WidgetHomeRow -> "widget:" + it.widget.placement.appWidgetId
         }
     }

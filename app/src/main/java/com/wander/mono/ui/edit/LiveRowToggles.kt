@@ -4,10 +4,12 @@ import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarAgenda
 import com.wander.mono.core.media.MediaState
+import com.wander.mono.core.notifications.LiveActivity
 import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.data.LiveRowKind
 import com.wander.mono.data.LiveRowRef
+import com.wander.mono.data.rowKind
 
 /**
  * The live row switches of each favourite: one per kind the app has right now ([available], real
@@ -55,6 +57,18 @@ internal fun calendarAvailability(
     return favorites
         .filter { it.isMainProfile && it.key.packageName == agenda.appPackage }
         .associate { it.key to setOf(LiveRowKind.Calendar) }
+}
+
+/** Which favourites have live activity rows to switch: those with a live update, timer or route now, per kind. */
+internal fun liveActivityAvailability(
+    activities: List<LiveActivity>,
+    favorites: List<LaunchableApp>,
+): Map<AppKey, Set<LiveRowKind>> {
+    val byOwner = activities.groupBy { it.owner }
+    return favorites.mapNotNull { app ->
+        val own = byOwner[PackageUser(app.key.packageName, app.key.userSerial)] ?: return@mapNotNull null
+        app.key to own.mapTo(HashSet()) { it.kind.rowKind }
+    }.toMap()
 }
 
 /** The kinds each app has, from several availability maps. */

@@ -17,11 +17,13 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.MenuAction
 import com.wander.mono.ui.components.MonoSheet
 import com.wander.mono.ui.components.SheetDismiss
+import com.wander.mono.ui.components.rememberCredentialPrompt
 
 /**
- * Long-press options for one app: its icon, name and today's use, then its actions as one button
- * group (Wanda's context menu): home in or out first, the app's shortcuts and the rest in pairs,
- * a headphones toggle, the moves as icons, uninstall at the foot.
+ * Long-press options for one app: its icon, name (a small lock after it while locked) and today's
+ * use, then "Open" as a split button with the app's shortcuts in its menu, then its actions as one
+ * button group (Wanda's context menu): home in or out first, the rest in pairs, the headphones and
+ * lock toggles, the moves as icons, uninstall at the foot.
  */
 @Composable
 fun AppSheet(
@@ -29,6 +31,7 @@ fun AppSheet(
     icons: AppIcons,
     usageToday: SheetUsage,
     onDismiss: () -> Unit,
+    onOpen: (AppKey) -> Unit,
     onShortcut: (AppShortcut) -> Unit,
     onAddToHome: (AppKey) -> Unit,
     onRemoveFromHome: (AppKey) -> Unit,
@@ -38,8 +41,19 @@ fun AppSheet(
     onRename: (AppKey) -> Unit,
     onAppInfo: (AppKey) -> Unit,
     onUninstall: (AppKey) -> Unit,
+    onSetLocked: (AppKey, Boolean) -> Unit,
 ) {
     val key = state.app.key
+    // Anyone holding the phone could otherwise lift the lock from here: removing it asks first.
+    val unlockForGood = rememberCredentialPrompt(
+        R.string.app_lock_remove_title,
+        onSuccess = { onSetLocked(key, false) },
+        // Without a screen lock the lock guards nothing, and would keep the app shut for good.
+        onNoScreenLock = { onSetLocked(key, false) },
+    )
+    val setLocked: (AppKey, Boolean) -> Unit = { app, lock ->
+        if (lock) onSetLocked(app, true) else unlockForGood()
+    }
     MonoSheet(onDismissRequest = onDismiss) { animatedDismiss ->
         Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
             SheetHeader(
@@ -50,12 +64,25 @@ fun AppSheet(
                 } else {
                     null
                 },
+                badge = { LockBadge(state.isLocked) },
+            )
+            OpenSplitButton(
+                locked = state.isLocked,
+                shortcuts = state.shortcuts,
+                onOpen = {
+                    onOpen(key)
+                    animatedDismiss()
+                },
+                onShortcut = { shortcut ->
+                    onShortcut(shortcut)
+                    animatedDismiss()
+                },
+                modifier = Modifier.padding(top = 8.dp),
             )
             ActionButtonGroup(
                 appActions(
                     state,
                     animatedDismiss,
-                    onShortcut,
                     onAddToHome,
                     onRemoveFromHome,
                     onMove,
@@ -64,6 +91,7 @@ fun AppSheet(
                     onRename,
                     onAppInfo,
                     onUninstall,
+                    setLocked,
                 ),
                 Modifier.padding(top = 8.dp),
             )
@@ -73,14 +101,13 @@ fun AppSheet(
 
 /**
  * The sheet's buttons. Each slides the sheet away after it runs, except the moves and the
- * headphones toggle, which keep it open to be seen changing, and rename, which runs after: its
- * caller drops the sheet at once to open the rename dialog.
+ * headphones and lock toggles, which keep it open to be seen changing, and rename, which runs
+ * after: its caller drops the sheet at once to open the rename dialog.
  */
 @Suppress("LongParameterList")
 private fun appActions(
     state: AppSheetState,
     dismiss: SheetDismiss,
-    onShortcut: (AppShortcut) -> Unit,
     onAddToHome: (AppKey) -> Unit,
     onRemoveFromHome: (AppKey) -> Unit,
     onMove: (AppKey, Int) -> Unit,
@@ -89,6 +116,7 @@ private fun appActions(
     onRename: (AppKey) -> Unit,
     onAppInfo: (AppKey) -> Unit,
     onUninstall: (AppKey) -> Unit,
+    onSetLocked: (AppKey, Boolean) -> Unit,
 ): List<MenuAction> {
     val key = state.app.key
     return buildList {
@@ -105,11 +133,6 @@ private fun appActions(
             MenuAction(R.drawable.sym_info, R.string.sheet_app_info, ActionEmphasis.Secondary) { onAppInfo(key) }
                 .thenDismiss(dismiss),
         )
-        state.shortcuts.forEach { shortcut ->
-            add(MenuAction(R.drawable.sym_arrow_outward, R.string.sheet_shortcut, labelArg = shortcut.label) {
-                onShortcut(shortcut)
-            }.thenDismiss(dismiss))
-        }
         add(MenuAction(R.drawable.sym_edit, R.string.sheet_rename) { onRename(key) }.afterDismiss(dismiss))
         val hideLabel = if (state.isHidden) R.string.sheet_unhide else R.string.sheet_hide
         add(MenuAction(R.drawable.sym_visibility, hideLabel) { onSetHidden(key, !state.isHidden) }.thenDismiss(dismiss))
@@ -118,6 +141,9 @@ private fun appActions(
                 onSetLiftsWithHeadphones(key, !lifts)
             })
         }
+        add(MenuAction(R.drawable.sym_lock, R.string.sheet_lock, selected = state.isLocked) {
+            onSetLocked(key, !state.isLocked)
+        })
         if (state.canMoveUp) {
             add(MenuAction(R.drawable.sym_keyboard_arrow_up, R.string.sheet_move_up, ActionEmphasis.Icon) {
                 onMove(key, -1)

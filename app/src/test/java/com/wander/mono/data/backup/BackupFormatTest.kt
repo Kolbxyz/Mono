@@ -26,6 +26,7 @@ class BackupFormatTest {
         settings = backedUpSettings.map { SettingValue.default(it) }
             .replace(SettingValue(ThemeSettings.Mode, ThemeMode.Dark))
             .replace(SettingValue(BadgeSettings.ShowCounts, false)),
+        lockedApps = setOf(work),
     )
 
     @Test
@@ -73,12 +74,19 @@ class BackupFormatTest {
             "liveRowsOff" to listOf("weather|${mail.encode()}"),
             "settings" to mapOf("theme_mode" to true),
             "settings" to mapOf("badge_show_counts" to "yes"),
+            "lockedApps" to listOf("not a key"),
         )
         damaged.forEach { field ->
             val tree = BackupFormat.encode(backup) + field
             assertEquals(field.toString(), BackupRead.Failed(BackupError.Malformed), decode(tree))
         }
         assertEquals(BackupRead.Failed(BackupError.Malformed), decode(BackupFormat.encode(backup) - "quietApps"))
+    }
+
+    @Test
+    fun `a file from before app lock locks nothing`() {
+        val read = decode(BackupFormat.encode(backup) - "lockedApps") as BackupRead.Read
+        assertEquals(emptySet<AppKey>(), read.backup.lockedApps)
     }
 
     @Test

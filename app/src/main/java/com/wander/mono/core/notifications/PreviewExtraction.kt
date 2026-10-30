@@ -69,7 +69,8 @@ private fun plainContentOf(notification: Notification): Pair<String?, String?> {
         (extras.text(Notification.EXTRA_TEXT) ?: extras.text(Notification.EXTRA_BIG_TEXT))
 }
 
-private fun android.os.Bundle.text(key: String): String? = getCharSequence(key)?.toString()?.takeIf { it.isNotBlank() }
+/** The extra [key] as text, null when absent or blank. */
+internal fun android.os.Bundle.text(key: String): String? = getCharSequence(key)?.toString()?.takeIf { it.isNotBlank() }
 
 /** The action taking free-form text, preferring the one the app marks as "reply". */
 private fun replyActionOf(notification: Notification): ReplyAction? {
