@@ -125,7 +125,7 @@
         <intent>
             <action android:name="android.intent.action.SET_ALARM" />
         </intent>
-        <!-- Home: dismissing the next alarm through the clock app (core/system/ClockActions). -->
+        <!-- The glance header's long press on the next alarm (core/system/AlarmDismiss). -->
         <intent>
             <action android:name="android.intent.action.DISMISS_ALARM" />
         </intent>
@@ -227,6 +227,36 @@
             android:exported="true"
             android:icon="@drawable/sym_quiet"
             android:label="@string/quiet_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="true" />
+        </service>
+
+        <!-- Quick Settings tile opening the drawer with search focused (core/tiles). An action, not a toggle. -->
+        <service
+            android:name=".core.tiles.SearchTileService"
+            android:exported="true"
+            android:icon="@drawable/sym_search"
+            android:label="@string/search_tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <!--
+          Quick Settings tile locking and unlocking Android 15's private space through Mono, the
+          default home app; unavailable on older Android and without a private space. A toggle.
+        -->
+        <service
+            android:name=".core.tiles.PrivateSpaceTileService"
+            android:exported="true"
+            android:icon="@drawable/sym_lock"
+            android:label="@string/private_tile_label"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
                 <action android:name="android.service.quicksettings.action.QS_TILE" />
