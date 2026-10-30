@@ -1,6 +1,6 @@
 package com.wander.mono.ui.home
 
-import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -67,6 +67,8 @@ internal fun Modifier.skipSwipe(
     val currentOnSkip by rememberUpdatedState(onSkip)
     var drag by remember { mutableFloatStateOf(0f) }
     var armed by remember { mutableStateOf(false) }
+    // The settle back; a new drag stops it, so the two never write the offset at once.
+    val settling = remember { Animatable(0f) }
 
     val state = rememberDraggableState { delta ->
         drag += delta
@@ -78,13 +80,15 @@ internal fun Modifier.skipSwipe(
         state = state,
         orientation = Orientation.Horizontal,
         enabled = canNext || canPrevious,
+        onDragStarted = { settling.stop() },
         onDragStopped = { velocity ->
             skipDirectionFor(drag, velocity, distance, flingVelocity, canNext, canPrevious)?.let {
                 haptics.performHapticFeedback(HapticFeedbackType.Confirm)
                 currentOnSkip(it)
             }
             armed = false
-            animate(drag, 0f, animationSpec = settle) { value, _ -> drag = value }
+            settling.snapTo(drag)
+            settling.animateTo(0f, settle) { drag = value }
         },
     ).graphicsLayer { translationX = drag * DRAG_FOLLOW }
 }
