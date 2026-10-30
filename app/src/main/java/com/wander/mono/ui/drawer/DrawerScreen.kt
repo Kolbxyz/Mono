@@ -32,17 +32,22 @@ import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.apps.WorkProfile
+import com.wander.mono.core.contacts.ContactReach
+import com.wander.mono.data.RecentSearch
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.readableColumn
 
 /**
- * All apps, alphabetical, with the letter rail and the work profile and private space at the bottom;
- * or, while a query is typed, the ranked results, the two cross-fading. Drawn on the background the
- * user chose, its blur following how far the drawer is [revealed]. With [focusSearch] (opened from
- * home's search bar or a search gesture), or on every opening when the user asked for the keyboard
- * on open, the search field takes focus and the keyboard opens; so does a second swipe up the list.
- * Once no longer [open], the keyboard goes. Dragging it closed is handled by its container.
+ * All apps, alphabetical (or newest first), with the letter rail, the list's floating toolbar and
+ * category chips, and the work profile and private space at the bottom;
+ * or, while a query is typed, the ranked results, the two cross-fading. While the empty field has
+ * focus, [recentSearches] show under it as chips; contacts in the results offer [onReach]'s actions.
+ * Drawn on the background the user chose, its blur following how far the drawer is [revealed]. With
+ * [focusSearch] (opened from home's search bar or a search gesture), or on every opening when the
+ * user asked for the keyboard on open, the search field takes focus and the keyboard opens; so does
+ * a second swipe up the list. Once no longer [open], the keyboard goes. Dragging it closed is handled
+ * by its container.
  */
 @Composable
 fun DrawerScreen(
@@ -60,7 +65,11 @@ fun DrawerScreen(
     onOpenSettings: () -> Unit,
     onUnlockHidden: () -> Unit,
     privateActions: PrivateSpaceActions,
+    listActions: DrawerListActions,
     onSetWorkPaused: (WorkProfile, Boolean) -> Unit,
+    recentSearches: List<RecentSearch>,
+    onForgetRecent: (RecentSearch) -> Unit,
+    onReach: (SearchHit.Person, ContactReach) -> Unit,
     modifier: Modifier = Modifier,
     pickingApp: Boolean = false,
     focusSearch: Boolean = false,
@@ -108,6 +117,8 @@ fun DrawerScreen(
                 onOpenSettings,
                 searchFocus,
                 Modifier.fillMaxWidth().padding(16.dp),
+                recent = recentSearches,
+                onForgetRecent = onForgetRecent,
             )
             if (pickingApp) {
                 Text(
@@ -129,6 +140,7 @@ fun DrawerScreen(
                         state,
                         icons,
                         actions,
+                        listActions,
                         onSetWorkPaused,
                         onLaunchApp,
                         onLongPress,
@@ -148,6 +160,7 @@ fun DrawerScreen(
                         onLongPress = onLongPress,
                         contentPadding = bottom,
                         onUnlockHidden = onUnlockHidden.takeIf { state.hiddenLocked },
+                        onReach = onReach,
                     )
                 }
             }

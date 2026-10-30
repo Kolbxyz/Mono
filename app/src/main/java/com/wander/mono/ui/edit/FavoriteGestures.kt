@@ -17,10 +17,10 @@ import androidx.compose.ui.input.pointer.positionChange
 import kotlin.math.abs
 
 /**
- * Tap, swipe right, hold, and hold-then-drag on one favourite. A tap launches; a swipe right
- * before the hold shows its notifications; holding then letting go opens its options; holding then
- * moving (or just holding, in edit mode) lifts it and drags it. A drag of the list before the hold
- * timeout is a scroll and is left to the list.
+ * Tap, swipes, hold, and hold-then-drag on one favourite. A tap launches; a swipe right before
+ * the hold shows its notifications, a swipe left runs the action the user chose for it; holding
+ * then letting go opens its options; holding then moving (or just holding, in edit mode) lifts it
+ * and drags it. A drag of the list before the hold timeout is a scroll and is left to the list.
  */
 internal suspend fun PointerInputScope.detectFavoriteGestures(
     interactions: MutableInteractionSource,
@@ -30,7 +30,11 @@ internal suspend fun PointerInputScope.detectFavoriteGestures(
     down.consume()
     val press = PressInteraction.Press(down.position)
     interactions.tryEmit(press)
-    val swipes = !callbacks.value.editing && callbacks.value.onSwipeRight != null
+    val editing = callbacks.value.editing
+    val swipes = Swipes(
+        right = !editing && callbacks.value.onSwipeRight != null,
+        left = !editing && callbacks.value.onSwipeLeft != null,
+    )
     val beforeHold = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) { awaitTapOrSwipe(down.id, swipes) }
     when (beforeHold) {
         null -> Unit
@@ -43,6 +47,11 @@ internal suspend fun PointerInputScope.detectFavoriteGestures(
         BeforeHold.SwipedRight -> {
             interactions.tryEmit(PressInteraction.Cancel(press))
             callbacks.value.onSwipeRight?.invoke()
+            return@awaitEachGesture
+        }
+        BeforeHold.SwipedLeft -> {
+            interactions.tryEmit(PressInteraction.Cancel(press))
+            callbacks.value.onSwipeLeft?.invoke()
             return@awaitEachGesture
         }
         BeforeHold.Cancelled -> {
@@ -126,15 +135,21 @@ private sealed interface BeforeHold {
 
     data object SwipedRight : BeforeHold
 
+    data object SwipedLeft : BeforeHold
+
     /** Taken by someone else (the list scrolling) or gone out of the row. */
     data object Cancelled : BeforeHold
 }
 
+/** Which horizontal swipes a favourite answers to right now. */
+private class Swipes(val right: Boolean, val left: Boolean)
+
 /**
  * `waitForUpOrCancellation`, also ending as a swipe once the finger has moved past the touch slop
- * to the right more than vertically, when [swipes]. A vertical drag is the list's: it consumes it.
+ * sideways more than vertically, in a direction [swipes] allows. A vertical drag is the list's: it
+ * consumes it.
  */
-private suspend fun AwaitPointerEventScope.awaitTapOrSwipe(id: PointerId, swipes: Boolean): BeforeHold {
+private suspend fun AwaitPointerEventScope.awaitTapOrSwipe(id: PointerId, swipes: Swipes): BeforeHold {
     var moved = Offset.Zero
     while (true) {
         val event = awaitPointerEvent()
@@ -144,9 +159,10 @@ private suspend fun AwaitPointerEventScope.awaitTapOrSwipe(id: PointerId, swipes
             return BeforeHold.Cancelled
         }
         moved += change.positionChange()
-        if (swipes && moved.x > viewConfiguration.touchSlop && moved.x > abs(moved.y)) {
+        val sideways = abs(moved.x) > viewConfiguration.touchSlop && abs(moved.x) > abs(moved.y)
+        if (sideways && (if (moved.x > 0) swipes.right else swipes.left)) {
             change.consume()
-            return BeforeHold.SwipedRight
+            return if (moved.x > 0) BeforeHold.SwipedRight else BeforeHold.SwipedLeft
         }
         // The list consumes its scroll after this row's pass; the final pass sees it.
         if (awaitPointerEvent(PointerEventPass.Final).changes.any { it.isConsumed }) return BeforeHold.Cancelled

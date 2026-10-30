@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings hub: the focus page and the about page's summary -->
+    <string name="settings_category_focus">Focus &amp; routines</string>
+    <string name="settings_category_focus_sub">Quiet mode, routines, screen time</string>
+    <string name="settings_category_about_sub">Version and font licences</string>
+
+    <!-- Settings › Notifications -->
+    <string name="settings_badges_previews">Badges &amp; previews</string>
+    <string name="settings_previews_show_short">The latest one under each favourite</string>
+
+    <!-- Settings › Drawer & search -->
+    <string name="settings_search_sources">What search finds</string>
+    <string name="settings_search_recent">Recent searches</string>
+
+    <!-- Settings › Appearance -->
+    <string name="settings_amoled_black_short">Black instead of dark grey in dark theme</string>
+
+    <!-- Onboarding › favourites: the filter field over a long list -->
+    <string name="onboarding_favorites_filter">Find an app</string>
+</resources>

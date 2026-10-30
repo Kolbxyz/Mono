@@ -13,11 +13,13 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -31,6 +33,22 @@ private const val BACK_MIN_SCALE = 0.9f
 
 /** The middle of the sheet's bottom edge, which a back swipe shrinks it toward. */
 private val SheetFoot = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 1f)
+
+/**
+ * How far a back swipe has taken the open [MonoSheet], for the layers under it to follow through
+ * [LocalSheetBack]. Each sheet opens whole; a committed swipe leaves it where the finger took it,
+ * so what is under the sheet comes forward from there as it slides away.
+ */
+@Stable
+class SheetBack {
+    internal val swipe = Animatable(0f)
+
+    /** 0 (whole) to 1 (the far end of the swipe). */
+    val progress: Float get() = swipe.value
+}
+
+/** Where a [MonoSheet] publishes its back swipe; null (the default) keeps it to the sheet. */
+val LocalSheetBack = staticCompositionLocalOf<SheetBack?> { null }
 
 /**
  * Slides a [MonoSheet] away, then calls its `onDismissRequest` and the `then` given to [invoke],
@@ -53,7 +71,7 @@ class SheetDismiss internal constructor(
 
 /**
  * Every bottom sheet in Mono: a [ModalBottomSheet] that shrinks toward its foot on a back swipe
- * instead of the stock plain slide.
+ * instead of the stock plain slide, and hands that swipe to [LocalSheetBack] when one is provided.
  *
  * [content] receives `animatedDismiss`: an action should call it instead of [onDismissRequest], so
  * the sheet runs its hide animation before the caller's state drops it from composition. An action
@@ -67,7 +85,10 @@ fun MonoSheet(
     content: @Composable ColumnScope.(animatedDismiss: SheetDismiss) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
-    val backProgress = remember { Animatable(0f) }
+    val published = LocalSheetBack.current
+    val backProgress = remember(published) { published?.swipe ?: Animatable(0f) }
+    // Each sheet opens whole, whatever the last one's back swipe left.
+    LaunchedEffect(backProgress) { backProgress.snapTo(0f) }
     val cancelSpec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
     val animatedDismiss = remember(scope, sheetState) { SheetDismiss(scope, sheetState) { currentOnDismiss() } }

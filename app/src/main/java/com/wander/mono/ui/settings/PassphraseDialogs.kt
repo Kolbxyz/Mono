@@ -12,7 +12,6 @@ import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.Text
@@ -31,6 +30,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.ui.components.MonoLoadingIndicator
 
 /**
  * Before saving: seal the backup with a passphrase, typed twice, or save it plain. The fields are
@@ -43,6 +43,7 @@ internal fun SealBackupDialog(onSeal: (CharArray) -> Unit, onPlain: () -> Unit, 
     ClearOnLeave(first, second)
     val long = first.text.length >= MIN_PASSPHRASE
     val same = first.text.toString() == second.text.toString()
+    val seal = { if (long && same) onSeal(first.take().also { second.clearText() }) }
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(painterResource(R.drawable.sym_lock), null) },
@@ -62,11 +63,12 @@ internal fun SealBackupDialog(onSeal: (CharArray) -> Unit, onPlain: () -> Unit, 
                     R.string.backup_seal_repeat,
                     isError = mismatch,
                     supporting = stringResource(R.string.backup_seal_mismatch).takeIf { mismatch },
+                    onDone = seal,
                 )
             }
         },
         confirmButton = {
-            TextButton(onClick = { onSeal(first.take().also { second.clearText() }) }, enabled = long && same) {
+            TextButton(onClick = seal, enabled = long && same) {
                 Text(stringResource(R.string.backup_seal_confirm))
             }
         },
@@ -99,7 +101,7 @@ internal fun OpenSealedDialog(prompt: SealedPrompt, onOpen: (CharArray) -> Unit,
         },
         confirmButton = {
             if (prompt.opening) {
-                LoadingIndicator()
+                MonoLoadingIndicator()
             } else {
                 TextButton(onClick = open, enabled = field.text.isNotEmpty()) {
                     Text(stringResource(R.string.backup_open_confirm))
@@ -110,7 +112,10 @@ internal fun OpenSealedDialog(prompt: SealedPrompt, onOpen: (CharArray) -> Unit,
     )
 }
 
-/** A hidden-text field with an eye to show it while typing a long passphrase. */
+/**
+ * A hidden-text field with an eye to show it while typing a long passphrase. The keyboard's action
+ * moves to the next field, or, given [onDone], is Done and runs it.
+ */
 @Composable
 private fun PassphraseField(
     state: TextFieldState,

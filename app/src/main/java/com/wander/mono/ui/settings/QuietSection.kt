@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.LifecycleStartEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -70,7 +71,7 @@ fun QuietSection(quiet: QuietSettingsViewModel = viewModel()) {
                         quiet.setQuiet(choice.app.key, it)
                     },
                 ) {
-                    Text(choice.app.label)
+                    Text(choice.app.label, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
