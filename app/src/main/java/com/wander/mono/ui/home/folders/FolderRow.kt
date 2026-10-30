@@ -23,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -36,7 +35,12 @@ import com.wander.mono.ui.components.AppBadge
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.CountBadge
 import com.wander.mono.ui.components.NotificationDot
-import com.wander.mono.ui.components.pressShrink
+import com.wander.mono.ui.components.PressMorph
+import com.wander.mono.ui.components.expressivePress
+import com.wander.mono.ui.components.instantPress
+import com.wander.mono.ui.home.FavoriteIconGap
+import com.wander.mono.ui.home.FavoriteRowInset
+import com.wander.mono.ui.home.HomeCardCorner
 import com.wander.mono.ui.home.HomeRow
 import com.wander.mono.ui.home.LocalRowDensity
 import com.wander.mono.ui.home.badgeState
@@ -69,8 +73,8 @@ internal fun FolderRow(
     Row(
         modifier
             .fillMaxWidth()
-            .pressShrink(interactions)
-            .clip(MaterialTheme.shapes.large)
+            .expressivePress(interactions, PressMorph.squarer(HomeCardCorner))
+            .instantPress(interactions)
             .combinedClickable(
                 interactionSource = interactions,
                 indication = ripple(),
@@ -82,8 +86,8 @@ internal fun FolderRow(
             )
             .semantics(mergeDescendants = true) { stateDescription = state }
             .heightIn(min = metrics.minHeight)
-            .padding(horizontal = 4.dp, vertical = metrics.verticalPadding),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+            .padding(horizontal = FavoriteRowInset, vertical = metrics.verticalPadding),
+        horizontalArrangement = Arrangement.spacedBy(FavoriteIconGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         FolderTile(row.apps, icons, open, metrics.iconSize)

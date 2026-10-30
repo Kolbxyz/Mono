@@ -9,9 +9,9 @@ import com.wander.mono.data.settings.DrawerSettings
 import com.wander.mono.data.settings.DrawerSort
 
 /**
- * What the app drawer is drawn on (scrim, blurred wallpaper or solid), whether opening it brings up
- * the keyboard, which edge its letter rail is on, how its list is ordered and whether new apps
- * gather at the top.
+ * What the app drawer is drawn on (scrim, blurred wallpaper or solid), how its list is ordered and
+ * whether new apps gather at the top, then whether opening it brings up the keyboard and which
+ * edge its letter rail is on.
  */
 @Composable
 fun DrawerSection(settings: SettingsViewModel) {
@@ -21,26 +21,19 @@ fun DrawerSection(settings: SettingsViewModel) {
         LayoutDirection.Rtl -> R.string.drawer_rail_right
     }
     SettingsGroup(R.string.drawer_settings_title) {
-        ChoiceSetting(settings, DrawerSettings.Background, R.string.drawer_background) { background ->
+        ChoiceSetting(
+            settings,
+            DrawerSettings.Background,
+            R.string.drawer_background,
+            R.drawable.sym_palette,
+        ) { background ->
             when (background) {
                 DrawerBackground.Scrim -> R.string.drawer_background_scrim
                 DrawerBackground.Blur -> R.string.drawer_background_blur
                 DrawerBackground.Solid -> R.string.drawer_background_solid
             }
         }
-        SwitchSetting(
-            settings,
-            DrawerSettings.KeyboardOnOpen,
-            title = R.string.drawer_keyboard_on_open,
-            summary = R.string.drawer_keyboard_on_open_summary,
-        )
-        SwitchSetting(
-            settings,
-            DrawerSettings.RailAtStart,
-            title = railTitle,
-            summary = R.string.drawer_rail_side_summary,
-        )
-        ChoiceSetting(settings, DrawerSettings.Sort, R.string.drawer_sort) { sort ->
+        ChoiceSetting(settings, DrawerSettings.Sort, R.string.drawer_sort, R.drawable.sym_view_agenda) { sort ->
             when (sort) {
                 DrawerSort.Alphabetical -> R.string.drawer_sort_alphabetical
                 DrawerSort.Recent -> R.string.drawer_sort_recent
@@ -51,6 +44,15 @@ fun DrawerSection(settings: SettingsViewModel) {
             DrawerSettings.NewApps,
             title = R.string.drawer_new_apps,
             summary = R.string.drawer_new_apps_summary,
+            icon = R.drawable.sym_add,
         )
+        SwitchSetting(
+            settings,
+            DrawerSettings.KeyboardOnOpen,
+            title = R.string.drawer_keyboard_on_open,
+            summary = R.string.drawer_keyboard_on_open_summary,
+            icon = R.drawable.sym_search,
+        )
+        SwitchSetting(settings, DrawerSettings.RailAtStart, title = railTitle, icon = R.drawable.sym_font_download)
     }
 }

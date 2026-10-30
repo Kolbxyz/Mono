@@ -26,7 +26,7 @@ import com.wander.mono.ui.theme.secondaryTextColor
  * the digits' place.
  */
 @Composable
-internal fun LiveTimerContent(activity: LiveActivity, onAction: (PreviewAction) -> Unit) {
+internal fun LiveTimerContent(activity: LiveActivity, tone: LiveTone, onAction: (PreviewAction) -> Unit) {
     val scheme = MaterialTheme.colorScheme
     val chronometer = activity.chronometer
     Column(Modifier.fillMaxWidth()) {
@@ -57,7 +57,7 @@ internal fun LiveTimerContent(activity: LiveActivity, onAction: (PreviewAction) 
                     }
                 }
             }
-            LiveBadge(R.drawable.sym_timer)
+            LiveBadge(R.drawable.sym_timer, tone)
         }
         val actions = activity.actions.take(MAX_ACTIONS)
         if (actions.isNotEmpty()) {

@@ -66,7 +66,7 @@ private fun Conversation(conversation: PreviewConversation, onOpen: () -> Unit) 
         val hidden = conversation.redaction == Redaction.Hidden
         Text(
             conversation.title.takeUnless { hidden } ?: stringResource(R.string.preview_content_hidden),
-            style = MaterialTheme.typography.titleSmall,
+            style = MaterialTheme.typography.titleSmall.onWallpaper(),
             color = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -74,7 +74,7 @@ private fun Conversation(conversation: PreviewConversation, onOpen: () -> Unit) 
         conversation.messages.forEach { message ->
             Text(
                 message.sender?.let { stringResource(R.string.preview_message_line, it, message.text) } ?: message.text,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyMedium.onWallpaper(),
                 color = secondaryTextColor(),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

@@ -18,12 +18,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import com.wander.mono.data.settings.IntSetting
+import com.wander.mono.ui.components.rememberMonoHaptics
 import kotlin.math.roundToInt
 
 /**
  * A number setting on a slider with a stop every [step] across [range] (the setting's own range
  * unless a narrower one applies). Each new stop is saved as the thumb reaches it, so a preview
- * follows the drag; the thumb itself follows the finger in between.
+ * follows the drag, with a haptic segment tick; the thumb itself follows the finger in between.
  */
 @Composable
 fun SliderSetting(
@@ -41,6 +42,7 @@ fun SliderSetting(
     val shown = dragging ?: stored.coerceIn(range).toFloat()
     val stops = ((range.last - range.first) / step - 1).coerceAtLeast(0)
     val labels = sliderStops(range, step).map { valueLabel(it) }
+    val haptics = rememberMonoHaptics()
     ListItem(
         colors = settingRowColors(),
         leadingContent = leadingBadge(icon, enabled),
@@ -49,11 +51,17 @@ fun SliderSetting(
             Slider(
                 value = shown,
                 onValueChange = { value ->
+                    // The live drag, not this composition's: one tick per stop crossed.
+                    val previous = dragging?.roundToInt() ?: stored
                     dragging = value
                     val stop = value.roundToInt()
+                    if (stop != previous) haptics.segment()
                     if (stop != stored) settings.set(setting, stop)
                 },
-                onValueChangeFinished = { dragging = null },
+                onValueChangeFinished = {
+                    dragging = null
+                    haptics.gestureEnd()
+                },
                 valueRange = range.first.toFloat()..range.last.toFloat(),
                 steps = stops,
                 enabled = enabled,

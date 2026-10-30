@@ -46,8 +46,8 @@
 
     <!-- Settings: routines -->
     <string name="settings_routines">Routines</string>
-    <string name="settings_routines_on">Apps first at set times</string>
-    <string name="settings_routines_summary">During each routine, the favourites you pick for it move to the top of home.</string>
+    <string name="settings_routines_on">Use routines</string>
+    <string name="settings_routines_summary">Favourites you pick go first at set times</string>
     <string name="settings_routine_add">Add routine</string>
     <string name="settings_routine_title">Routine %1$d</string>
     <string name="settings_routine_remove">Remove routine %1$d</string>
