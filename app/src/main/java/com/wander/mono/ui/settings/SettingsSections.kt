@@ -18,7 +18,9 @@ internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = whe
         { MediaSection(it) },
     )
     SettingsCategory.Appearance -> listOf(
+        { LooksSection(it) },
         { ThemeSection(it) },
+        { WallpapersSection() },
         { IconSection(it) },
         { AccessibilitySection(it) },
     )

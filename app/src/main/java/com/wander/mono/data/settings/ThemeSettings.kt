@@ -10,10 +10,26 @@ enum class ThemeMode(override val stored: String) : StoredEnum {
     Dark("dark"),
 }
 
+/**
+ * Where the colours come from: the wallpaper (Android 12+; Material's baseline before), or one of
+ * Mono's hand-made palettes, each with a light and a dark scheme.
+ */
+enum class ThemePalette(override val stored: String) : StoredEnum {
+    Wallpaper("wallpaper"),
+    Graphite("graphite"),
+    Sand("sand"),
+    Sage("sage"),
+    Ocean("ocean"),
+    Dusk("dusk"),
+    Ember("ember"),
+}
+
 object ThemeSettings {
     val Mode = EnumSetting("theme_mode", ThemeMode.System, ThemeMode.entries)
 
-    /** Pure black surfaces in dark theme, for OLED screens; accents keep the wallpaper colours. */
+    val Palette = EnumSetting("theme_palette", ThemePalette.Wallpaper, ThemePalette.entries)
+
+    /** Pure black surfaces in dark theme, for OLED screens; accents keep the palette's colours. */
     val AmoledBlack = BooleanSetting("theme_amoled_black", default = false)
 
     /** With [AmoledBlack] in dark theme, the window is black instead of the wallpaper. */
@@ -23,6 +39,7 @@ object ThemeSettings {
 /** What `MonoTheme` and the window need, read together so the theme changes in one step. */
 data class ThemeChoice(
     val mode: ThemeMode,
+    val palette: ThemePalette,
     val amoledBlack: Boolean,
     val blackWallpaper: Boolean,
     val iconShape: IconShape,
@@ -30,10 +47,11 @@ data class ThemeChoice(
 )
 
 fun SettingsStore.themeChoice(): Flow<ThemeChoice> = combine(
-    this[ThemeSettings.Mode],
+    combine(this[ThemeSettings.Mode], this[ThemeSettings.Palette], ::Pair),
     this[ThemeSettings.AmoledBlack],
     this[ThemeSettings.BlackWallpaper],
     this[IconSettings.Shape],
     combine(this[IconSettings.ThemedTint], this[IconSettings.TintRows], ::IconTheming),
-    ::ThemeChoice,
-)
+) { (mode, palette), amoledBlack, blackWallpaper, iconShape, iconTheming ->
+    ThemeChoice(mode, palette, amoledBlack, blackWallpaper, iconShape, iconTheming)
+}
