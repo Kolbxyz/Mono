@@ -18,6 +18,7 @@ import com.wander.mono.core.widgets.Widgets
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.LiveRowPrefs
 import com.wander.mono.data.LiveRowRef
+import com.wander.mono.data.NowPlayingAnchor
 import com.wander.mono.data.WidgetPrefs
 import com.wander.mono.data.settings.HomeLookSettings
 import com.wander.mono.data.settings.PreviewSettings
@@ -35,7 +36,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** Edit mode's changes to the home list: order, removal, additions, per-app live rows, widgets and row density. */
+/**
+ * Edit mode's changes to the home list: order, removal, additions, per-app live rows, the
+ * now-playing card's place, widgets and row density.
+ */
 @HiltViewModel
 class EditHomeViewModel @Inject constructor(
     catalog: AppCatalog,
@@ -67,15 +71,26 @@ class EditHomeViewModel @Inject constructor(
         liveRowToggles(shown, available, hidden)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyMap())
 
+    /** Where the user placed the now-playing card; null while it follows the app that plays. */
+    val nowPlaying: StateFlow<NowPlayingAnchor?> = liveRows.nowPlayingAnchor
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+
     /** How roomy the favourite rows are, which the toolbar's Density button names. */
     val density: StateFlow<RowDensity> = settings[HomeLookSettings.Density]
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), HomeLookSettings.Density.default)
 
-    /** Saves a drag: the favourites' new order, then each widget under the favourite now above it. */
+    /**
+     * Saves a drag: the favourites' new order, then each widget under the favourite now above it,
+     * and the now-playing card's place when it was the one moved.
+     */
     fun arrange(arrangement: HomeArrangement) = launch {
         prefs.reorderFavorites(arrangement.favorites)
         widgetPrefs.edit { it.arranged(arrangement.widgets) }
+        arrangement.nowPlaying?.let { liveRows.setNowPlayingAnchor(it) }
     }
+
+    /** The now-playing card goes back under the app that plays. */
+    fun unplaceNowPlaying() = launch { liveRows.setNowPlayingAnchor(null) }
 
     fun move(key: AppKey, by: Int) = launch { prefs.moveFavorite(key, by) }
 

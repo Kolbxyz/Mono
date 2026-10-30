@@ -1,6 +1,7 @@
 package com.wander.mono.data.backup
 
 import com.wander.mono.data.HomeFolder
+import com.wander.mono.data.NowPlayingAnchor
 import com.wander.mono.data.Routine
 import com.wander.mono.data.SwipeAction
 import com.wander.mono.data.cleanFolderName
@@ -11,17 +12,25 @@ import com.wander.mono.data.cleanFolderName
  * whole file malformed, as any other field does.
  */
 internal object StructureFormat {
-    fun encode(structure: HomeStructure): Map<String, Any> = mapOf(
-        FOLDERS to structure.folders.map { folder ->
-            mapOf("id" to folder.id, "name" to folder.name, "apps" to folder.apps.map { it.encode() })
-        },
-        SWIPES to structure.swipes.entries.associate { (key, action) -> key.encode() to action.encode() },
-        MUTED to structure.mutedApps.map { it.encode() },
-        LIMITS to structure.dailyLimits.entries.associate { (key, minutes) -> key.encode() to minutes },
-        ROUTINES to structure.routines.map { routine ->
-            mapOf("start" to routine.start, "end" to routine.end, "apps" to routine.apps.map { it.encode() })
-        },
-    )
+    fun encode(structure: HomeStructure): Map<String, Any> = buildMap<String, Any> {
+        put(
+            FOLDERS,
+            structure.folders.map { folder ->
+                mapOf("id" to folder.id, "name" to folder.name, "apps" to folder.apps.map { it.encode() })
+            },
+        )
+        put(SWIPES, structure.swipes.entries.associate { (key, action) -> key.encode() to action.encode() })
+        put(MUTED, structure.mutedApps.map { it.encode() })
+        put(LIMITS, structure.dailyLimits.entries.associate { (key, minutes) -> key.encode() to minutes })
+        put(
+            ROUTINES,
+            structure.routines.map { routine ->
+                mapOf("start" to routine.start, "end" to routine.end, "apps" to routine.apps.map { it.encode() })
+            },
+        )
+        // Left out while the card follows its app, as in a file from before it could be placed.
+        structure.nowPlaying?.let { put(NOW_PLAYING, it.encode()) }
+    }
 
     fun read(tree: Map<String, Any?>): HomeStructure = HomeStructure(
         folders = tree.optionalField<List<*>>(FOLDERS, emptyList<Any?>()).map(::folder),
@@ -32,6 +41,7 @@ internal object StructureFormat {
         dailyLimits = tree.optionalField<Map<*, *>>(LIMITS, emptyMap<Any?, Any?>()).entries
             .associate { (key, minutes) -> appKey(key) to minutes(minutes) },
         routines = tree.optionalField<List<*>>(ROUTINES, emptyList<Any?>()).map(::routine).take(Routine.MAX),
+        nowPlaying = tree[NOW_PLAYING]?.let { NowPlayingAnchor.decode(string(it)) ?: throw MalformedBackup() },
     )
 
     private fun folder(value: Any?): HomeFolder {
@@ -62,6 +72,7 @@ internal object StructureFormat {
     private const val MUTED = "mutedOnHome"
     private const val LIMITS = "dailyLimits"
     private const val ROUTINES = "routines"
+    private const val NOW_PLAYING = "nowPlayingAnchor"
 
     /** A day's worth of minutes: no limit can be longer, and no time of day later. */
     private const val MAX_LIMIT = 24L * 60

@@ -5,6 +5,7 @@ import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.media.MediaState
 import com.wander.mono.core.media.PlayingMedia
 import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.data.NowPlayingAnchor
 import com.wander.mono.ui.components.AppBadge
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -33,7 +34,7 @@ class HomeRowsTest {
             progress = null,
             upNext = emptyList(),
             output = null,
-            collapseAtMs = null,
+            pausedAtMs = null,
         ),
     )
 
@@ -42,12 +43,14 @@ class HomeRowsTest {
         media: MediaState = MediaState.Idle,
         badges: Map<PackageUser, Int> = emptyMap(),
         showCounts: Boolean = true,
-    ) = assembleHomeRows(favorites, catalog, badges, media, showCounts)
+        anchor: NowPlayingAnchor? = null,
+    ) = assembleHomeRows(favorites, catalog, badges, media, showCounts, anchor)
 
     private fun shape(rows: List<HomeRow>) = rows.map {
         when (it) {
             is HomeRow.App -> it.app.label + if (it.app.isMainProfile) "" else " (work)"
             is HomeRow.NowPlaying -> "now:" + it.media.packageName
+            HomeRow.NowPlayingSpot -> "spot"
             HomeRow.ListenerPrompt -> "prompt"
             is NotificationRow -> "notification:" + it.app.label
             is CalendarRow -> "calendar"
@@ -76,6 +79,22 @@ class HomeRowsTest {
     fun `now playing goes first when its app is not a favourite`() {
         val result = rows(listOf(phalanx.key), playing("com.wander.android"))
         assertEquals(listOf("now:com.wander.android", "Phalanx"), shape(result))
+    }
+
+    @Test
+    fun `now playing stays where the user placed it`() {
+        val favorites = listOf(phalanx.key, wanda.key, clock.key)
+        val under = rows(favorites, playing("com.wander.android"), anchor = NowPlayingAnchor.Under(clock.key))
+        assertEquals(listOf("Phalanx", "Wanda", "Clock", "now:com.wander.android"), shape(under))
+        val top = rows(favorites, playing("com.wander.android"), anchor = NowPlayingAnchor.Top)
+        assertEquals(listOf("now:com.wander.android", "Phalanx", "Wanda", "Clock"), shape(top))
+    }
+
+    @Test
+    fun `now playing follows its app again when the favourite it was placed under is gone`() {
+        val gone = NowPlayingAnchor.Under(clock.key)
+        val result = rows(listOf(phalanx.key, wanda.key), playing("com.wander.android"), anchor = gone)
+        assertEquals(listOf("Phalanx", "Wanda", "now:com.wander.android"), shape(result))
     }
 
     @Test

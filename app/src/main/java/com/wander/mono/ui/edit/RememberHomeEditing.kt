@@ -17,10 +17,12 @@ fun rememberHomeEditing(
     onRename: (AppKey) -> Unit,
 ): HomeEditing {
     val toggles by edit.toggles.collectAsStateWithLifecycle()
+    val nowPlaying by edit.nowPlaying.collectAsStateWithLifecycle()
     val reorder = remember(list) { ReorderState(list) }
     return HomeEditing(
         active = active,
         toggles = toggles,
+        nowPlaying = nowPlaying,
         reorder = reorder,
         onEnter = onEnter,
         onArrange = edit::arrange,
@@ -30,5 +32,6 @@ fun rememberHomeEditing(
         onSetLiveRow = edit::setLiveRow,
         onResizeWidget = edit::resizeWidget,
         onRemoveWidget = edit::removeWidget,
+        onUnplaceNowPlaying = edit::unplaceNowPlaying,
     )
 }

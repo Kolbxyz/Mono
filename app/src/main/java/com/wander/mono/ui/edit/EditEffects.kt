@@ -10,17 +10,17 @@ import com.wander.mono.ui.home.HomeRow
 import com.wander.mono.ui.home.folders.flattenFolders
 
 /**
- * What edit mode keeps in step with the list: the dragged order is dropped once saved (or when
- * edit mode ends), and while a row is dragged past an edge of the list, the list scrolls, once
- * per frame, only for as long as the finger holds it there.
+ * What edit mode keeps in step with the list: the dragged order is dropped once saved (the rows
+ * or the now-playing card's place caught up, or edit mode ends), and while a row is dragged past an
+ * edge of the list, the list scrolls, once per frame, only for as long as the finger holds it there.
  */
 @Composable
 fun EditEffects(editing: HomeEditing, rows: List<HomeRow>?, list: LazyListState) {
     val reorder = editing.reorder
     val haptics = rememberMonoHaptics()
     val dragging = reorder.dragging != null
-    LaunchedEffect(rows, dragging) {
-        reorder.settle(flattenFolders(rows.orEmpty()).filter(::isMovable).map { it.key })
+    LaunchedEffect(rows, dragging, editing.nowPlaying) {
+        editing.settle(flattenFolders(rows.orEmpty()))
     }
     LaunchedEffect(editing.active) { if (!editing.active) reorder.reset() }
     LaunchedEffect(dragging) {

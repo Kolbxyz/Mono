@@ -42,7 +42,7 @@ internal fun playingMedia(controller: MediaController, art: ArtMemo, output: Aud
         },
         upNext = controller.upNext(),
         output = output,
-        collapseAtMs = playback?.let { collapseAt(it.state, it.lastPositionUpdateTime, SystemClock.elapsedRealtime()) },
+        pausedAtMs = playback?.let { pausedAt(it.state, it.lastPositionUpdateTime, SystemClock.elapsedRealtime()) },
     )
 }
 

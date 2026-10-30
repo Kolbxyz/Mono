@@ -1,10 +1,13 @@
 package com.wander.mono.ui.edit
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.only
@@ -19,11 +22,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -33,10 +40,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.data.settings.RowDensity
 import com.wander.mono.ui.home.densityLabel
+import com.wander.mono.ui.theme.secondaryTextColor
 
 /**
- * Edit mode's floating toolbar, in the thumb zone: add an app or a widget, cycle the row density,
- * settings, and Done.
+ * Edit mode's floating toolbar, in the thumb zone: add an app or a widget, the row density (named,
+ * each press the next one), settings, and Done.
  * Slides up while [visible]. It floats over home's list, which keeps [EditToolbarClearance] free.
  */
 @Composable
@@ -92,15 +100,42 @@ private fun Toolbar(
         IconButton(onClick = onAddWidget) {
             Icon(painterResource(R.drawable.sym_widgets), contentDescription = stringResource(R.string.edit_add_widget))
         }
-        // Names the density it is on; each press shows the next one in place.
-        val densityName = stringResource(R.string.edit_density, stringResource(densityLabel(density)))
-        IconButton(onClick = onCycleDensity) {
-            Icon(painterResource(R.drawable.sym_view_agenda), contentDescription = densityName)
-        }
+        DensityButton(density, onCycleDensity)
         IconButton(onClick = onOpenSettings) {
             Icon(painterResource(R.drawable.sym_settings), contentDescription = stringResource(R.string.edit_settings))
         }
     }
+}
+
+/**
+ * The row density as a small labelled button: "Rows" over the density it is on, so it reads
+ * without a guess; each press moves to the next one, shown in place.
+ */
+@Composable
+private fun DensityButton(density: RowDensity, onCycle: () -> Unit) {
+    val densityName = stringResource(R.string.edit_density, stringResource(densityLabel(density)))
+    TextButton(
+        onClick = onCycle,
+        contentPadding = PaddingValues(horizontal = 12.dp),
+        modifier = Modifier.semantics { contentDescription = densityName },
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.clearAndSetSemantics {}) {
+            Text(
+                stringResource(R.string.edit_density_caption),
+                style = MaterialTheme.typography.labelSmall,
+                color = secondaryTextColor(),
+            )
+            Text(stringResource(shortDensityLabel(density)), style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}
+
+/** A density's name short enough for the toolbar. */
+@StringRes
+private fun shortDensityLabel(density: RowDensity): Int = when (density) {
+    RowDensity.Compact -> R.string.density_compact
+    RowDensity.Default -> R.string.density_default
+    RowDensity.Comfortable -> R.string.edit_density_roomy
 }
 
 /** The toolbar's gap above the bottom inset. */
