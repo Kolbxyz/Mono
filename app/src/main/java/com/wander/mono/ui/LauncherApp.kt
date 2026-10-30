@@ -163,7 +163,7 @@ fun LauncherApp(
         ) {
             // Hidden apps unlocked for this opening only.
             DisposableEffect(Unit) { onDispose(drawer::relockHidden) }
-            QuietDrawerGate(quiet = quietOn, onClose = launcher::closeDrawer) {
+            QuietDrawerGate(quiet = quietOn, revealed = { drawerMotion.shown }, onClose = launcher::closeDrawer) {
                 DrawerScreen(
                     open = drawerOpen,
                     revealed = { drawerMotion.shown },
