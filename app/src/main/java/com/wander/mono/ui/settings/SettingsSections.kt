@@ -11,7 +11,6 @@ internal typealias SettingsSection = @Composable (SettingsViewModel) -> Unit
  */
 internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = when (category) {
     SettingsCategory.Home -> listOf(
-        { ClockPreviewSection() },
         { ClockSection(it) },
         { GlanceLinesSection(it) },
         { CalendarSection() },
@@ -48,3 +47,14 @@ internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = whe
         { AboutSection() },
     )
 }
+
+/**
+ * A page's live preview of what its sections shape, if it has one: pinned under the title bar
+ * while the sections scroll, so every change shows without scrolling back up.
+ */
+internal fun pinnedOf(category: SettingsCategory): SettingsSection? = when (category) {
+    SettingsCategory.Home -> pinnedClock
+    else -> null
+}
+
+private val pinnedClock: SettingsSection = { ClockPreviewSection() }

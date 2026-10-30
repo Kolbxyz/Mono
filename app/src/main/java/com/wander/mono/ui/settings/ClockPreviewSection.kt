@@ -24,9 +24,10 @@ import com.wander.mono.ui.home.GlanceContent
 
 /**
  * The home clock as the settings below shape it, live: same face, lines and chips as home, with
- * nothing to tap. Hidden from TalkBack, which reads the settings themselves. Its sources (the
- * clock tick, battery and alarm broadcasts) answer only once registered, so the preview grows in
- * rather than appearing in one frame and pushing the rows below.
+ * nothing to tap, at the compact size home takes in landscape so it can stay pinned over the rows
+ * ([pinnedOf]) without eating the screen. Hidden from TalkBack, which reads the settings
+ * themselves. Its sources (the clock tick, battery and alarm broadcasts) answer only once
+ * registered, so the preview grows in rather than appearing in one frame and pushing the rows.
  */
 @Composable
 fun ClockPreviewSection(preview: ClockPreviewViewModel = viewModel()) {
@@ -52,6 +53,6 @@ private fun ClockPreview(shown: Glance) {
             .padding(horizontal = 24.dp)
             .clearAndSetSemantics {},
     ) {
-        GlanceContent(shown, taps = null, modifier = Modifier.fillMaxWidth(), compact = false)
+        GlanceContent(shown, taps = null, modifier = Modifier.fillMaxWidth(), compact = true)
     }
 }
