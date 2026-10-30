@@ -24,7 +24,7 @@ fun rememberWideWindow(): Boolean {
 /**
  * Home's swipe up in the wide layout, where the drawer already stands beside home and has nowhere
  * to rise: a swipe past [threshold] px, or a flick faster than [fling] px/s, calls [onPull] (bring
- * up the side panel's search) once the finger lifts.
+ * up the side panel) once the finger lifts.
  */
 @Stable
 class PanelSearchPull internal constructor(

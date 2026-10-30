@@ -39,7 +39,7 @@ import kotlinx.coroutines.launch
  * space without [privateActions] (while picking an app for home, where private apps never go).
  * Category chips unfold above it and a floating toolbar sets it up from below, getting out of the
  * way as the list scrolls on. [listState] is the caller's, so the list keeps its place while search
- * results show instead. Dragging up once the list has nowhere further to go runs [onPullUp].
+ * results show instead.
  * TalkBack gets a "Jump to" action per letter on the list itself.
  */
 @Composable
@@ -53,7 +53,6 @@ internal fun DrawerAppList(
     onLongPress: (LaunchableApp) -> Unit,
     bottom: PaddingValues,
     listState: LazyListState,
-    onPullUp: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
@@ -72,7 +71,6 @@ internal fun DrawerAppList(
             }
         }
     }
-    val searchPull = rememberSearchPullConnection(onPullUp)
     val toolbarScroll = rememberToolbarScroll()
     // Always there while the list cannot scroll back, so it is never lost on a short list.
     val toolbarShown by remember(listState, toolbarScroll) {
@@ -96,7 +94,6 @@ internal fun DrawerAppList(
                     state = listState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .nestedScroll(searchPull)
                         .nestedScroll(toolbarScroll)
                         .semantics { customActions = jumpActions },
                     contentPadding = PaddingValues(

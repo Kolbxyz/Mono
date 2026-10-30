@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,6 +23,8 @@ import com.wander.mono.R
 import com.wander.mono.data.settings.SwipeUpAction
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.SheetBack
+import com.wander.mono.ui.components.depthScrim
+import com.wander.mono.ui.components.outOfFocus
 import com.wander.mono.ui.components.rememberCredentialPrompt
 import com.wander.mono.ui.components.rememberPullUpConnection
 import com.wander.mono.ui.drawer.DrawerViewModel
@@ -31,6 +35,7 @@ import com.wander.mono.ui.edit.rememberHomeEditing
 import com.wander.mono.ui.home.HomeLookViewModel
 import com.wander.mono.ui.home.HomeShellViewModel
 import com.wander.mono.ui.home.HomeViewModel
+import com.wander.mono.ui.home.ScrimEdges
 import com.wander.mono.ui.home.rememberHeroConnection
 import com.wander.mono.ui.home.rememberHeroPull
 import com.wander.mono.ui.quiet.QuietViewModel
@@ -78,6 +83,7 @@ fun LauncherApp(
         onNoScreenLock = drawer::reportNoScreenLock,
     )
     val homeList = rememberLazyListState()
+    val scrimEdges = remember { ScrimEdges() }
     val homeIcons = remember(drawerState.iconMode, drawerState.iconPack) {
         AppIcons(drawerState.iconMode, drawer::icon, drawerState.iconPack)
     }
@@ -92,8 +98,9 @@ fun LauncherApp(
     val drawerMotion = rememberDrawerMotion(drawerOpen) { open ->
         if (open) launcher.openDrawer(focusSearch = swipeUp == SwipeUpAction.Search) else launcher.closeDrawer()
     }
-    // Wide, the drawer has nowhere to rise: swiping up brings up the side panel's search instead.
-    val panelPull = rememberPanelSearchPull { launcher.openDrawer(focusSearch = true) }
+    // Wide, the drawer has nowhere to rise: swiping up brings up the side panel, with its keyboard
+    // only when the swipe up is set to search.
+    val panelPull = rememberPanelSearchPull { launcher.openDrawer(focusSearch = swipeUp == SwipeUpAction.Search) }
     val pullDown = gestures.pullDownFor(swipeDown) { launcher.openDrawer(focusSearch = true) }
     val hero = rememberHeroPull(pullDownActive = pullDown != null)
     val homeGestures = rememberHeroConnection(
@@ -145,13 +152,29 @@ fun LauncherApp(
             covered = (drawerOpen && !wide) || settingsOpen,
             gestureScroll = homeGestures,
             hero = hero,
+            scrimEdges = scrimEdges,
             modifier = modifier,
             contentModifier = contentModifier,
         )
     }
+    // The blur is motion of its own: with motion reduced, what is under settings only dims.
+    val settingsDim = depthScrim(overlayScrim(), blur = !reducedMotion)
+    val sheetDepth = { coverOf(sheetCover, sheetBack.progress) }
     Box(Modifier.fillMaxSize().onSizeChanged { drawerMotion.travel = it.height * TRAVEL_FRACTION }) {
-        Box(Modifier.fillMaxSize().recede({ coverOf(sheetCover, sheetBack.progress) }, OverlayLevel.Sheet)) {
-            Box(Modifier.fillMaxSize().recede(settings::cover, OverlayLevel.Screen, overlayScrim())) {
+        // Scrims never scale with the layers they lie on, so no edge of theirs shows as those recede.
+        LauncherHomeScrim(
+            homeLookModel, shellModel, editing.active, scrimEdges, homeList, wide,
+            if (wide) Modifier else Modifier.fadeBehindDrawer(drawerMotion),
+        )
+        Box(Modifier.fillMaxSize().recede(sheetDepth, OverlayLevel.Sheet)) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    // Under the whole of settings, which is opaque, nothing here shows: no blur pass for it.
+                    .drawWithContent { if (settings.cover < 1f) drawContent() }
+                    .recede(settings::cover, OverlayLevel.Screen)
+                    .outOfFocus(settings::cover, blur = !reducedMotion),
+            ) {
                 if (wide) {
                     Row(Modifier.fillMaxSize()) {
                         homeLayer(Modifier.weight(1f), Modifier)
@@ -186,6 +209,10 @@ fun LauncherApp(
                     }
                 }
             }
+        }
+        Spacer(Modifier.fillMaxSize().overlayDim(settings::cover, settingsDim))
+        // Receding under a sheet as the layers under it do, in step.
+        Box(Modifier.fillMaxSize().recede(sheetDepth, OverlayLevel.Sheet)) {
             SettingsLayer(settings, settingsOpen, animateExit = overlaysAnimate, onBack = launcher::closeSettings) {
                 if (wide) {
                     SettingsTwoPane(onBack = launcher::closeSettings)

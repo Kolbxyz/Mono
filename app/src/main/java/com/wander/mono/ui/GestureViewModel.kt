@@ -28,11 +28,13 @@ class GestureViewModel @Inject constructor(
     val doubleTapLock: StateFlow<Boolean> =
         settings[GestureSettings.DoubleTapLock].stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    val swipeUp: StateFlow<SwipeUpAction> =
-        settings[GestureSettings.SwipeUp].stateIn(viewModelScope, SharingStarted.Eagerly, SwipeUpAction.Drawer)
+    val swipeUp: StateFlow<SwipeUpAction> = GestureSettings.SwipeUp.let {
+        settings[it].stateIn(viewModelScope, SharingStarted.Eagerly, it.default)
+    }
 
-    val swipeDown: StateFlow<SwipeDownAction> =
-        settings[GestureSettings.SwipeDown].stateIn(viewModelScope, SharingStarted.Eagerly, SwipeDownAction.None)
+    val swipeDown: StateFlow<SwipeDownAction> = GestureSettings.SwipeDown.let {
+        settings[it].stateIn(viewModelScope, SharingStarted.Eagerly, it.default)
+    }
 
     /** Whether the user has switched the gesture service on. */
     val available: StateFlow<Boolean> = actions.isAvailable

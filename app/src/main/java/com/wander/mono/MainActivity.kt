@@ -9,7 +9,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.wander.mono.core.apps.PrivateSpace
 import com.wander.mono.core.apps.ShortcutRepository
@@ -20,6 +22,7 @@ import com.wander.mono.core.widgets.WidgetHost
 import com.wander.mono.ui.LauncherApp
 import com.wander.mono.ui.LauncherViewModel
 import com.wander.mono.ui.drawer.DrawerViewModel
+import com.wander.mono.ui.home.LocalTopResumed
 import com.wander.mono.ui.onboarding.Onboarding
 import com.wander.mono.ui.sheet.AppSheetViewModel
 import com.wander.mono.ui.theme.MonoTheme
@@ -56,6 +59,9 @@ class MainActivity : ComponentActivity() {
     /** A Quick Settings tile's request, run once Mono is in front. */
     private var tileRequest: TileRequest? = null
 
+    /** Whether Mono is the top resumed activity; home's scrim starts stepping aside the moment it is not. */
+    private val topResumed = mutableStateOf(true)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -83,9 +89,11 @@ class MainActivity : ComponentActivity() {
                 iconShape = theme.iconShape,
                 iconTheming = theme.iconTheming,
             ) {
-                Box {
-                    LauncherApp()
-                    Onboarding()
+                CompositionLocalProvider(LocalTopResumed provides topResumed.value) {
+                    Box {
+                        LauncherApp()
+                        Onboarding()
+                    }
                 }
             }
         }
@@ -114,6 +122,13 @@ class MainActivity : ComponentActivity() {
             }
         }
         tileRequest = null
+    }
+
+    // Android 10 and up. Called as another activity starts to take over (the recents gesture
+    // included), before the window loses focus, so the scrim's fade starts earlier.
+    override fun onTopResumedActivityChanged(isTopResumedActivity: Boolean) {
+        super.onTopResumedActivityChanged(isTopResumedActivity)
+        topResumed.value = isTopResumedActivity
     }
 
     override fun onStop() {
