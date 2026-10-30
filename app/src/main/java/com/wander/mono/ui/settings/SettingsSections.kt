@@ -16,6 +16,7 @@ internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = whe
         { GlanceLinesSection(it) },
         { HomeLookSection(it) },
         { HeadphoneSection(it) },
+        { RoutinesSection(it) },
         { CalendarSection() },
     )
     SettingsCategory.DrawerSearch -> listOf(
@@ -40,6 +41,7 @@ internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = whe
         { PrivacySection() },
         { HiddenAppsSection() },
         { UsageSection(it) },
+        { ScreenTimeSection(it) },
         { BackupSection() },
         { AboutSection() },
     )
