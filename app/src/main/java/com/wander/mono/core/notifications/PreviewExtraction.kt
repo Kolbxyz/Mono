@@ -10,7 +10,12 @@ import androidx.core.app.NotificationCompat
  * (or the sender, one to one) over its latest message; anything else shows its title and text.
  * Replying is only offered when the full content is shown.
  */
-internal fun previewOf(sbn: StatusBarNotification, owner: PackageUser, redaction: Redaction): NotificationPreview {
+internal fun previewOf(
+    sbn: StatusBarNotification,
+    owner: PackageUser,
+    redaction: Redaction,
+    expansion: PreviewExpansion,
+): NotificationPreview {
     val notification = sbn.notification
     val (title, text) = when (redaction) {
         Redaction.Full -> contentOf(notification)
@@ -27,6 +32,7 @@ internal fun previewOf(sbn: StatusBarNotification, owner: PackageUser, redaction
         autoCancel = notification.flags and Notification.FLAG_AUTO_CANCEL != 0,
         isClearable = sbn.isClearable,
         reply = if (redaction == Redaction.Full) replyActionOf(notification) else null,
+        expansion = expansion,
     )
 }
 
