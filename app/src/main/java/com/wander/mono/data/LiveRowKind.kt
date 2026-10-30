@@ -4,6 +4,7 @@ import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppKey
+import com.wander.mono.core.notifications.LiveActivityKind
 import com.wander.mono.data.settings.StoredEnum
 
 /**
@@ -18,7 +19,18 @@ enum class LiveRowKind(
     NowPlaying("now_playing", R.string.live_row_now_playing, R.drawable.sym_music_note),
     NotificationPreview("notification_preview", R.string.live_row_notification_preview, R.drawable.sym_notifications),
     Calendar("calendar", R.string.live_row_calendar, R.drawable.sym_calendar_today),
+    LiveUpdate("live_update", R.string.live_row_live_update, R.drawable.sym_hourglass_bottom),
+    Timer("timer", R.string.live_row_timer, R.drawable.sym_timer),
+    Navigation("navigation", R.string.live_row_navigation, R.drawable.sym_navigation),
 }
+
+/** The live row kind an ongoing notification of this kind is switched on and off as. */
+val LiveActivityKind.rowKind: LiveRowKind
+    get() = when (this) {
+        LiveActivityKind.Progress -> LiveRowKind.LiveUpdate
+        LiveActivityKind.Timer -> LiveRowKind.Timer
+        LiveActivityKind.Navigation -> LiveRowKind.Navigation
+    }
 
 /** One live row of one app, as persisted when it is switched off. */
 data class LiveRowRef(val app: AppKey, val kind: LiveRowKind) {
