@@ -2,7 +2,6 @@ package com.wander.mono.ui.drawer
 
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +36,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.ui.components.rememberMonoHaptics
+import com.wander.mono.ui.home.onWallpaper
 import com.wander.mono.ui.theme.LocalReducedMotion
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -48,7 +47,9 @@ import kotlinx.coroutines.launch
  * the rail index; [current] is one too), shows the entry in a bubble and ticks once per entry.
  * Sliding the finger off the rail toward the list bows the letters around it out in a wave that
  * follows the finger, so it can scrub from wherever the thumb rests; wave and bubble face the list
- * whichever edge the rail is on. With reduced motion the wave stays flat and only the letter under
+ * whichever edge the rail is on. While scrubbing, the letter nearest the finger grows and its
+ * neighbours less so. The letters sit straight on the drawer's background, shadowed like other text
+ * on the wallpaper. With reduced motion the wave stays flat, nothing grows and only the letter under
  * the finger lights up. With a private space ([lock]) a lock ends the rail: scrubbing onto it
  * jumps to the space like a letter, tapping it alone locks or unlocks it. Letters tick lightly, ★
  * and the lock with a long buzz.
@@ -89,7 +90,7 @@ fun LetterRail(
     val currentLock by rememberUpdatedState(lock)
 
     var height by remember { mutableIntStateOf(0) }
-    // The letters' own column, inside the pill's end padding: what a finger's y maps onto.
+    // The letters' own column, inside the track's end padding: what a finger's y maps onto.
     var lettersHeight by remember { mutableIntStateOf(0) }
     val lettersTop = with(LocalDensity.current) { TRACK_PADDING.toPx() }
     val currentLettersTop by rememberUpdatedState(lettersTop)
@@ -171,22 +172,23 @@ fun LetterRail(
     ) {
         // A short rail (landscape) draws every other or third letter; all of them still scrub.
         val stride = RailMath.labelStride(lettersHeight.toFloat(), letters.size, minSlot)
-        // The letters sit on a slim tonal pill, so the rail reads as one control.
+        // No clip: the wave bows letters out past the track, toward the list.
         Column(
             Modifier
                 .fillMaxHeight()
-                .padding(horizontal = TRACK_INSET)
-                // A shaped background, not a clip: the wave bows letters out past the pill.
-                .background(MaterialTheme.colorScheme.surfaceContainer, CircleShape)
-                .padding(vertical = TRACK_PADDING)
+                .padding(horizontal = TRACK_INSET, vertical = TRACK_PADDING)
                 .onSizeChanged { lettersHeight = it.height },
         ) {
+            val letterStyle = MaterialTheme.typography.labelMedium.onWallpaper()
             letters.forEachIndexed { index, letter ->
                 val lit = scrubbing && index == active
                 val wave = Modifier.graphicsLayer {
                     val slot = RailMath.fingerSlot(fingerY, lettersTop, lettersHeight.toFloat(), letters.size)
                     val bow = pressBow * pressed + dragBow
                     translationX = -mirror * RailMath.letterOffset(index, slot, bow)
+                    // Grows with the press, so it eases back to size on release.
+                    scaleX = RailMath.letterScale(index, slot, pressed)
+                    scaleY = scaleX
                 }
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     if (index == lockIndex && lock != null) {
@@ -194,13 +196,9 @@ fun LetterRail(
                     } else if (lit || index % stride == 0) {
                         Text(
                             letter,
-                            style = MaterialTheme.typography.labelMedium,
+                            style = letterStyle,
                             fontWeight = if (lit) FontWeight.Bold else null,
-                            color = if (lit) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.onSurfaceVariant
-                            },
+                            color = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             modifier = wave,
                         )
                     }
@@ -223,10 +221,10 @@ fun LetterRail(
 /** Width of the rail's touch area, which the list leaves free on the rail's side. */
 internal val RAIL_WIDTH = 48.dp
 
-/** Space on each side of the rail's pill, inside its touch area. */
+/** Space on each side of the letters' track, inside the rail's touch area. */
 private val TRACK_INSET = 8.dp
 
-/** Space inside each end of the pill, above the first letter and below the last. */
+/** Space at each end of the track, above the first letter and below the last. */
 private val TRACK_PADDING = 8.dp
 
 /**

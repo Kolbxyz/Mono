@@ -76,8 +76,11 @@ sealed interface SearchHit {
         override val label: String get() = contact.name
     }
 
-    /** A song in Wanda's library; tapping hands it to Wanda to play. */
-    data class Track(val track: WandaTrack) : SearchHit {
+    /**
+     * A song in Wanda's library; tapping hands it to Wanda to play. [owner] is the Wanda build that
+     * found it, for its icon; null when it has no launcher entry (or is hidden).
+     */
+    data class Track(val track: WandaTrack, val owner: LaunchableApp? = null) : SearchHit {
         override val key: String get() = "track:${track.packageName}/${track.trackId}"
         override val label: String get() = track.title
     }

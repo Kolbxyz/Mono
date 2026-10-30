@@ -11,6 +11,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.SideEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.wander.mono.core.apps.PrivateSpace
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.calendar.CalendarAccess
 import com.wander.mono.core.notifications.ListenerAccess
@@ -43,6 +44,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var calendarAccess: CalendarAccess
+
+    @Inject
+    lateinit var privateSpace: PrivateSpace
 
     private val launcher: LauncherViewModel by viewModels()
     private val sheet: AppSheetViewModel by viewModels()
@@ -94,6 +98,8 @@ class MainActivity : ComponentActivity() {
         shortcuts.recheckHostPermission()
         listenerAccess.recheck()
         calendarAccess.recheck()
+        // The private space can finish unlocking after its last broadcast, leaving it listed empty.
+        privateSpace.recheck()
     }
 
     override fun onResume() {
