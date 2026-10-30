@@ -44,19 +44,6 @@ fun CalculationRow(hit: SearchHit.Calculation, icons: AppIcons, onCopy: () -> Un
     )
 }
 
-@Composable
-fun PersonRow(hit: SearchHit.Person, icons: AppIcons, onOpen: () -> Unit, modifier: Modifier = Modifier) {
-    SymbolRow(
-        symbol = R.drawable.sym_person,
-        title = hit.label,
-        subtitle = stringResource(R.string.search_contact),
-        clickLabel = R.string.action_open,
-        icons = icons,
-        onClick = onOpen,
-        modifier = modifier,
-    )
-}
-
 /** A song in Wanda; the subtitle says so, with the artist when Wanda knows it. */
 @Composable
 fun TrackRow(hit: SearchHit.Track, icons: AppIcons, onPlay: () -> Unit, modifier: Modifier = Modifier) {
@@ -78,6 +65,7 @@ fun SettingRow(hit: SearchHit.Setting, icons: AppIcons, onOpen: () -> Unit, modi
         symbol = R.drawable.sym_settings,
         title = hit.label,
         subtitle = stringResource(R.string.settings_title),
+        matched = hit.matched,
         clickLabel = R.string.action_open,
         icons = icons,
         onClick = onOpen,
@@ -100,9 +88,38 @@ fun WebRow(hit: SearchHit.Web, icons: AppIcons, onSearch: () -> Unit, modifier: 
     )
 }
 
+/** The query read as a web address: opens it in the app that takes it. */
+@Composable
+fun LinkRow(hit: SearchHit.Link, icons: AppIcons, onOpen: () -> Unit, modifier: Modifier = Modifier) {
+    SymbolRow(
+        symbol = R.drawable.sym_arrow_outward,
+        title = stringResource(R.string.search_open_link),
+        subtitle = hit.url,
+        clickLabel = R.string.action_open,
+        icons = icons,
+        onClick = onOpen,
+        modifier = modifier,
+    )
+}
+
+/** Pasted text (or a link): hands it to Android's share sheet. */
+@Composable
+fun ShareRow(hit: SearchHit.ShareText, icons: AppIcons, onShare: () -> Unit, modifier: Modifier = Modifier) {
+    SymbolRow(
+        symbol = R.drawable.sym_share,
+        title = stringResource(R.string.search_share_text),
+        subtitle = hit.text,
+        clickLabel = R.string.search_share_action,
+        icons = icons,
+        onClick = onShare,
+        modifier = modifier,
+    )
+}
+
 /**
  * A result that is not an app: a symbol where app rows have their icon (none in text-only mode,
- * like apps), a title and what kind of result it is underneath.
+ * like apps), a title with what the query [matched] highlighted, and what kind of result it is
+ * underneath.
  */
 @Composable
 internal fun SymbolRow(
@@ -114,6 +131,7 @@ internal fun SymbolRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
+    matched: List<IntRange> = emptyList(),
 ) {
     Row(
         modifier
@@ -137,7 +155,12 @@ internal fun SymbolRow(
             }
         }
         Column {
-            Text(title, style = titleStyle, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(
+                rememberHighlighted(title, matched),
+                style = titleStyle,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,
