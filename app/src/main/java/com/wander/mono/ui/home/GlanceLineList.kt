@@ -93,6 +93,25 @@ private fun Modifier.alarmPresses(onOpen: () -> Unit, onDismiss: () -> Unit): Mo
 )
 
 /**
+ * The clock's tap (the alarm list) and long press (its own sheet, [onLongPress]). With a long press
+ * it takes the touch, like [alarmPresses], so home's options under it never open as well; without
+ * one it is a plain [tapTo].
+ */
+@Composable
+internal fun Modifier.clockPresses(onTap: (() -> Unit)?, onLongPress: (() -> Unit)?): Modifier {
+    if (onTap == null || onLongPress == null) return tapTo(onTap, R.string.glance_open_clock)
+    return combinedClickable(
+        interactionSource = null,
+        indication = null,
+        onClickLabel = stringResource(R.string.glance_open_clock),
+        role = Role.Button,
+        onLongClickLabel = stringResource(R.string.glance_clock_options),
+        onLongClick = onLongPress,
+        onClick = onTap,
+    )
+}
+
+/**
  * A plain tap on a header line. Not `clickable` nor `detectTapGestures`: both take the touch down,
  * and home's long press (home options) under the clock would never start. This only watches: a
  * quick lift opens, a long press or a scroll leaves the touch to home.

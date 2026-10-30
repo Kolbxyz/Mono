@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TalkBack: the long press on the home clock opens its own sheet. -->
+    <string name="glance_clock_options">Clock options</string>
+    <!-- TalkBack: the long press on the now-playing card opens its sheet. -->
+    <string name="media_sheet_open">Media options</string>
+
+    <!-- The now-playing card's settings, in its sheet and in settings. -->
+    <string name="settings_media">Now playing</string>
+    <string name="settings_media_expanded">Open as the full player</string>
+    <string name="settings_media_swipe">Swipe to skip tracks</string>
+    <string name="settings_media_tint">Colour from the artwork</string>
+    <string name="settings_media_paused">Hide when paused for</string>
+    <string name="settings_media_paused_5">5 min</string>
+    <string name="settings_media_paused_10">10 min</string>
+    <string name="settings_media_paused_30">30 min</string>
+    <string name="settings_media_paused_never">Never</string>
+
+    <!-- Edit mode: the now-playing card's stand-in, placed by dragging. -->
+    <string name="edit_now_playing_follows">Under the app that plays. Drag it to place it</string>
+    <string name="edit_now_playing_placed">Stays where you put it</string>
+    <string name="edit_now_playing_unplace">Put back under the app that plays</string>
+
+    <!-- Edit toolbar: the row density button, "Rows" over the density it is on. -->
+    <string name="edit_density_caption">Rows</string>
+    <!-- The Comfortable density, short enough for the toolbar. -->
+    <string name="edit_density_roomy">Roomy</string>
+</resources>

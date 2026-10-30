@@ -9,7 +9,7 @@ import com.wander.mono.data.settings.DrawerSettings
 import com.wander.mono.data.settings.DrawerSort
 
 /**
- * What the app drawer is drawn on (scrim, blurred wallpaper or solid), how its list is ordered and
+ * What the app drawer is drawn on (bare or blurred wallpaper, scrim or solid), how its list is ordered and
  * whether new apps gather at the top, then whether opening it brings up the keyboard and which
  * edge its letter rail is on.
  */
@@ -28,6 +28,8 @@ fun DrawerSection(settings: SettingsViewModel) {
             R.drawable.sym_palette,
         ) { background ->
             when (background) {
+                DrawerBackground.None -> R.string.drawer_background_none
+                DrawerBackground.SoftBlur -> R.string.drawer_background_soft_blur
                 DrawerBackground.Scrim -> R.string.drawer_background_scrim
                 DrawerBackground.Blur -> R.string.drawer_background_blur
                 DrawerBackground.Solid -> R.string.drawer_background_solid

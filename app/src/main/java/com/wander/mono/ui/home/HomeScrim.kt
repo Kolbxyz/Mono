@@ -1,26 +1,84 @@
 package com.wander.mono.ui.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.dp
 
 /**
  * Draws the legibility scrim behind the header and the list only (spec 5.4): [color] at full
  * strength at the screen's top and bottom edges, easing out to nothing over [reach] px past the
  * header and before the list. The ease is a smoothstep sampled finely, so the falloff has no visible
- * edge. Positions are read at draw time, so scrolling only redraws.
+ * edge. Positions and [strength] (0..1, the fade while the window is not focused) are read at draw
+ * time, so scrolling and the fade only redraw.
+ *
+ * The outermost [taper] px on every side ease to nothing: when the system scales Mono's window
+ * (the recents gesture) but not the wallpaper behind it, no opaque band shows a hard edge.
  */
-fun Modifier.homeScrim(color: Color, headerBottom: () -> Float, listTop: () -> Float, reach: Float): Modifier =
+fun Modifier.homeScrim(
+    color: Color,
+    strength: () -> Float,
+    headerBottom: () -> Float,
+    listTop: () -> Float,
+    reach: Float,
+    taper: Float,
+): Modifier =
     if (color.alpha == 0f) {
         this
     } else {
         drawBehind {
+            val alpha = color.alpha * strength()
+            if (alpha <= 0f) return@drawBehind
             val stops = scrimStops(size.height, headerBottom(), listTop(), reach)
-                .map { (position, strength) -> position to color.copy(alpha = color.alpha * strength) }
-            drawRect(Brush.verticalGradient(*stops.toTypedArray()))
+                .map { (position, share) -> position to color.copy(alpha = alpha * share) }
+            drawIntoCanvas { canvas ->
+                canvas.saveLayer(Rect(0f, 0f, size.width, size.height), Paint())
+                drawRect(Brush.verticalGradient(*stops.toTypedArray()))
+                drawRect(Brush.horizontalGradient(*edgeMask(size.width, taper)), blendMode = BlendMode.DstIn)
+                drawRect(Brush.verticalGradient(*edgeMask(size.height, taper)), blendMode = BlendMode.DstIn)
+                canvas.restore()
+            }
         }
     }
+
+/**
+ * The scrim's strength: 1 while the window has focus, easing to 0 without it. The recents gesture
+ * scales the window but not the wallpaper behind it, so the scrim and the text halo step aside.
+ */
+@Composable
+internal fun windowFocusStrength(): State<Float> = animateFloatAsState(
+    if (LocalWindowInfo.current.isWindowFocused) 1f else 0f,
+    MaterialTheme.motionScheme.defaultEffectsSpec(),
+    label = "scrim-focus",
+)
+
+/** [edgeStops] as gradient stops for a [BlendMode.DstIn] mask: only the alpha counts. */
+private fun edgeMask(length: Float, taper: Float): Array<Pair<Float, Color>> =
+    edgeStops(length, taper).map { (position, keep) -> position to Color.Black.copy(alpha = keep) }.toTypedArray()
+
+/**
+ * A mask along a side of [length] px as (fraction, keep 0..1): 0 at both ends, rising on a smoothstep
+ * to 1 over [taper] px, 1 in between.
+ */
+internal fun edgeStops(length: Float, taper: Float): List<Pair<Float, Float>> {
+    if (length <= 0f || taper <= 0f) return listOf(0f to 1f, 1f to 1f)
+    val edge = (taper / length).coerceAtMost(HALF_LENGTH)
+    val rise = (0..EDGE_STEPS).map { step ->
+        val t = step / EDGE_STEPS.toFloat()
+        edge * t to smoothstep(0f, 1f, t)
+    }
+    return rise + rise.reversed().map { (position, keep) -> 1f - position to keep }
+}
 
 /**
  * Gradient stops as (fraction of [height], strength 0..1). The top holds full strength over the
@@ -53,6 +111,12 @@ private fun smoothstep(from: Float, to: Float, x: Float): Float {
     return t * t * (SMOOTH_A - SMOOTH_B * t)
 }
 
+/** How far the scrim eases out into the empty space past the header and before the list. */
+internal val ScrimReach = 120.dp
+
+/** How far in from each window edge the scrim eases from nothing, so no opaque band meets the border. */
+internal val ScrimTaper = 24.dp
+
 /** How far down the header the top scrim holds full strength before easing out. */
 private const val TOP_HOLD = 0.4f
 
@@ -62,3 +126,9 @@ private const val SMOOTH_B = 2f
 
 /** Enough stops that the sampled curve reads as smooth on a tall screen. */
 private const val STEPS = 32
+
+/** Stops per edge taper; it spans only a few dozen px. */
+private const val EDGE_STEPS = 6
+
+/** On a side shorter than two tapers, each taper takes half. */
+private const val HALF_LENGTH = 0.5f

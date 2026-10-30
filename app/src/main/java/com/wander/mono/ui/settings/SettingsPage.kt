@@ -1,10 +1,12 @@
 package com.wander.mono.ui.settings
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -53,14 +55,18 @@ internal fun SettingsPage(
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
     ) { padding ->
         // The bar spans the window; the rows sit in the centred readable column, inside the
-        // side insets so a landscape cutout pushes the column only when it reaches it.
+        // side insets so a landscape cutout pushes the column only when it reaches it. The list
+        // starts under the bar rather than scrolling beneath it: a pinned preview ([categoryPage])
+        // sticks to the list's top edge, not to its content padding.
         LazyColumn(
             Modifier
                 .fillMaxSize()
+                .padding(top = padding.calculateTopPadding())
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                 .readableColumn(),
-            contentPadding = padding,
+            contentPadding = PaddingValues(bottom = padding.calculateBottomPadding()),
             content = content,
         )
     }
 }
+

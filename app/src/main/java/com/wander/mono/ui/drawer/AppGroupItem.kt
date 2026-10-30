@@ -20,9 +20,9 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.components.AppIcons
-import com.wander.mono.ui.components.SegmentedColumn
+import com.wander.mono.ui.home.onWallpaper
 
-/** One group of the drawer's list: its heading, then its apps as one segmented card. */
+/** One group of the drawer's list: its heading, then its apps straight on the drawer's background. */
 @Composable
 internal fun AppGroupItem(
     group: AppGroup,
@@ -33,15 +33,14 @@ internal fun AppGroupItem(
 ) {
     Column(modifier) {
         GroupHeading(group.head)
-        SegmentedColumn {
-            group.entries.forEach { entry ->
-                DrawerAppRow(
-                    entry = entry,
-                    icons = icons,
-                    onLaunch = { onLaunchApp(entry.app) },
-                    onLongPress = { onLongPress(entry.app) },
-                )
-            }
+        group.entries.forEach { entry ->
+            DrawerAppRow(
+                entry = entry,
+                icons = icons,
+                onLaunch = { onLaunchApp(entry.app) },
+                onLongPress = { onLongPress(entry.app) },
+                labelStyle = MaterialTheme.typography.titleMedium.onWallpaper(),
+            )
         }
     }
 }
@@ -61,7 +60,7 @@ private fun GroupHeading(head: GroupHead) {
         }
         Text(
             headingText(head),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.onWallpaper(),
             color = MaterialTheme.colorScheme.primary,
         )
     }

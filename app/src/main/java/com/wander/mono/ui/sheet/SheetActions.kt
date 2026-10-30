@@ -15,4 +15,5 @@ internal fun MenuAction.thenDismiss(dismiss: SheetDismiss): MenuAction = withCli
  */
 internal fun MenuAction.afterDismiss(dismiss: SheetDismiss): MenuAction = withClick { dismiss(onClick) }
 
-private fun MenuAction.withClick(click: () -> Unit) = MenuAction(icon, label, emphasis, selected, labelArg, click)
+private fun MenuAction.withClick(click: () -> Unit) =
+    MenuAction(icon, label, emphasis, selected, labelArg, group, shortLabel, click)

@@ -10,7 +10,7 @@ Minimalist Android launcher in the Niagara style: one vertical list of favourite
 | **No network, ever** | No `INTERNET` permission. A launcher has nothing to fetch; nothing leaves the device. |
 | **`LauncherApps` is the app source** | Apps, profiles, shortcuts, launch, app info: always through `LauncherApps`, so work profiles behave. |
 | **No polling** | React to `LauncherApps.Callback`, broadcasts and listener callbacks; re-check only on `onStart` what has no event. |
-| **Rows, not screens** | The home list is a sealed `HomeRow`; live content (media, widgets later) is a row next to its app. |
+| **Rows, not screens** | The home list is a sealed `HomeRow`; live content (media, widgets) is a row under its app, unless the user placed it (now playing, in edit mode). |
 | **Strict Material 3 Expressive** | `MaterialExpressiveTheme`, wallpaper dynamic color, motion from `MaterialTheme.motionScheme`, never hand-rolled `spring()`. |
 | **Explicit window insets** | Edge-to-edge needs manual container-edge padding. |
 | **No Google services** | No Play Services, Firebase or GMS fonts. |

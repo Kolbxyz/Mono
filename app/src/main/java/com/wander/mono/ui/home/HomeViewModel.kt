@@ -34,6 +34,7 @@ import com.wander.mono.data.Routines
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.ClockSettings
 import com.wander.mono.data.settings.HeadphoneSettings
+import com.wander.mono.data.settings.MediaSettings
 import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.QuietSettings
 import com.wander.mono.data.settings.RoutineSettings
@@ -53,6 +54,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -85,10 +87,15 @@ class HomeViewModel @Inject constructor(
 ) : ViewModel() {
     /**
      * The playing media, unless its row is switched off, its app's notifications are muted on home
-     * or it has been paused 10 minutes (spec 7.6).
+     * or it has been paused as long as the user lets it linger (spec 7.6).
      */
     private val shownMedia: Flow<MediaState> = combine(
-        wandaUpNext.fill(media.state.collapsedWhenPaused(SystemClock::elapsedRealtime)),
+        wandaUpNext.fill(
+            media.state.collapsedWhenPaused(
+                settings[MediaSettings.PausedHideAfter].map { it.millis },
+                SystemClock::elapsedRealtime,
+            ),
+        ),
         liveRows.hidden,
         muted.apps,
     ) { state, hidden, off -> state.unlessHidden(hidden).unlessMuted(off) }
@@ -111,10 +118,11 @@ class HomeViewModel @Inject constructor(
         prefs.favorites,
         catalog.apps.filterNotNull(),
         combine(counts.counts, muted.apps) { all, off -> all.unmuted(off) },
-        shownMedia,
+        combine(shownMedia, liveRows.nowPlayingAnchor, ::Pair),
         settings[BadgeSettings.ShowCounts],
-        ::assembleHomeRows,
-    ).combine(
+    ) { favorites, apps, badges, (playing, anchor), showCounts ->
+        assembleHomeRows(favorites, apps, badges, playing, showCounts, anchor)
+    }.combine(
         combine(
             previews.previews,
             settings[PreviewSettings.ShowPreviews],

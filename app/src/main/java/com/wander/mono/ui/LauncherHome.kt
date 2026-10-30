@@ -75,6 +75,8 @@ fun LauncherHome(
         gestureScroll = gestureScroll,
         onDoubleTap = if (doubleTapLock) gestures::lockScreen else null,
         onHomeOptions = { launcher.showHomeOptions(true) },
+        onClockOptions = { launcher.showClockSheet(true) },
+        onMediaOptions = { launcher.showMediaSheet(true) },
         createWidgetView = widgets::createView,
         onWidgetLongPress = { widgets.showOptions(it.widget.placement.appWidgetId) },
         modifier = modifier,

@@ -157,6 +157,15 @@ class RailMathTest {
         assertEquals(100f, RailMath.bubbleX(mirror = -1f, gap = 16f, size = 72f, bow = 12f), DELTA)
     }
 
+    @Test
+    fun `letter under the finger grows most, falling off with distance, only while pressed`() {
+        assertEquals(RailMath.LETTER_ZOOM, RailMath.letterScale(index = 3, slot = 3f, pressed = 1f), DELTA)
+        val neighbour = RailMath.letterScale(index = 4, slot = 3f, pressed = 1f)
+        assertTrue(neighbour > 1f && neighbour < RailMath.LETTER_ZOOM)
+        assertEquals(1f, RailMath.letterScale(index = 9, slot = 3f, pressed = 1f), DELTA)
+        assertEquals(1f, RailMath.letterScale(index = 3, slot = 3f, pressed = 0f), DELTA)
+    }
+
     private companion object {
         const val DELTA = 1e-4f
     }

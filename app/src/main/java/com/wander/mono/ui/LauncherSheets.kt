@@ -10,15 +10,18 @@ import com.wander.mono.ui.components.SheetBack
 import com.wander.mono.ui.quiet.QuietViewModel
 import com.wander.mono.ui.sheet.AppSheet
 import com.wander.mono.ui.sheet.AppSheetViewModel
+import com.wander.mono.ui.sheet.ClockSheet
 import com.wander.mono.ui.sheet.HomeSheet
+import com.wander.mono.ui.sheet.MediaSheet
 import com.wander.mono.ui.sheet.RenameDialog
 import com.wander.mono.ui.sheet.RenameViewModel
 import com.wander.mono.ui.widgets.WidgetSheets
 import com.wander.mono.ui.widgets.WidgetsViewModel
 
 /**
- * Whether any of [LauncherSheets] is open, so the layers under them recede: home's options, an
- * app's, the widget picker or a widget's options, and the rename dialog.
+ * Whether any of [LauncherSheets] is open, so the layers under them recede: home's options, the
+ * clock's or the media card's, an app's, the widget picker or a widget's options, and the rename
+ * dialog.
  */
 @Composable
 fun anySheetOpen(
@@ -28,17 +31,20 @@ fun anySheetOpen(
     widgets: WidgetsViewModel,
 ): Boolean {
     val homeOptionsOpen by launcher.homeOptionsOpen.collectAsStateWithLifecycle()
+    val clockSheetOpen by launcher.clockSheetOpen.collectAsStateWithLifecycle()
+    val mediaSheetOpen by launcher.mediaSheetOpen.collectAsStateWithLifecycle()
     val appSheet by sheet.state.collectAsStateWithLifecycle()
     val pickerOpen by widgets.pickerOpen.collectAsStateWithLifecycle()
     val widgetOptions by widgets.options.collectAsStateWithLifecycle()
     val renaming by rename.app.collectAsStateWithLifecycle()
-    return homeOptionsOpen || appSheet != null || pickerOpen || widgetOptions != null || renaming != null
+    return homeOptionsOpen || clockSheetOpen || mediaSheetOpen || appSheet != null || pickerOpen ||
+        widgetOptions != null || renaming != null
 }
 
 /**
- * What opens over everything from a long press: home's own options, a widget's, an app's (drawing
- * its icon with [icons]) and the rename dialog. Their back swipes go to [back], which the layers
- * under them follow.
+ * What opens over everything from a long press: home's own options, the clock's and the media
+ * card's sheets, a widget's, an app's (drawing its icon with [icons]) and the rename dialog.
+ * Their back swipes go to [back], which the layers under them follow.
  */
 @Composable
 fun LauncherSheets(
@@ -65,6 +71,8 @@ private fun Sheets(
     icons: AppIcons,
 ) {
     val homeOptionsOpen by launcher.homeOptionsOpen.collectAsStateWithLifecycle()
+    val clockSheetOpen by launcher.clockSheetOpen.collectAsStateWithLifecycle()
+    val mediaSheetOpen by launcher.mediaSheetOpen.collectAsStateWithLifecycle()
     val quietOn by quiet.enabled.collectAsStateWithLifecycle()
     val sheetState by sheet.state.collectAsStateWithLifecycle()
     val sheetUsage by sheet.usageToday.collectAsStateWithLifecycle()
@@ -84,6 +92,8 @@ private fun Sheets(
             onEditHome = { launcher.setEditing(true) },
         )
     }
+    if (clockSheetOpen) ClockSheet(onDismiss = { launcher.showClockSheet(false) })
+    if (mediaSheetOpen) MediaSheet(onDismiss = { launcher.showMediaSheet(false) })
     WidgetSheets(widgets)
     sheetState?.let { state ->
         AppSheet(
@@ -93,9 +103,9 @@ private fun Sheets(
             onDismiss = sheet::dismiss,
             onOpen = sheet::open,
             onShortcut = sheet::launchShortcut,
+            loadShortcutIcon = sheet::shortcutIcon,
             onAddToHome = sheet::addToHome,
             onRemoveFromHome = sheet::removeFromHome,
-            onMove = sheet::move,
             onSetHidden = sheet::setHidden,
             onSetLiftsWithHeadphones = sheet::setLiftsWithHeadphones,
             onRename = {
