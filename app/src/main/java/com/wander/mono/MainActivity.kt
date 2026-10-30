@@ -66,7 +66,12 @@ class MainActivity : ComponentActivity() {
                 )
                 window.showWallpaper(!blackWindow)
             }
-            MonoTheme(darkTheme = dark, amoledBlack = theme.amoledBlack, iconShape = theme.iconShape) {
+            MonoTheme(
+                darkTheme = dark,
+                amoledBlack = theme.amoledBlack,
+                iconShape = theme.iconShape,
+                iconTheming = theme.iconTheming,
+            ) {
                 Box {
                     LauncherApp()
                     Onboarding()
