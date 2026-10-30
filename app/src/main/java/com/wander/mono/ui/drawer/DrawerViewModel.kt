@@ -30,6 +30,7 @@ import com.wander.mono.core.system.SettingsPage
 import com.wander.mono.core.system.SystemContrast
 import com.wander.mono.core.system.Wallpaper
 import com.wander.mono.data.LauncherPrefs
+import com.wander.mono.data.OpenedNewApps
 import com.wander.mono.data.settings.AccessibilitySettings
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.DrawerSettings
@@ -53,7 +54,7 @@ import kotlinx.coroutines.launch
 @HiltViewModel
 class DrawerViewModel @Inject constructor(
     private val savedState: SavedStateHandle,
-    catalog: AppCatalog,
+    private val catalog: AppCatalog,
     prefs: LauncherPrefs,
     settings: SettingsStore,
     counts: NotificationCounts,
@@ -70,9 +71,15 @@ class DrawerViewModel @Inject constructor(
     private val shortcutIcons: ShortcutIcons,
     wallpaper: Wallpaper,
     systemContrast: SystemContrast,
+    openedNew: OpenedNewApps,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
     val query: StateFlow<String> = savedState.getStateFlow(QUERY, "")
+
+    private val listChoices = ListChoiceState(savedState, settings, openedNew, viewModelScope)
+
+    /** What the drawer's toolbar and category chips change. */
+    val listActions: DrawerListActions = listChoices.actions
 
     private val entries = combine(
         catalog.apps.filterNotNull(),
@@ -136,7 +143,10 @@ class DrawerViewModel @Inject constructor(
             look = drawerLook,
         )
     }
-        .combine(privateSpace.state) { state, space -> state.copy(privateSpace = space) }
+        .combine(privateSpace.state) { state, space -> state.withPrivateSpace(space) }
+        .combine(listChoices.inputs(catalog.apps.filterNotNull())) { state, (choices, opened, now) ->
+            state.shaped(choices, opened, now)
+        }
         .combine(
             combine(settings[DrawerSettings.KeyboardOnOpen], settings[DrawerSettings.RailAtStart], ::Pair),
         ) { state, (keyboard, railAtStart) -> state.copy(keyboardOnOpen = keyboard, railAtStart = railAtStart) }
@@ -173,7 +183,12 @@ class DrawerViewModel @Inject constructor(
     }
 
     /** True when the app opened, so the caller can close the drawer. */
-    fun launch(app: LaunchableApp): Boolean = messages.report(actions.launch(app.key))
+    fun launch(app: LaunchableApp): Boolean = messages.report(actions.launch(app.key)).also { opened ->
+        if (opened) listChoices.opened(app, catalog.apps.value.orEmpty())
+    }
+
+    /** The drawer closed: the next opening starts on every app again. */
+    fun clearListFilters() = listChoices.clear()
 
     fun launch(hit: SearchHit): HitOutcome = when (hit) {
         is SearchHit.App -> opened(launch(hit.entry.app))
