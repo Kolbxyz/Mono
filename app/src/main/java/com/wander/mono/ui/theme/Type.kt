@@ -31,8 +31,14 @@ private fun flexFont(weight: FontWeight, roundness: Float) = Font(
     ),
 )
 
-private val weights =
-    listOf(FontWeight.Normal, FontWeight.Medium, FontWeight.SemiBold, FontWeight.Bold, FontWeight.ExtraBold)
+private val weights = listOf(
+    FontWeight.Normal,
+    FontWeight.Medium,
+    FontWeight.SemiBold,
+    FontWeight.Bold,
+    FontWeight.ExtraBold,
+    FontWeight.Black,
+)
 
 private val BodyFamily = FontFamily(weights.map { flexFont(it, roundness = 0f) })
 
@@ -62,7 +68,12 @@ private fun body(weight: FontWeight, size: TextUnit, line: TextUnit, spacing: Te
     letterSpacing = spacing,
 )
 
-/** Rounded, heavier titles over a plain body, the scale Wanda and Phalanx share. */
+/**
+ * Rounded, heavier titles over a plain body, the scale Wanda and Phalanx share. Each style's
+ * Expressive `…Emphasized` twin is the same size one weight up, in the same family: left unset,
+ * Material would fill them from its own default typeface, and an emphasized header would be the
+ * one line on screen not in Google Sans Flex.
+ */
 internal val MonoTypography = Typography(
     displayLarge = title(FontWeight.ExtraBold, 54.sp, 60.sp, (-1).sp),
     displayMedium = title(FontWeight.ExtraBold, 44.sp, 52.sp, (-0.5).sp),
@@ -79,6 +90,21 @@ internal val MonoTypography = Typography(
     labelLarge = body(FontWeight.SemiBold, 14.sp, 20.sp, 0.1.sp),
     labelMedium = body(FontWeight.Medium, 12.sp, 16.sp, 0.4.sp),
     labelSmall = body(FontWeight.SemiBold, 10.sp, 14.sp, 0.5.sp),
+    displayLargeEmphasized = title(FontWeight.Black, 54.sp, 60.sp, (-1).sp),
+    displayMediumEmphasized = title(FontWeight.Black, 44.sp, 52.sp, (-0.5).sp),
+    displaySmallEmphasized = title(FontWeight.ExtraBold, 36.sp, 44.sp),
+    headlineLargeEmphasized = title(FontWeight.ExtraBold, 32.sp, 40.sp, (-0.5).sp),
+    headlineMediumEmphasized = title(FontWeight.ExtraBold, 26.sp, 34.sp, (-0.2).sp),
+    headlineSmallEmphasized = title(FontWeight.ExtraBold, 22.sp, 28.sp),
+    titleLargeEmphasized = title(FontWeight.Bold, 20.sp, 26.sp),
+    titleMediumEmphasized = title(FontWeight.Bold, 16.sp, 22.sp, 0.1.sp),
+    titleSmallEmphasized = title(FontWeight.SemiBold, 14.sp, 20.sp, 0.1.sp),
+    bodyLargeEmphasized = body(FontWeight.Medium, 16.sp, 24.sp, 0.3.sp),
+    bodyMediumEmphasized = body(FontWeight.Medium, 14.sp, 20.sp, 0.2.sp),
+    bodySmallEmphasized = body(FontWeight.Medium, 12.sp, 16.sp),
+    labelLargeEmphasized = body(FontWeight.Bold, 14.sp, 20.sp, 0.1.sp),
+    labelMediumEmphasized = body(FontWeight.SemiBold, 12.sp, 16.sp, 0.4.sp),
+    labelSmallEmphasized = body(FontWeight.Bold, 10.sp, 14.sp, 0.5.sp),
 )
 
 /**
