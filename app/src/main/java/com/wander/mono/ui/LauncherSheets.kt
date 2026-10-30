@@ -93,9 +93,9 @@ private fun Sheets(
             onDismiss = sheet::dismiss,
             onOpen = sheet::open,
             onShortcut = sheet::launchShortcut,
+            loadShortcutIcon = sheet::shortcutIcon,
             onAddToHome = sheet::addToHome,
             onRemoveFromHome = sheet::removeFromHome,
-            onMove = sheet::move,
             onSetHidden = sheet::setHidden,
             onSetLiftsWithHeadphones = sheet::setLiftsWithHeadphones,
             onRename = {

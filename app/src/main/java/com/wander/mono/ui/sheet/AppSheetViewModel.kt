@@ -9,6 +9,8 @@ import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.AppKey
 import com.wander.mono.core.apps.AppShortcut
 import com.wander.mono.core.apps.ActionResult
+import com.wander.mono.core.apps.AppIconImage
+import com.wander.mono.core.apps.ShortcutIcons
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.security.AppLock
 import com.wander.mono.core.usage.AppUsage
@@ -44,6 +46,7 @@ class AppSheetViewModel @Inject constructor(
     private val usage: AppUsage,
     private val headphoneApps: HeadphoneApps,
     private val lock: AppLock,
+    private val shortcutIcons: ShortcutIcons,
 ) : ViewModel() {
     private val target: StateFlow<String?> = savedState.getStateFlow(TARGET, null)
 
@@ -59,8 +62,7 @@ class AppSheetViewModel @Inject constructor(
         val app = apps?.firstOrNull { it.key == key } ?: return@combine null
         AppSheetState(
             app = app,
-            favoriteIndex = favorites.indexOf(key),
-            favoriteCount = favorites.size,
+            isFavorite = key in favorites,
             isHidden = key in hidden,
             shortcuts = allShortcuts.filter { it.packageName == key.packageName && it.userSerial == key.userSerial },
             liftsWithHeadphones = lifting?.takeIf { key in favorites }?.contains(key),
@@ -93,11 +95,6 @@ class AppSheetViewModel @Inject constructor(
 
     fun removeFromHome(key: AppKey) = edit { prefs.removeFavorite(key) }
 
-    /** Keeps the sheet open, so the app can be moved several places in a row. */
-    fun move(key: AppKey, by: Int) {
-        viewModelScope.launch { prefs.moveFavorite(key, by) }
-    }
-
     /** Keeps the sheet open, so the switch is seen to change. */
     fun setLiftsWithHeadphones(key: AppKey, lifts: Boolean) {
         viewModelScope.launch { headphoneApps.setLifted(key, lifts) }
@@ -124,6 +121,9 @@ class AppSheetViewModel @Inject constructor(
     fun uninstall(key: AppKey) = finish(actions.uninstall(key))
 
     fun launchShortcut(shortcut: AppShortcut) = finish(actions.launchShortcut(shortcut))
+
+    /** The shortcut's own icon (a face, an avatar); null when it has none, so its chip shows its app's. */
+    suspend fun shortcutIcon(shortcut: AppShortcut, sizePx: Int): AppIconImage? = shortcutIcons.icon(shortcut, sizePx)
 
     // No dismiss() in the actions: the sheet slides itself away, then calls it.
     private fun edit(change: suspend () -> Unit) {

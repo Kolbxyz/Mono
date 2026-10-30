@@ -81,7 +81,14 @@ fun LauncherApp(
     val homeIcons = remember(drawerState.iconMode, drawerState.iconPack) {
         AppIcons(drawerState.iconMode, drawer::icon, drawerState.iconPack)
     }
-    val editing = rememberHomeEditing(editingOn, homeList, edit, { launcher.setEditing(true) }, rename::show)
+    val editing = rememberHomeEditing(
+        editingOn,
+        homeList,
+        edit,
+        onEnter = { launcher.setEditing(true) },
+        onHoldCancelled = sheet::dismiss,
+        onRename = rename::show,
+    )
     val drawerMotion = rememberDrawerMotion(drawerOpen) { open ->
         if (open) launcher.openDrawer(focusSearch = swipeUp == SwipeUpAction.Search) else launcher.closeDrawer()
     }

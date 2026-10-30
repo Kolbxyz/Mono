@@ -10,7 +10,8 @@ import com.wander.mono.ui.home.HomeRow
 /**
  * Edit mode as home sees it: whether it is on, the live row switches per favourite, the running
  * drag and what edits do. Outside edit mode only [reorder] matters: holding a favourite and
- * dragging it starts edit mode with that drag.
+ * dragging it starts edit mode with that drag, closing the options the hold opened
+ * ([onHoldCancelled]).
  */
 @Stable
 class HomeEditing(
@@ -18,6 +19,7 @@ class HomeEditing(
     val toggles: Map<AppKey, List<LiveRowToggle>>,
     val reorder: ReorderState,
     val onEnter: () -> Unit,
+    val onHoldCancelled: () -> Unit,
     val onArrange: (HomeArrangement) -> Unit,
     val onMove: (AppKey, Int) -> Unit,
     val onRemove: (AppKey) -> Unit,
