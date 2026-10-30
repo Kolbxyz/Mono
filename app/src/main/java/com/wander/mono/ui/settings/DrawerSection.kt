@@ -6,10 +6,12 @@ import androidx.compose.ui.unit.LayoutDirection
 import com.wander.mono.R
 import com.wander.mono.data.settings.DrawerBackground
 import com.wander.mono.data.settings.DrawerSettings
+import com.wander.mono.data.settings.DrawerSort
 
 /**
  * What the app drawer is drawn on (scrim, blurred wallpaper or solid), whether opening it brings up
- * the keyboard, and which edge its letter rail is on.
+ * the keyboard, which edge its letter rail is on, how its list is ordered and whether new apps
+ * gather at the top.
  */
 @Composable
 fun DrawerSection(settings: SettingsViewModel) {
@@ -37,6 +39,18 @@ fun DrawerSection(settings: SettingsViewModel) {
             DrawerSettings.RailAtStart,
             title = railTitle,
             summary = R.string.drawer_rail_side_summary,
+        )
+        ChoiceSetting(settings, DrawerSettings.Sort, R.string.drawer_sort) { sort ->
+            when (sort) {
+                DrawerSort.Alphabetical -> R.string.drawer_sort_alphabetical
+                DrawerSort.Recent -> R.string.drawer_sort_recent
+            }
+        }
+        SwitchSetting(
+            settings,
+            DrawerSettings.NewApps,
+            title = R.string.drawer_new_apps,
+            summary = R.string.drawer_new_apps_summary,
         )
     }
 }
