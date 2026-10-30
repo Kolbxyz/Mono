@@ -32,7 +32,8 @@ import com.wander.mono.ui.home.rememberLaunchOrigin
  * hold-and-drag that starts edit mode carries on as the row turns into its edit form.
  * [siblings] are the movable rows' keys (favourites and, in edit mode, widgets) in shown order:
  * what a drag moves among. [onShowPreview] expands the favourite's notification preview, null
- * when it has none.
+ * when it has none; [swipeLeft] is what the user chose for a swipe left, null for nothing.
+ * [overLimit] dims it: today's time in the app is past its daily limit.
  */
 @Composable
 fun ReorderableFavorite(
@@ -46,6 +47,8 @@ fun ReorderableFavorite(
     onAppInfo: () -> Unit,
     onShowPreview: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    swipeLeft: SwipeLeft? = null,
+    overLimit: Boolean = false,
 ) {
     val haptics = LocalHapticFeedback.current
     val interactions = remember { MutableInteractionSource() }
@@ -56,7 +59,7 @@ fun ReorderableFavorite(
     // The app's window grows out of this row (spec 7.4.4).
     val origin = rememberLaunchOrigin()
     val launch = { onLaunch(origin.source()) }
-    val actions = FavoriteActions(launch, onLongPress, onAppInfo, onShowPreview)
+    val actions = FavoriteActions(launch, onLongPress, onAppInfo, onShowPreview, swipeLeft)
     val callbacks = rememberUpdatedState(
         FavoriteGestureCallbacks(
             editing = editing.active,
@@ -65,6 +68,12 @@ fun ReorderableFavorite(
                 {
                     haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
                     show()
+                }
+            },
+            onSwipeLeft = swipeLeft?.let { swipe ->
+                {
+                    haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                    swipe.run()
                 }
             },
             onHeld = { haptics.performHapticFeedback(HapticFeedbackType.LongPress) },
@@ -105,16 +114,17 @@ fun ReorderableFavorite(
                 handle = Modifier.pointerInput(row.key) { detectHandleDrag(callbacks) },
             )
         } else {
-            FavoriteRow(row, icons)
+            FavoriteRow(row, icons, overLimit = overLimit)
         }
     }
 }
 
 /**
  * Outside edit mode the row is one button (open, options) offering App info, Show notifications
- * (the swipe right) and the moves among the favourites as custom actions, so TalkBack can reorder
- * without entering edit mode. In edit mode its buttons and switches stay separate nodes, and the
- * row offers TalkBack the moves a drag does, among favourites and widgets alike.
+ * (the swipe right), the swipe left's action and the moves among the favourites as custom
+ * actions, so TalkBack can reorder without entering edit mode. In edit mode its buttons and
+ * switches stay separate nodes, and the row offers TalkBack the moves a drag does, among
+ * favourites and widgets alike.
  */
 @Composable
 private fun Modifier.favoriteSemantics(
@@ -140,6 +150,7 @@ private fun Modifier.favoriteSemantics(
         customActions = buildList {
             add(CustomAccessibilityAction(appInfo) { actions.onAppInfo().let { true } })
             actions.onShowPreview?.let { show -> add(CustomAccessibilityAction(showPreview) { show().let { true } }) }
+            actions.swipeLeft?.let { swipe -> add(CustomAccessibilityAction(swipe.label) { swipe.run().let { true } }) }
             if (index > 0) add(CustomAccessibilityAction(moveUp) { editing.onMove(key, -1).let { true } })
             if (index in 0 until favorites.lastIndex) {
                 add(CustomAccessibilityAction(moveDown) { editing.onMove(key, 1).let { true } })
@@ -154,4 +165,5 @@ private class FavoriteActions(
     val onLongPress: () -> Unit,
     val onAppInfo: () -> Unit,
     val onShowPreview: (() -> Unit)?,
+    val swipeLeft: SwipeLeft?,
 )

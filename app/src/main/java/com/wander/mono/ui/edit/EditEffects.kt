@@ -8,6 +8,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import com.wander.mono.ui.home.HomeRow
+import com.wander.mono.ui.home.folders.flattenFolders
 
 /**
  * What edit mode keeps in step with the list: the dragged order is dropped once saved (or when
@@ -19,7 +20,9 @@ fun EditEffects(editing: HomeEditing, rows: List<HomeRow>?, list: LazyListState)
     val reorder = editing.reorder
     val haptics = LocalHapticFeedback.current
     val dragging = reorder.dragging != null
-    LaunchedEffect(rows, dragging) { reorder.settle(rows.orEmpty().filter(::isMovable).map { it.key }) }
+    LaunchedEffect(rows, dragging) {
+        reorder.settle(flattenFolders(rows.orEmpty()).filter(::isMovable).map { it.key })
+    }
     LaunchedEffect(editing.active) { if (!editing.active) reorder.reset() }
     LaunchedEffect(dragging) {
         while (dragging) {
