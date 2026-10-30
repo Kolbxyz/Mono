@@ -9,6 +9,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -118,16 +119,16 @@ private fun PagePane(category: SettingsCategory, settings: SettingsViewModel) {
         },
         contentWindowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
     ) { padding ->
-        val sections = sectionsOf(category)
+        // Under the bar, not beneath it, as on one pane: the pinned preview sticks to the list's top.
         LazyColumn(
             Modifier
                 .fillMaxSize()
+                .padding(top = padding.calculateTopPadding())
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End))
                 .readableColumn(),
-            contentPadding = padding,
+            contentPadding = PaddingValues(bottom = padding.calculateBottomPadding()),
         ) {
-            // A section's place on its page is its identity: the list is fixed per category.
-            items(sections.size, key = { "${category.name}:$it" }) { sections[it](settings) }
+            categoryPage(category, settings)
         }
     }
 }
