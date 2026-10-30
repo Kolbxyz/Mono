@@ -12,7 +12,7 @@
     <string name="settings_category_gestures">Gestures</string>
     <string name="settings_category_gestures_sub">Swipe down, double tap</string>
     <string name="settings_category_privacy">Privacy &amp; about</string>
-    <string name="settings_category_privacy_sub">Hidden apps, usage, licences</string>
+    <string name="settings_category_privacy_sub">What Mono can see, hidden apps, backup</string>
 
     <!-- Short summaries: one line, only where the title needs it -->
     <string name="settings_text_shadow_short">Instead of dimming the wallpaper</string>

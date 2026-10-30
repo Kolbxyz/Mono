@@ -2,8 +2,6 @@
 <resources>
     <!-- Settings: gestures -->
     <string name="gesture_settings_title">Gestures</string>
-    <string name="gesture_swipe_down">Swipe down for notifications</string>
-    <string name="gesture_swipe_down_summary">Swipe down on home to open the notification shade</string>
     <string name="gesture_double_tap_lock">Double tap to lock</string>
     <string name="gesture_double_tap_lock_summary">Double tap an empty spot on home to turn the screen off</string>
     <string name="gesture_service_grant">Allow gestures</string>
@@ -11,8 +9,8 @@
 
     <!-- The accessibility service, as Android's accessibility settings list it. -->
     <string name="gesture_service_label">Mono gestures</string>
-    <string name="gesture_service_summary">Locks the screen and opens notifications from home</string>
-    <string name="gesture_service_description">Mono uses this only to lock the screen when you double tap home and to open the notification shade when you swipe down on home. It reads nothing on screen and receives no events.</string>
+    <string name="gesture_service_summary">Locks the screen and opens notifications or quick settings from home</string>
+    <string name="gesture_service_description">Mono uses this only to lock the screen when you double tap home and to open the notification shade or quick settings when you swipe down on home. It reads nothing on screen and receives no events.</string>
 
     <!-- Errors -->
     <string name="error_gesture_service_off">Turn on Mono gestures in Settings first</string>

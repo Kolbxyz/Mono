@@ -9,20 +9,33 @@ import android.net.Uri
 import android.os.UserHandle
 import com.wander.mono.MainActivity
 import com.wander.mono.R
+import com.wander.mono.core.security.AppLock
+import com.wander.mono.core.security.LaunchRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Launch, app info, uninstall and shortcuts, all through `LauncherApps` so other profiles work too. */
+/**
+ * Launch, app info, uninstall and shortcuts, all through `LauncherApps` so other profiles work too.
+ * Every launch of an app or a shortcut passes [AppLock] here first, whichever screen asked.
+ */
 @Singleton
 class AppActions @Inject constructor(
     @ApplicationContext private val context: Context,
     private val profiles: Profiles,
+    private val lock: AppLock,
 ) {
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
 
-    fun launch(key: AppKey): ActionResult = inProfile(key.userSerial) { user ->
-        launcherApps.startMainActivity(key.component(), user, null, null)
+    /**
+     * Opens [key], growing its window out of [source] when the tap gave one, else as the system
+     * animates it. A locked app is held for the screen lock instead, which counts as done here.
+     */
+    fun launch(key: AppKey, source: LaunchSource? = null): ActionResult {
+        if (lock.holdsBack(LaunchRequest.App(key, source))) return ActionResult.Done
+        return inProfile(key.userSerial) { user ->
+            launcherApps.startMainActivity(key.component(), user, source?.bounds, source?.options)
+        }
     }
 
     fun openAppInfo(key: AppKey): ActionResult = inProfile(key.userSerial) { user ->
@@ -42,8 +55,17 @@ class AppActions @Inject constructor(
         context.startActivity(intent)
     }
 
-    fun launchShortcut(shortcut: AppShortcut): ActionResult = inProfile(shortcut.userSerial) { user ->
-        launcherApps.startShortcut(shortcut.packageName, shortcut.id, null, null, user)
+    fun launchShortcut(shortcut: AppShortcut): ActionResult {
+        if (lock.holdsBack(LaunchRequest.Shortcut(shortcut))) return ActionResult.Done
+        return inProfile(shortcut.userSerial) { user ->
+            launcherApps.startShortcut(shortcut.packageName, shortcut.id, null, null, user)
+        }
+    }
+
+    /** Runs a [request] [AppLock] held back, once the screen lock is confirmed for it. */
+    fun launch(request: LaunchRequest): ActionResult = when (request) {
+        is LaunchRequest.App -> launch(request.key, request.source)
+        is LaunchRequest.Shortcut -> launchShortcut(request.shortcut)
     }
 
     private inline fun inProfile(serial: Long, start: (UserHandle) -> Unit): ActionResult {

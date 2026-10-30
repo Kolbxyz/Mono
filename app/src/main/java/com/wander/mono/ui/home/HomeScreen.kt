@@ -33,19 +33,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.onLongClick
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.wander.mono.R
 import com.wander.mono.core.apps.AppKey
+import com.wander.mono.core.apps.LaunchSource
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.core.calendar.CalendarEvent
 import com.wander.mono.core.widgets.MonoWidgetHostView
@@ -54,14 +53,17 @@ import com.wander.mono.ui.components.ReadableLayout
 import com.wander.mono.ui.components.readableColumn
 import com.wander.mono.ui.edit.EditToolbarClearance
 import com.wander.mono.ui.edit.HomeEditing
+import com.wander.mono.ui.onboarding.SwipeHint
 import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
- * The home screen over the wallpaper: the glance header at the top, the rows anchored to the
- * bottom so favourites sit in the thumb zone, and the search dock under them. Drags anywhere
+ * The home screen over the wallpaper: the glance header at the top (or, [shell] reachable, just
+ * over the dock), the rows anchored to the bottom so favourites sit in the thumb zone, and the
+ * search dock under them. [hero] is how far the hero pull has grown the clock. Drags anywhere
  * (past the end of the list when it scrolls) go to [gestureScroll]: up pulls the drawer, down
  * opens the notification shade. Long-pressing the clock or an empty spot opens the home options and
  * double-tapping one runs [onDoubleTap]; rows consume their own presses, so they never reach them.
+ * The favourite [pulse] keys, just added, pulses once, then [onPulsed] clears it.
  * The [lifted] favourites go first while headphones are connected, outside edit mode only.
  *
  * The scrim and the edit dim are drawn by the outer layer ([modifier]); [contentModifier] applies
@@ -76,7 +78,9 @@ fun HomeScreen(
     listState: LazyListState,
     icons: AppIcons,
     editing: HomeEditing,
-    onLaunch: (LaunchableApp) -> Unit,
+    pulse: AppKey?,
+    onPulsed: (AppKey) -> Unit,
+    onLaunch: (LaunchableApp, LaunchSource?) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
     onAppInfo: (LaunchableApp) -> Unit,
     onTogglePlay: () -> Unit,
@@ -96,6 +100,8 @@ fun HomeScreen(
     onWidgetLongPress: (WidgetHomeRow) -> Unit,
     modifier: Modifier = Modifier,
     contentModifier: Modifier = Modifier,
+    shell: HomeShell = HomeShell(),
+    hero: () -> Float = { 0f },
     previews: NotificationPreviewViewModel = viewModel(),
 ) {
     // The header and search dock are not scrollable; this lets drags on them reach gestureScroll too.
@@ -103,6 +109,7 @@ fun HomeScreen(
     val motion = MaterialTheme.motionScheme
     val scheme = MaterialTheme.colorScheme
     val density = LocalDensity.current
+    val haptics = LocalHapticFeedback.current
     val scrimEdges = remember { ScrimEdges() }
     val replyOpen = previews.replying.collectAsStateWithLifecycle().value != null
     val legibleAlpha = remember(look.tone, scheme.surface, scheme.onSurface) {
@@ -113,27 +120,33 @@ fun HomeScreen(
     val editPadding = animateDpAsState(if (editing.active) EditToolbarClearance else 16.dp, motion.defaultSpatialSpec())
     val scrimAlpha = homeScrimAlpha(legibleAlpha, look.textShadow, look.highContrast)
     val shadow = wallpaperTextShadow(look.textShadow)
+    val reach = with(density) { SCRIM_REACH.toPx() }
 
     // Without onSurface as the content colour, the clock and favourites would fall back to black.
     CompositionLocalProvider(
         LocalContentColor provides scheme.onSurface,
         LocalWallpaperTextShadow provides shadow,
         LocalHighContrast provides look.highContrast,
+        LocalRowDensity provides look.density,
     ) {
         BoxWithConstraints(
             modifier
                 .fillMaxSize()
                 .homeScrim(
                     color = scheme.surface.copy(alpha = scrimAlpha),
-                    headerBottom = { scrimEdges.headerBottom },
+                    // Reachable, the header is under the list: one scrim rising from the rows covers both.
+                    headerBottom = { if (shell.reachable) -reach else scrimEdges.headerBottom },
                     listTop = { scrimEdges.listTop + listState.contentTop() },
-                    reach = with(density) { SCRIM_REACH.toPx() },
+                    reach = reach,
                 )
                 .drawBehind { drawRect(scheme.surface.copy(alpha = editDim.value)) }
                 .pointerInput(onHomeOptions, onDoubleTap) {
                     detectTapGestures(
                         onDoubleTap = if (onDoubleTap != null) { _ -> onDoubleTap() } else null,
-                        onLongPress = { onHomeOptions() },
+                        onLongPress = {
+                            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onHomeOptions()
+                        },
                     )
                 }
                 .nestedScroll(gestureScroll)
@@ -154,45 +167,48 @@ fun HomeScreen(
                     .readableColumn()
                     .padding(horizontal = gutter),
             ) {
-                val optionsLabel = stringResource(R.string.action_home_options)
-                GlanceHeader(
-                    glance,
-                    compact = compactHeader,
-                    modifier = Modifier
-                        .onGloballyPositioned(scrimEdges::onHeader)
-                        .semantics {
-                            onLongClick(optionsLabel) {
-                                onHomeOptions()
-                                true
-                            }
-                        },
-                )
-                HomeList(
-                    rows = rows,
-                    lifted = lifted,
-                    listState = listState,
-                    icons = icons,
-                    editing = editing,
-                    // In edit mode the floating toolbar covers the list's foot: keep the last row clear of it.
-                    contentPadding = PaddingValues(bottom = editPadding.value),
-                    onLaunch = onLaunch,
-                    onLongPress = onLongPress,
-                    onAppInfo = onAppInfo,
-                    onTogglePlay = onTogglePlay,
-                    onSkipNext = onSkipNext,
-                    onSkipPrevious = onSkipPrevious,
-                    onSeek = onSeek,
-                    onPlayQueueItem = onPlayQueueItem,
-                    onOpenOutput = onOpenOutput,
-                    onGrantAccess = onGrantAccess,
-                    onOpenEvent = onOpenEvent,
-                    onOpenDrawer = onOpenDrawer,
-                    createWidgetView = createWidgetView,
-                    onWidgetLongPress = onWidgetLongPress,
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                        .onGloballyPositioned(scrimEdges::onList),
+                val header = @Composable {
+                    HomeGlanceSlot(glance, shell, compactHeader, hero, scrimEdges::onHeader, onHomeOptions)
+                }
+                if (!shell.reachable) header()
+                val listModifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .onGloballyPositioned(scrimEdges::onList)
+                ScaledLabels(shell.labelScale) {
+                    HomeList(
+                        rows = rows,
+                        lifted = lifted,
+                        listState = listState,
+                        icons = icons,
+                        editing = editing,
+                        previews = previews,
+                        pulse = pulse,
+                        onPulsed = onPulsed,
+                        // In edit mode the floating toolbar covers the list's foot: keep the last row clear of it.
+                        contentPadding = PaddingValues(bottom = editPadding.value),
+                        onLaunch = onLaunch,
+                        onLongPress = onLongPress,
+                        onAppInfo = onAppInfo,
+                        onTogglePlay = onTogglePlay,
+                        onSkipNext = onSkipNext,
+                        onSkipPrevious = onSkipPrevious,
+                        onSeek = onSeek,
+                        onPlayQueueItem = onPlayQueueItem,
+                        onOpenOutput = onOpenOutput,
+                        onGrantAccess = onGrantAccess,
+                        onOpenEvent = onOpenEvent,
+                        onOpenDrawer = onOpenDrawer,
+                        createWidgetView = createWidgetView,
+                        onWidgetLongPress = onWidgetLongPress,
+                        modifier = listModifier,
+                    )
+                }
+                if (shell.reachable) header()
+                // Once, until the drawer is first opened; the empty state already says the same.
+                SwipeHint(
+                    hidden = editing.active || rows.orEmpty().none { it is HomeRow.App },
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
                 // In edit mode the floating toolbar takes this place; the dock folds away as the
                 // list's clearance grows on the same spec, so the rows never jump.
