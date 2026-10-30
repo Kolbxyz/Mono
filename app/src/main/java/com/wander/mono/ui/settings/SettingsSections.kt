@@ -10,39 +10,41 @@ internal typealias SettingsSection = @Composable (SettingsViewModel) -> Unit
  * it belongs to; the section itself lives in its own `*Section.kt` file.
  */
 internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = when (category) {
-    SettingsCategory.HomeClock -> listOf(
+    SettingsCategory.Home -> listOf(
         { ClockPreviewSection() },
         { ClockSection(it) },
         { GlanceLinesSection(it) },
-        { HomeLookSection(it) },
-        { HeadphoneSection(it) },
-        { RoutinesSection(it) },
         { CalendarSection() },
-    )
-    SettingsCategory.DrawerSearch -> listOf(
-        { DrawerSection(it) },
-        { SearchSection(it) },
+        { HomeLookSection(it) },
     )
     SettingsCategory.Appearance -> listOf(
         { ThemeSection(it) },
         { IconSection(it) },
         { AccessibilitySection(it) },
     )
+    SettingsCategory.DrawerSearch -> listOf(
+        { DrawerSection(it) },
+        { SearchSection(it) },
+    )
     SettingsCategory.Notifications -> listOf(
-        { BadgeSection(it) },
-        { PreviewSection(it) },
+        { NotificationSection(it) },
         { LiveActivitySection(it) },
-        { QuietSection() },
     )
     SettingsCategory.Gestures -> listOf(
         { GestureSection(it) },
     )
-    SettingsCategory.PrivacyAbout -> listOf(
+    SettingsCategory.Focus -> listOf(
+        { QuietSection() },
+        { RoutinesSection(it) },
+        { HeadphoneSection(it) },
+        { ScreenTimeSection(it) },
+    )
+    SettingsCategory.Privacy -> listOf(
         { PrivacySection() },
         { HiddenAppsSection() },
-        { UsageSection(it) },
-        { ScreenTimeSection(it) },
         { BackupSection() },
+    )
+    SettingsCategory.About -> listOf(
         { AboutSection() },
     )
 }
