@@ -17,11 +17,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.data.settings.IconSettings
+import com.wander.mono.data.settings.IconShape
 import com.wander.mono.data.settings.SYSTEM_ICON_PACK
 
 /**
- * Full-colour, themed monochrome, or no app icons at all; and in full colour, the icon pack they
- * come from. Apps a pack does not cover keep their own icon.
+ * Full-colour, themed monochrome, or no app icons at all, and the shape they are cut to; in full
+ * colour, the icon pack they come from. Apps a pack does not cover keep their own icon.
  */
 @Composable
 fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = viewModel()) {
@@ -32,6 +33,22 @@ fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = view
                 IconMode.Colour -> R.string.settings_icon_colour
                 IconMode.Themed -> R.string.settings_icon_themed
                 IconMode.TextOnly -> R.string.settings_icon_text_only
+            }
+        }
+        if (mode != null && mode != IconMode.TextOnly) {
+            ChoiceSetting(
+                settings,
+                IconSettings.Shape,
+                R.string.settings_icon_shape,
+                R.drawable.sym_interests,
+            ) { shape ->
+                when (shape) {
+                    IconShape.System -> R.string.settings_icon_shape_system
+                    IconShape.Circle -> R.string.settings_icon_shape_circle
+                    IconShape.Squircle -> R.string.settings_icon_shape_squircle
+                    IconShape.Cookie -> R.string.settings_icon_shape_cookie
+                    IconShape.Clover -> R.string.settings_icon_shape_clover
+                }
             }
         }
     }
