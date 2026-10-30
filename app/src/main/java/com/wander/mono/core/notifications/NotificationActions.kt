@@ -10,37 +10,54 @@ import android.os.Build
 import android.os.Bundle
 import com.wander.mono.R
 import com.wander.mono.core.apps.ActionResult
+import com.wander.mono.core.security.AppLock
+import com.wander.mono.core.security.LaunchRequest
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Opening, dismissing and replying to a notification from its preview row, and opening a live row. */
+/**
+ * Opening, dismissing and replying to a notification from its preview row, and opening a live row.
+ * Whatever reaches into the app (its tap target, a button, a reply) passes [AppLock] first, as a
+ * launch from [AppActions][com.wander.mono.core.apps.AppActions] does.
+ */
 @Singleton
 class NotificationActions @Inject constructor(
     @ApplicationContext private val context: Context,
     private val previews: NotificationPreviews,
+    private val lock: AppLock,
 ) {
     /** Sends the notification's own tap intent; null when it has none (the caller opens the app). */
     fun open(preview: NotificationPreview): ActionResult? {
         val intent = preview.contentIntent ?: return null
-        val result = send(intent, fillIn = null)
-        if (result == ActionResult.Done && preview.autoCancel) previews.cancel(preview.key)
-        return result
+        val cancels = preview.key.takeIf { preview.autoCancel }
+        return send(LaunchRequest.Notification(preview.owner, intent, cancels = cancels))
     }
 
     /** Opens one conversation of an expanded row; null when it has no tap intent (the caller opens the app). */
     fun open(conversation: PreviewConversation): ActionResult? {
         val intent = conversation.contentIntent ?: return null
-        val result = send(intent, fillIn = null)
-        if (result == ActionResult.Done && conversation.autoCancel) previews.cancel(conversation.key)
-        return result
+        val cancels = conversation.key.takeIf { conversation.autoCancel }
+        return send(LaunchRequest.Notification(conversation.owner, intent, cancels = cancels))
     }
 
     /** Sends a live row's tap intent; null when it has none (the caller opens the app). Ongoing, so never cancelled. */
-    fun open(activity: LiveActivity): ActionResult? = activity.contentIntent?.let { send(it, fillIn = null) }
+    fun open(activity: LiveActivity): ActionResult? =
+        activity.contentIntent?.let { send(LaunchRequest.Notification(activity.owner, it)) }
 
     /** One of the notification's own buttons, fired as the shade would. */
-    fun fire(action: PreviewAction): ActionResult = send(action.intent, fillIn = null)
+    fun fire(action: PreviewAction): ActionResult = send(LaunchRequest.Notification(action.owner, action.intent))
+
+    /**
+     * Sends [request], or holds it for the screen lock when its app is locked (which counts as done
+     * here); [AppActions][com.wander.mono.core.apps.AppActions] runs it again once confirmed.
+     */
+    fun send(request: LaunchRequest.Notification): ActionResult {
+        if (lock.holdsBack(request)) return ActionResult.Done
+        val result = send(request.intent, request.fillIn)
+        if (result == ActionResult.Done) request.cancels?.let(previews::cancel)
+        return result
+    }
 
     /**
      * Marks the app's notifications read: through the app's own mark-as-read action where it has
@@ -77,7 +94,7 @@ class NotificationActions @Inject constructor(
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             RemoteInput.setResultsSource(fillIn, RemoteInput.SOURCE_FREE_FORM_INPUT)
         }
-        return send(reply.intent, fillIn)
+        return send(LaunchRequest.Notification(preview.owner, reply.intent, fillIn))
     }
 
     private fun send(intent: PendingIntent, fillIn: Intent?): ActionResult = try {

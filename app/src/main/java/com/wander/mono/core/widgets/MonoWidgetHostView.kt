@@ -7,11 +7,11 @@ import android.graphics.Outline
 import android.os.Build
 import android.os.Bundle
 import android.util.SizeF
-import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewOutlineProvider
+import com.wander.mono.ui.components.MonoHaptics
 import kotlin.math.hypot
 
 /**
@@ -30,13 +30,14 @@ class MonoWidgetHostView(context: Context) : AppWidgetHostView(context) {
         }
 
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+    private val haptics = MonoHaptics(this)
     private var downX = 0f
     private var downY = 0f
     private var longPressed = false
     private var appliedSize: Pair<Int, Int>? = null
     private val longPress = Runnable {
         longPressed = true
-        performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        haptics.longPress()
         onLongPress()
     }
 

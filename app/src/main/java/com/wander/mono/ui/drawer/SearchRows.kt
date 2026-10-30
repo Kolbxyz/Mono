@@ -3,7 +3,6 @@ package com.wander.mono.ui.drawer
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -137,7 +136,7 @@ internal fun SymbolRow(
         modifier
             .fillMaxWidth()
             .heightIn(min = MIN_ROW_HEIGHT)
-            .clickable(onClickLabel = stringResource(clickLabel), onClick = onClick)
+            .rowPress(onClickLabel = stringResource(clickLabel), onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -7,11 +7,10 @@
     <string name="drawer_jump_to_letter">Jump to %1$s</string>
 
     <!-- Settings: drawer -->
-    <string name="drawer_keyboard_on_open">Keyboard on open</string>
+    <string name="drawer_keyboard_on_open">Show keyboard on open</string>
     <string name="drawer_keyboard_on_open_summary">Opening the drawer goes straight to search</string>
     <string name="drawer_rail_left">Letters on the left</string>
     <string name="drawer_rail_right">Letters on the right</string>
-    <string name="drawer_rail_side_summary">Move the letter rail to the other edge</string>
 
     <!-- Settings: search sources -->
     <string name="search_source_quick_answers">Quick answers</string>

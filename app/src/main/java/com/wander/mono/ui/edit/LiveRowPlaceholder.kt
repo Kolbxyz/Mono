@@ -2,6 +2,7 @@ package com.wander.mono.ui.edit
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,12 +14,13 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -27,6 +29,9 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.data.LiveRowRef
 import com.wander.mono.ui.components.CheckSwitch
+import com.wander.mono.ui.components.PressMorph
+import com.wander.mono.ui.components.expressivePress
+import com.wander.mono.ui.home.HomeCardCorner
 
 /**
  * A live row (now playing, notification preview, calendar) as edit mode shows it: a compact card
@@ -41,6 +46,7 @@ internal fun LiveRowPlaceholder(
 ) {
     val scheme = MaterialTheme.colorScheme
     val kind = toggle.row.kind
+    val interaction = remember { MutableInteractionSource() }
     val content by animateFloatAsState(
         if (toggle.shown) 1f else HIDDEN_ALPHA,
         MaterialTheme.motionScheme.defaultEffectsSpec(),
@@ -50,9 +56,9 @@ internal fun LiveRowPlaceholder(
         modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
-            .clip(MaterialTheme.shapes.large)
+            .expressivePress(interaction, PressMorph.squarer(HomeCardCorner))
             .background(scheme.surfaceContainer)
-            .toggleable(toggle.shown, role = Role.Switch) { onSetLiveRow(toggle.row, it) }
+            .toggleable(toggle.shown, interaction, ripple(), role = Role.Switch) { onSetLiveRow(toggle.row, it) }
             .padding(start = 16.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
