@@ -17,6 +17,8 @@ import com.wander.mono.core.media.MediaSessions
 import com.wander.mono.core.media.MediaState
 import com.wander.mono.core.media.collapsedWhenPaused
 import com.wander.mono.core.notifications.ListenerAccess
+import com.wander.mono.core.notifications.LiveActivities
+import com.wander.mono.core.notifications.LiveActivity
 import com.wander.mono.core.notifications.NotificationCounts
 import com.wander.mono.core.notifications.NotificationPreviews
 import com.wander.mono.core.quiet.QuietMode
@@ -34,6 +36,7 @@ import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.QuietSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.clockLook
+import com.wander.mono.data.settings.liveActivityKinds
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -62,6 +65,7 @@ class HomeViewModel @Inject constructor(
     liveRows: LiveRowPrefs,
     quiet: QuietMode,
     calendar: CalendarEvents,
+    liveActivities: LiveActivities,
     private val calendarActions: CalendarActions,
     widgets: Widgets,
     listening: ListeningDevices,
@@ -78,6 +82,14 @@ class HomeViewModel @Inject constructor(
         liveRows.hidden,
     ) { state, hidden -> state.unlessHidden(hidden) }
 
+    /** Live updates, timers and routes whose kind is on in settings and whose row is not switched off. */
+    private val shownLive: Flow<List<LiveActivity>> = combine(
+        liveActivities.activities,
+        liveRows.hidden,
+        settings.liveActivityKinds(),
+        ::liveActivitiesShown,
+    )
+
     /** Null until the catalog is loaded, so an empty home is never shown by mistake. */
     val rows: StateFlow<List<HomeRow>?> = combine(
         prefs.favorites,
@@ -92,6 +104,7 @@ class HomeViewModel @Inject constructor(
         },
         ::withPreviews,
     ).combine(combine(calendar.agenda, liveRows.hidden, CalendarAgenda?::unlessHidden), ::withCalendarRow)
+        .combine(shownLive, ::withLiveActivities)
         .combine(widgets.placed, ::withWidgetRows)
         .combine(quiet.state, ::quietHomeRows)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
