@@ -3,6 +3,7 @@ package com.wander.mono.ui.sheet
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.wander.mono.R
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.AppKey
@@ -15,6 +16,7 @@ import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.HeadphoneSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.UsageSettings
+import com.wander.mono.ui.MessageAction
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -98,7 +100,13 @@ class AppSheetViewModel @Inject constructor(
         viewModelScope.launch { headphoneApps.setLifted(key, lifts) }
     }
 
-    fun setHidden(key: AppKey, hidden: Boolean) = edit { prefs.setHidden(key, hidden) }
+    /** Hiding offers Undo (spec 7.8): the app is gone from the drawer before the user sees where it went. */
+    fun setHidden(key: AppKey, hidden: Boolean) = edit {
+        prefs.setHidden(key, hidden)
+        if (hidden) {
+            messages.show(R.string.app_hidden, MessageAction(R.string.action_undo) { setHidden(key, hidden = false) })
+        }
+    }
 
     fun openAppInfo(key: AppKey) = finish(actions.openAppInfo(key))
 
