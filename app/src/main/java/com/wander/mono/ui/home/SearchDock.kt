@@ -23,7 +23,7 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
-import com.wander.mono.ui.components.pressShrink
+import com.wander.mono.ui.components.expressivePress
 
 /**
  * The way into the drawer from home: a tonal pill in the thumb zone with the search hint, as the
@@ -38,7 +38,7 @@ fun SearchDock(onOpen: () -> Unit, modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(DOCK_HEIGHT)
-            .pressShrink(interaction)
+            .expressivePress(interaction)
             .clearAndSetSemantics {
                 contentDescription = label
                 onClick { onOpen().let { true } }

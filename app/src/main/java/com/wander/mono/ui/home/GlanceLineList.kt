@@ -17,13 +17,15 @@ import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import com.wander.mono.R
+import com.wander.mono.core.system.canOfferAlarmDismiss
 import com.wander.mono.data.settings.GlanceLines
 import com.wander.mono.ui.theme.secondaryTextColor
 import java.util.Locale
 
 /**
  * The header's text lines that [lines] asks for and [glance] has: the date, the next event, the next
- * alarm. Each opens what it names; a long press on the alarm dismisses it ([onDismissAlarm]).
+ * alarm. Each opens what it names; a long press on the alarm dismisses it ([onDismissAlarm]) when
+ * [canOfferAlarmDismiss] says the clock app would.
  * [taps] null (the settings preview) makes every line plain text.
  */
 @Composable
@@ -60,12 +62,14 @@ internal fun GlanceLineList(
     glance.nextAlarm?.takeIf { lines.alarm }?.let { next ->
         val alarm = remember(next, timeSkeleton, locale) { format(next, ALARM_DAY_SKELETON + timeSkeleton, locale) }
         val onOpen = taps?.onAlarm
+        // Only an alarm the clock app would dismiss; otherwise the long press stays home's options.
+        val onDismiss = onDismissAlarm?.takeIf { canOfferAlarmDismiss(next, glance.now) }
         Text(
             stringResource(R.string.home_next_alarm, alarm),
             style = lineStyle,
             color = secondaryTextColor(),
-            modifier = if (onOpen != null && onDismissAlarm != null) {
-                Modifier.alarmPresses(onOpen, onDismissAlarm)
+            modifier = if (onOpen != null && onDismiss != null) {
+                Modifier.alarmPresses(onOpen, onDismiss)
             } else {
                 Modifier.tapTo(onOpen, R.string.glance_open_alarms)
             },
