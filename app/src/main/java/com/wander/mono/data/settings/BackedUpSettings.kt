@@ -46,6 +46,8 @@ val backedUpSettings: List<Setting<*>> = listOf(
     DrawerSettings.NewApps,
     DrawerSettings.Sort,
     HeadphoneSettings.LiftApps,
+    RoutineSettings.Enabled,
+    ScreenTimeSettings.Nudge,
     GestureSettings.DoubleTapLock,
     GestureSettings.LegacySwipeDownNotifications,
     GestureSettings.SwipeUp,
