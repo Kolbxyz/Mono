@@ -13,6 +13,7 @@ enum class BackupError(@param:StringRes val message: Int) {
     NotABackup(R.string.backup_error_not_backup),
     Newer(R.string.backup_error_newer),
     Malformed(R.string.backup_error_malformed),
+    WrongPassphrase(R.string.backup_error_passphrase),
 }
 
 /** A file read as a [Backup], or the reason it could not be. */
@@ -20,13 +21,16 @@ sealed interface BackupRead {
     data class Read(val backup: Backup) : BackupRead
 
     data class Failed(val error: BackupError) : BackupRead
+
+    /** Sealed with a passphrase: nothing is read until it is given. */
+    class Sealed(val file: ByteArray) : BackupRead
 }
 
 /**
  * The backup file's layout, as a JSON-shaped tree of maps, lists, strings, numbers and booleans.
  * App keys and live rows keep the encodings the stores use. A [VERSION] newer than this build's is
  * refused whole, never half read; a setting this build does not know is ignored, and one the file
- * lacks goes back to its default.
+ * lacks goes back to its default. Locked apps came later in version 1: a file without them locks none.
  */
 internal object BackupFormat {
     const val FORMAT = "mono-backup"
@@ -43,6 +47,7 @@ internal object BackupFormat {
         "quietApps" to backup.quietApps.map { it.encode() },
         "headphoneApps" to backup.headphoneApps.map { it.encode() },
         "settings" to backup.settings.associate { it.setting.name to it.stored },
+        "lockedApps" to backup.lockedApps.map { it.encode() },
     )
 
     fun decode(tree: Map<String, Any?>, settings: List<Setting<*>>): BackupRead {
@@ -70,6 +75,7 @@ internal object BackupFormat {
             quietApps = tree.strings("quietApps").mapTo(mutableSetOf(), ::appKey),
             headphoneApps = tree.strings("headphoneApps").mapTo(mutableSetOf(), ::appKey),
             settings = settings.map { setting -> settingValue(setting, stored[setting.name]) },
+            lockedApps = tree.optionalStrings("lockedApps").mapTo(mutableSetOf(), ::appKey),
         )
     }
 
@@ -88,6 +94,10 @@ internal object BackupFormat {
         this[name] as? T ?: throw MalformedBackup()
 
     private fun Map<String, Any?>.strings(name: String): List<String> = field<List<*>>(name).map(::string)
+
+    /** A list a file from before it was added does not have: read as empty. */
+    private fun Map<String, Any?>.optionalStrings(name: String): List<String> =
+        if (name in this) strings(name) else emptyList()
 
     private fun Number.whole(): Long = integer(this) ?: throw MalformedBackup()
 
