@@ -1,7 +1,5 @@
 package com.wander.mono.core.notifications
 
-import android.app.ActivityOptions
-import android.app.ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE
 import android.app.PendingIntent
 import android.app.RemoteInput
 import android.content.Context
@@ -98,28 +96,11 @@ class NotificationActions @Inject constructor(
     }
 
     private fun send(intent: PendingIntent, fillIn: Intent?): ActionResult = try {
-        intent.send(context, 0, fillIn, null, null, null, startOptions())
+        intent.send(context, 0, fillIn, null, null, null, backgroundStartOptions())
         ActionResult.Done
     } catch (_: PendingIntent.CanceledException) {
         ActionResult.Failed(R.string.error_notification_gone)
     }
-
-    /**
-     * Android 14+ only lets a sent intent start an activity from the background with the
-     * sender's consent; home is in front when the user taps, so it lends its own.
-     */
-    private fun startOptions(): Bundle? = when {
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA -> ActivityOptions.makeBasic()
-            .setPendingIntentBackgroundActivityStartMode(MODE_BACKGROUND_ACTIVITY_START_ALLOW_IF_VISIBLE)
-            .toBundle()
-        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE -> ActivityOptions.makeBasic()
-            .setPendingIntentBackgroundActivityStartMode(legacyAllowedMode())
-            .toBundle()
-        else -> null
-    }
-
-    @Suppress("DEPRECATION") // Replaced by ALLOW_IF_VISIBLE, which only exists from Android 16.
-    private fun legacyAllowedMode(): Int = ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED
 
     private companion object {
         val GONE = ActionResult.Failed(R.string.error_notification_gone)

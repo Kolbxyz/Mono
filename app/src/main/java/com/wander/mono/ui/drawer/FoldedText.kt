@@ -76,10 +76,10 @@ internal class FoldedText(val original: String) {
         private fun isMark(point: Int): Boolean = Character.getType(point) == Character.NON_SPACING_MARK.toInt()
 
         private fun isWordStart(previous: Int?, point: Int, next: Int?): Boolean {
-            if (!Character.isLetterOrDigit(point)) return false
-            if (previous == null || !Character.isLetterOrDigit(previous)) return true
             val upper = Character.isUpperCase(point)
             return when {
+                !Character.isLetterOrDigit(point) -> false
+                previous == null || !Character.isLetterOrDigit(previous) -> true
                 upper && Character.isLowerCase(previous) -> true
                 upper && Character.isUpperCase(previous) -> next != null && Character.isLowerCase(next)
                 else -> false

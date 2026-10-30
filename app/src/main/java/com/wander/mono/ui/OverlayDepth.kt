@@ -41,11 +41,14 @@ fun Modifier.recede(cover: () -> Float, depth: OverlayLevel, scrim: Color? = nul
 /** How far the layers under each kind of overlay shrink back when it is fully in. */
 enum class OverlayLevel(val scale: Float) {
     /** The drawer and settings take the whole window. */
-    Screen(0.92f),
+    Screen(SCREEN_SCALE),
 
     /** A sheet takes the lower part; the rest only needs to step back. */
-    Sheet(0.96f),
+    Sheet(SHEET_SCALE),
 }
+
+private const val SCREEN_SCALE = 0.92f
+private const val SHEET_SCALE = 0.96f
 
 /** The one scrim between an overlay and the layers under it: Material's own sheet scrim colour. */
 @Composable

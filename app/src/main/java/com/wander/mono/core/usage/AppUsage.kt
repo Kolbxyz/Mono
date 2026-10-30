@@ -68,14 +68,15 @@ class AppUsage @Inject constructor(@ApplicationContext private val context: Cont
         val event = UsageEvents.Event()
         val marks = mutableMapOf<String, MutableList<ActivityMark>>()
         while (events.getNextEvent(event)) {
-            if (!wanted(event.packageName)) continue
             val resumed = when (event.eventType) {
                 RESUMED -> true
                 PAUSED -> false
-                else -> continue
+                else -> null
             }
-            val mark = ActivityMark(event.className.orEmpty(), resumed, event.timeStamp)
-            marks.getOrPut(event.packageName) { mutableListOf() } += mark
+            if (resumed != null && wanted(event.packageName)) {
+                val mark = ActivityMark(event.className.orEmpty(), resumed, event.timeStamp)
+                marks.getOrPut(event.packageName) { mutableListOf() } += mark
+            }
         }
         return marks
     }

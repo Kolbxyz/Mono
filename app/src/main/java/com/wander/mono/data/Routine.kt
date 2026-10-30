@@ -28,11 +28,11 @@ data class Routine(val start: Int, val end: Int, val apps: Set<AppKey>) {
         private const val FIELDS = 3
 
         fun decode(encoded: String): Routine? {
-            val fields = encoded.split(FIELD)
+            val fields = encoded.split(FIELD).takeIf { it.size == FIELDS } ?: return null
             val start = fields[0].toIntOrNull()?.takeIf(::isMinuteOfDay)
-            val end = fields.getOrNull(1)?.toIntOrNull()?.takeIf(::isMinuteOfDay)
-            val apps = fields.getOrNull(2).orEmpty().split(APPS).filter { it.isNotEmpty() }.map(AppKey::decode)
-            return if (fields.size == FIELDS && start != null && end != null && null !in apps) {
+            val end = fields[1].toIntOrNull()?.takeIf(::isMinuteOfDay)
+            val apps = fields[2].split(APPS).filter { it.isNotEmpty() }.map(AppKey::decode)
+            return if (start != null && end != null && null !in apps) {
                 Routine(start, end, apps.filterNotNull().toSet())
             } else {
                 null

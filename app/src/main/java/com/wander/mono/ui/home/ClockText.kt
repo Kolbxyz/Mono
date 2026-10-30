@@ -91,15 +91,20 @@ private fun RollingGlyphs(glyphs: List<ClockGlyph>, style: TextStyle) {
                     targetState = glyph,
                     modifier = Modifier.alignByBaseline(),
                     transitionSpec = {
-                        (slideInVertically(motion.defaultSpatialSpec()) { it } + fadeIn(motion.defaultEffectsSpec()))
-                            .togetherWith(
-                                slideOutVertically(motion.defaultSpatialSpec()) { -it } + fadeOut(motion.fastEffectsSpec()),
-                            )
+                        val enter = slideInVertically(motion.defaultSpatialSpec()) { it } +
+                            fadeIn(motion.defaultEffectsSpec())
+                        val exit = slideOutVertically(motion.defaultSpatialSpec()) { -it } +
+                            fadeOut(motion.fastEffectsSpec())
+                        (enter togetherWith exit)
                             .using(SizeTransform(clip = false) { _, _ -> motion.defaultSpatialSpec() })
                     },
                     label = "clockGlyph",
                 ) { shown ->
-                    val glyphStyle = if (shown.marker) style.copy(fontSize = style.fontSize * MARKER_FRACTION) else style
+                    val glyphStyle = if (shown.marker) {
+                        style.copy(fontSize = style.fontSize * MARKER_FRACTION)
+                    } else {
+                        style
+                    }
                     Text(shown.char.toString(), style = glyphStyle, color = MaterialTheme.colorScheme.onSurface)
                 }
             }

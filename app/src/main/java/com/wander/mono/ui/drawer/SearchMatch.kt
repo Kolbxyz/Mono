@@ -31,11 +31,10 @@ internal fun queryWords(query: String): List<String> = query.split(wordBreak).fi
  * the same word prefixes with one typo in each word of at least [MatchTier.FUZZY_MIN_LENGTH] letters.
  */
 internal fun FoldedText.match(query: String): NameMatch? {
-    if (query.isEmpty()) return null
     val start = folded.length - folded.trimStart().length
     val end = folded.trimEnd().length
-    if (start >= end) return null
     return when {
+        query.isEmpty() || start >= end -> null
         folded.regionMatches(start, query, 0, query.length) && end - start == query.length ->
             NameMatch(MatchTier.EXACT, listOf(originalRange(start, end)))
         folded.startsWith(query, start) ->
@@ -48,13 +47,15 @@ internal fun FoldedText.match(query: String): NameMatch? {
 }
 
 /** Each query word starting a word of the name, wherever in the name. */
-private fun FoldedText.wordPrefixes(query: String): List<IntRange>? {
-    val parts = queryWords(query).ifEmpty { return null }
-    return parts.map { part ->
-        val at = wordStarts.firstOrNull { folded.startsWith(part, it) } ?: return null
-        originalRange(at, at + part.length)
-    }
-}
+private fun FoldedText.wordPrefixes(query: String): List<IntRange>? = allFound(queryWords(query).map { wordPrefix(it) })
+
+/** Where [part] starts a word of the name, null when it starts none. */
+private fun FoldedText.wordPrefix(part: String): IntRange? =
+    wordStarts.firstOrNull { folded.startsWith(part, it) }?.let { at -> originalRange(at, at + part.length) }
+
+/** Every range of [found], null when there are none or any part was not found. */
+private fun allFound(found: List<IntRange?>): List<IntRange>? =
+    found.takeIf { it.isNotEmpty() && null !in it }?.filterNotNull()
 
 /** The query's letters as the first letters of words, in order, beginning with the first word. */
 private fun FoldedText.initials(query: String): List<IntRange>? {
@@ -78,15 +79,14 @@ private fun FoldedText.substring(query: String): List<IntRange>? {
  * ("spotfy" finds "Spotify", "mpas" finds "Maps"; "mpa" is too short to be read as a typo).
  */
 private fun FoldedText.typoWords(query: String): List<IntRange>? {
-    val parts = queryWords(query).ifEmpty { return null }
+    val parts = queryWords(query)
     if (parts.none { it.length >= MatchTier.FUZZY_MIN_LENGTH }) return null
-    return parts.map { part ->
-        val exact = wordStarts.firstOrNull { folded.startsWith(part, it) }
-        if (exact != null) return@map originalRange(exact, exact + part.length)
-        if (part.length < MatchTier.FUZZY_MIN_LENGTH) return null
-        wordStarts.firstNotNullOfOrNull { at -> typoAt(at, part) } ?: return null
-    }
+    return allFound(parts.map { part -> wordPrefix(part) ?: typoWord(part) })
 }
+
+/** A word start within one typo of [part]; none for a part too short to be read as a typo. */
+private fun FoldedText.typoWord(part: String): IntRange? =
+    if (part.length < MatchTier.FUZZY_MIN_LENGTH) null else wordStarts.firstNotNullOfOrNull { at -> typoAt(at, part) }
 
 /** The stretch from [at] within one edit of [part], trying its own length first, then one more and one less. */
 private fun FoldedText.typoAt(at: Int, part: String): IntRange? =

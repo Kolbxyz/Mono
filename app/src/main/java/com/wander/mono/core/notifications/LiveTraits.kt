@@ -29,12 +29,18 @@ internal fun liveKindOf(traits: LiveTraits): LiveActivityKind? = with(traits) {
         !isOngoing || isGroupSummary || isMedia || category in NOT_LIVE -> null
         category == NotificationCompat.CATEGORY_NAVIGATION -> LiveActivityKind.Navigation
         isLiveUpdate && progress != null -> LiveActivityKind.Progress
-        showsChronometer || fromClockApp || category == NotificationCompat.CATEGORY_STOPWATCH -> LiveActivityKind.Timer
-        isLiveUpdate || progress is LiveProgress.Determinate -> LiveActivityKind.Progress
-        category == NotificationCompat.CATEGORY_PROGRESS && progress != null -> LiveActivityKind.Progress
+        isTimer() -> LiveActivityKind.Timer
+        isUnderWay() -> LiveActivityKind.Progress
         else -> null
     }
 }
+
+private fun LiveTraits.isTimer(): Boolean =
+    showsChronometer || fromClockApp || category == NotificationCompat.CATEGORY_STOPWATCH
+
+private fun LiveTraits.isUnderWay(): Boolean =
+    isLiveUpdate || progress is LiveProgress.Determinate ||
+        (category == NotificationCompat.CATEGORY_PROGRESS && progress != null)
 
 /** The progress bar from the notification's `EXTRA_PROGRESS*` extras; none when its maximum is 0. */
 internal fun progressOf(value: Int, max: Int, indeterminate: Boolean): LiveProgress? = when {

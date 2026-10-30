@@ -25,7 +25,7 @@ internal fun Modifier.heroGrow(progress: () -> Float, centred: Boolean): Modifie
         placeable.placeWithLayer(0, 0) {
             scaleX = scale
             scaleY = scale
-            transformOrigin = TransformOrigin(if (centred) 0.5f else 0f, 0f)
+            transformOrigin = TransformOrigin(if (centred) MIDDLE else 0f, 0f)
         }
     }
 }
@@ -75,6 +75,9 @@ internal fun summaryLines(shown: GlanceLines): GlanceLines =
 
 /** The display size the hero grows the clock toward, as a share of its own. */
 internal const val HERO_MAX_SCALE = 1.5f
+
+/** Halfway across, as a transform origin's fraction of the width. */
+private const val MIDDLE = 0.5f
 
 /** How far the summary drops into place as it appears. */
 private val REVEAL_DROP = 8.dp

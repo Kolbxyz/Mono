@@ -153,18 +153,33 @@ private suspend fun AwaitPointerEventScope.awaitTapOrSwipe(id: PointerId, swipes
     var moved = Offset.Zero
     while (true) {
         val event = awaitPointerEvent()
-        val change = event.changes.firstOrNull { it.id == id } ?: return BeforeHold.Cancelled
-        if (event.changes.all { it.changedToUp() }) return BeforeHold.Tap(change)
-        if (event.changes.any { it.isConsumed || it.isOutOfBounds(size, extendedTouchPadding) }) {
-            return BeforeHold.Cancelled
+        val change = event.changes.firstOrNull { it.id == id }
+        val ended = when {
+            change == null -> BeforeHold.Cancelled
+            event.changes.all { it.changedToUp() } -> BeforeHold.Tap(change)
+            event.changes.any { it.isConsumed || it.isOutOfBounds(size, extendedTouchPadding) } -> BeforeHold.Cancelled
+            else -> {
+                moved += change.positionChange()
+                swipeOf(moved, swipes)?.also { change.consume() } ?: scrolledAway()
+            }
         }
-        moved += change.positionChange()
-        val sideways = abs(moved.x) > viewConfiguration.touchSlop && abs(moved.x) > abs(moved.y)
-        if (sideways && (if (moved.x > 0) swipes.right else swipes.left)) {
-            change.consume()
-            return if (moved.x > 0) BeforeHold.SwipedRight else BeforeHold.SwipedLeft
-        }
-        // The list consumes its scroll after this row's pass; the final pass sees it.
-        if (awaitPointerEvent(PointerEventPass.Final).changes.any { it.isConsumed }) return BeforeHold.Cancelled
+        if (ended != null) return ended
     }
 }
+
+/** A swipe once [moved] passes the touch slop sideways more than vertically, in a direction [swipes] allows. */
+private fun AwaitPointerEventScope.swipeOf(moved: Offset, swipes: Swipes): BeforeHold? {
+    val sideways = abs(moved.x) > viewConfiguration.touchSlop && abs(moved.x) > abs(moved.y)
+    return when {
+        !sideways -> null
+        moved.x > 0 -> BeforeHold.SwipedRight.takeIf { swipes.right }
+        else -> BeforeHold.SwipedLeft.takeIf { swipes.left }
+    }
+}
+
+/**
+ * Cancelled once the list has taken the drag: it consumes its scroll after this row's pass, so the
+ * final pass sees it.
+ */
+private suspend fun AwaitPointerEventScope.scrolledAway(): BeforeHold? =
+    BeforeHold.Cancelled.takeIf { awaitPointerEvent(PointerEventPass.Final).changes.any { it.isConsumed } }

@@ -45,7 +45,7 @@ class FavoriteSuggestionsTest {
     @Test
     fun `at most five apps are ticked`() {
         val apps = ('A'..'H').map { app(it.toString()) }
-        val usage = apps.mapIndexed { index, it -> it.key.packageName to (index + 1) * minutes }.toMap()
+        val usage = apps.mapIndexed { index, entry -> entry.key.packageName to (index + 1) * minutes }.toMap()
         val suggestions = favoriteSuggestions(apps, usage)
         assertEquals(MAX_PRESELECTED, suggestions.preselected.size)
         assertEquals(apps.takeLast(MAX_PRESELECTED).reversed().map { it.key }, suggestions.preselected)

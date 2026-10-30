@@ -69,10 +69,17 @@ object BackupCipher {
     }
 
     fun open(file: ByteArray, passphrase: CharArray): Unsealed {
-        if (!isSealed(file) || file.size < MAGIC.size + 1) return Unsealed.Damaged
-        val version = file[MAGIC.size]
-        if (version > VERSION) return Unsealed.Newer
-        if (version < VERSION || file.size < HEADER_BYTES + TAG_BITS / Byte.SIZE_BITS) return Unsealed.Damaged
+        val version = file.getOrNull(MAGIC.size)
+        return when {
+            !isSealed(file) || version == null -> Unsealed.Damaged
+            version > VERSION -> Unsealed.Newer
+            version < VERSION || file.size < HEADER_BYTES + TAG_BITS / Byte.SIZE_BITS -> Unsealed.Damaged
+            else -> decrypt(file, passphrase)
+        }
+    }
+
+    /** Opens a [file] whose header is this version's and long enough, the tag included. */
+    private fun decrypt(file: ByteArray, passphrase: CharArray): Unsealed {
         val header = ByteBuffer.wrap(file, MAGIC.size + 1, HEADER_BYTES - MAGIC.size - 1)
         val iterations = header.int
         if (iterations !in ITERATIONS..MAX_ITERATIONS) return Unsealed.Damaged

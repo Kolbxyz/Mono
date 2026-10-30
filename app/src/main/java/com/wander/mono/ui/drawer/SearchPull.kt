@@ -25,14 +25,12 @@ internal class SearchPull(private val threshold: Float) {
      * the step that passes the threshold.
      */
     fun drag(consumed: Float, leftover: Float): Boolean {
-        if (consumed != 0f || leftover > 0f) {
-            pulled = 0f
-            return false
-        }
-        pulled -= leftover
-        if (fired || pulled < threshold) return false
-        fired = true
-        return true
+        // Only what the list could not take, going up, counts; anything else starts the count over.
+        val stuck = consumed == 0f && leftover <= 0f
+        pulled = if (stuck) pulled - leftover else 0f
+        val passes = stuck && !fired && pulled >= threshold
+        if (passes) fired = true
+        return passes
     }
 
     /** The finger lifted: the next gesture counts afresh. */
