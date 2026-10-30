@@ -1,21 +1,17 @@
 package com.wander.mono.ui.drawer
 
-import android.os.Build
-import android.view.HapticFeedbackConstants
 import android.view.View
 import android.view.accessibility.AccessibilityManager
+import com.wander.mono.ui.components.MonoHaptics
 
 /**
- * Feels reaching a rail entry: the light tick for a letter, the long press buzz for ★ and the lock,
- * so a thumb (or a TalkBack user, who hears but does not see the rail) knows it reached an end.
+ * Feels reaching a rail entry: the light scrubbing tick for a letter, the heavier long-press buzz
+ * for ★ and the lock, so a thumb (or a TalkBack user, who hears but does not see the rail) knows it
+ * reached an end.
  */
-internal fun View.railTick(tick: RailTick) {
-    performHapticFeedback(
-        when (tick) {
-            RailTick.Letter -> LETTER_TICK
-            RailTick.Edge -> HapticFeedbackConstants.LONG_PRESS
-        },
-    )
+internal fun MonoHaptics.railTick(reached: RailTick) = when (reached) {
+    RailTick.Letter -> tick()
+    RailTick.Edge -> longPress()
 }
 
 /**
@@ -24,10 +20,3 @@ internal fun View.railTick(tick: RailTick) {
  */
 internal fun View.screenReaderOn(): Boolean =
     context.getSystemService(AccessibilityManager::class.java)?.isTouchExplorationEnabled == true
-
-/** The light "segment" tick Android 14 added for scrubbing through values; a clock tick before it. */
-private val LETTER_TICK = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-    HapticFeedbackConstants.SEGMENT_FREQUENT_TICK
-} else {
-    HapticFeedbackConstants.CLOCK_TICK
-}
