@@ -63,17 +63,18 @@ class AppSheetViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    /** Today's time in the sheet's app, read once as it opens; null when off, not granted or elsewhere. */
-    val usageToday: StateFlow<Long?> = combine(
+    /** Today's time in the sheet's app, read once as it opens. */
+    val usageToday: StateFlow<SheetUsage> = combine(
         state.map { it?.app }.distinctUntilChanged(),
         settings[UsageSettings.ShowInSheet],
     ) { app, show -> app.takeIf { show } }
         .transformLatest { app ->
-            // Nothing while reading, so one app's time never shows on another's sheet.
-            emit(null)
-            if (app != null) emit(usage.todayMillis(app))
+            // Reading first, so one app's time never shows on another's sheet.
+            val readable = app != null && app.isMainProfile && usage.isGranted()
+            emit(usageBeforeReading(show = app != null, readable = readable))
+            if (app != null && readable) emit(usageRead(usage.todayMillis(app)))
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), SheetUsage.Hidden)
 
     fun show(key: AppKey) {
         savedState[TARGET] = key.encode()
@@ -105,13 +106,12 @@ class AppSheetViewModel @Inject constructor(
 
     fun launchShortcut(shortcut: AppShortcut) = finish(actions.launchShortcut(shortcut))
 
+    // No dismiss() in the actions: the sheet slides itself away, then calls it.
     private fun edit(change: suspend () -> Unit) {
-        dismiss()
         viewModelScope.launch { change() }
     }
 
     private fun finish(result: ActionResult) {
-        dismiss()
         messages.report(result)
     }
 

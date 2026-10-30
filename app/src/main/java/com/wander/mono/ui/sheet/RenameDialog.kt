@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
@@ -49,11 +50,16 @@ private fun RenameDialog(app: LaunchableApp, onRename: (String?) -> Unit, onDism
         mutableStateOf(TextFieldValue(app.label, TextRange(0, app.label.length)))
     }
     val focus = remember { FocusRequester() }
-    LaunchedEffect(focus) { focus.requestFocus() }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.rename_title)) },
         text = {
+            // The dialog is its own window: focus and the keyboard are asked for from inside it.
+            val keyboard = LocalSoftwareKeyboardController.current
+            LaunchedEffect(focus) {
+                focus.requestFocus()
+                keyboard?.show()
+            }
             Column {
                 OutlinedTextField(
                     value = text,

@@ -16,6 +16,7 @@ import com.wander.mono.ui.components.AppIcon
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.MenuAction
 import com.wander.mono.ui.components.MonoSheet
+import com.wander.mono.ui.components.SheetDismiss
 
 /**
  * Long-press options for one app: its icon, name and today's use, then its actions as one button
@@ -26,7 +27,7 @@ import com.wander.mono.ui.components.MonoSheet
 fun AppSheet(
     state: AppSheetState,
     icons: AppIcons,
-    usageToday: Long?,
+    usageToday: SheetUsage,
     onDismiss: () -> Unit,
     onShortcut: (AppShortcut) -> Unit,
     onAddToHome: (AppKey) -> Unit,
@@ -39,13 +40,13 @@ fun AppSheet(
     onUninstall: (AppKey) -> Unit,
 ) {
     val key = state.app.key
-    MonoSheet(onDismissRequest = onDismiss) {
+    MonoSheet(onDismissRequest = onDismiss) { animatedDismiss ->
         Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
             SheetHeader(
                 title = state.app.label,
                 leading = { AppIcon(key, icons, size = 48.dp) },
-                supporting = if (usageToday != null) {
-                    { UsageLine(usageToday) }
+                supporting = if (usageToday != SheetUsage.Hidden) {
+                    { UsageSlot(usageToday) }
                 } else {
                     null
                 },
@@ -53,6 +54,7 @@ fun AppSheet(
             ActionButtonGroup(
                 appActions(
                     state,
+                    animatedDismiss,
                     onShortcut,
                     onAddToHome,
                     onRemoveFromHome,
@@ -69,9 +71,15 @@ fun AppSheet(
     }
 }
 
+/**
+ * The sheet's buttons. Each slides the sheet away after it runs, except the moves and the
+ * headphones toggle, which keep it open to be seen changing, and rename, which runs after: its
+ * caller drops the sheet at once to open the rename dialog.
+ */
 @Suppress("LongParameterList")
 private fun appActions(
     state: AppSheetState,
+    dismiss: SheetDismiss,
     onShortcut: (AppShortcut) -> Unit,
     onAddToHome: (AppKey) -> Unit,
     onRemoveFromHome: (AppKey) -> Unit,
@@ -87,21 +95,24 @@ private fun appActions(
         if (state.isFavorite) {
             add(MenuAction(R.drawable.sym_remove_circle, R.string.sheet_remove_from_home, ActionEmphasis.Primary) {
                 onRemoveFromHome(key)
-            })
+            }.thenDismiss(dismiss))
         } else if (state.canGoOnHome) {
             add(MenuAction(R.drawable.sym_keep, R.string.sheet_add_to_home, ActionEmphasis.Primary) {
                 onAddToHome(key)
-            })
+            }.thenDismiss(dismiss))
         }
-        add(MenuAction(R.drawable.sym_info, R.string.sheet_app_info, ActionEmphasis.Secondary) { onAppInfo(key) })
+        add(
+            MenuAction(R.drawable.sym_info, R.string.sheet_app_info, ActionEmphasis.Secondary) { onAppInfo(key) }
+                .thenDismiss(dismiss),
+        )
         state.shortcuts.forEach { shortcut ->
             add(MenuAction(R.drawable.sym_arrow_outward, R.string.sheet_shortcut, labelArg = shortcut.label) {
                 onShortcut(shortcut)
-            })
+            }.thenDismiss(dismiss))
         }
-        add(MenuAction(R.drawable.sym_edit, R.string.sheet_rename) { onRename(key) })
+        add(MenuAction(R.drawable.sym_edit, R.string.sheet_rename) { onRename(key) }.afterDismiss(dismiss))
         val hideLabel = if (state.isHidden) R.string.sheet_unhide else R.string.sheet_hide
-        add(MenuAction(R.drawable.sym_visibility, hideLabel) { onSetHidden(key, !state.isHidden) })
+        add(MenuAction(R.drawable.sym_visibility, hideLabel) { onSetHidden(key, !state.isHidden) }.thenDismiss(dismiss))
         state.liftsWithHeadphones?.let { lifts ->
             add(MenuAction(R.drawable.sym_headphones, R.string.sheet_headphones_top, selected = lifts) {
                 onSetLiftsWithHeadphones(key, !lifts)
@@ -117,6 +128,9 @@ private fun appActions(
                 onMove(key, 1)
             })
         }
-        add(MenuAction(R.drawable.sym_delete, R.string.sheet_uninstall, ActionEmphasis.Danger) { onUninstall(key) })
+        add(
+            MenuAction(R.drawable.sym_delete, R.string.sheet_uninstall, ActionEmphasis.Danger) { onUninstall(key) }
+                .thenDismiss(dismiss),
+        )
     }
 }
