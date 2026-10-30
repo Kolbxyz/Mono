@@ -53,6 +53,7 @@ fun LauncherSheets(
             icons = icons,
             usageToday = sheetUsage,
             onDismiss = sheet::dismiss,
+            onOpen = sheet::open,
             onShortcut = sheet::launchShortcut,
             onAddToHome = sheet::addToHome,
             onRemoveFromHome = sheet::removeFromHome,
@@ -65,6 +66,7 @@ fun LauncherSheets(
             },
             onAppInfo = sheet::openAppInfo,
             onUninstall = sheet::uninstall,
+            onSetLocked = sheet::setLocked,
         )
     }
     RenameDialog(rename)
