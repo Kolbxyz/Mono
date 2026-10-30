@@ -64,6 +64,60 @@ class AppSearchTest {
     }
 
     @Test
+    fun `every tier in order, typos last`() {
+        val apps = listOf(
+            entry("Nite Owl"), // one typo: "nite"
+            entry("Keynote"), // substring
+            entry("Nice Old Tiny Editor"), // initials
+            entry("Quick Note"), // word prefix
+            entry("Notebook"), // prefix
+            entry("Note"), // exact
+        )
+        val hits = AppSearch.search("note", apps, emptyList())
+        assertEquals(
+            listOf("Note", "Notebook", "Quick Note", "Nice Old Tiny Editor", "Keynote", "Nite Owl"),
+            labels(hits),
+        )
+    }
+
+    @Test
+    fun `initials find google maps and play store`() {
+        val apps = listOf(entry("Google Maps"), entry("Play Store"), entry("Gmail"))
+        assertEquals(listOf("Gmail", "Google Maps"), labels(AppSearch.search("gm", apps, emptyList())))
+        // "Google Maps" holds "ps" too, as a plain substring: after the initials.
+        assertEquals(listOf("Play Store", "Google Maps"), labels(AppSearch.search("ps", apps, emptyList())))
+    }
+
+    @Test
+    fun `a typo still finds the app, after every match without one`() {
+        val apps = listOf(entry("Spotify"), entry("Spot Finder"), entry("Notes"))
+        assertEquals(listOf("Spotify"), labels(AppSearch.search("spotfy", apps, emptyList())))
+        val typoLast = listOf(entry("Nite"), entry("A Very Long Notebook App"))
+        val hits = AppSearch.search("note", typoLast, emptyList())
+        assertEquals(listOf("A Very Long Notebook App", "Nite"), labels(hits))
+    }
+
+    @Test
+    fun `camel case words are words`() {
+        assertEquals(listOf("YouTube"), labels(AppSearch.search("tube", listOf(entry("YouTube")), emptyList())))
+    }
+
+    @Test
+    fun `hits carry the matched characters of their label`() {
+        val shortcut = AppShortcut("pkg", "id", 0, "New École note")
+        val hits = AppSearch.search("ecole", listOf(entry("École Directe")), listOf(shortcut))
+        assertEquals(listOf(0..4), hits[0].matched)
+        assertEquals(listOf(4..8), hits[1].matched)
+    }
+
+    @Test
+    fun `an alias match ranks the item but marks nothing of its label`() {
+        val ranked =
+            AppSearch.rankMatched("bright", listOf("Display"), label = { it }, aliases = { listOf("brightness") })
+        assertEquals(listOf(Ranked("Display", emptyList())), ranked)
+    }
+
+    @Test
     fun `blank query and non-matches return nothing`() {
         assertTrue(AppSearch.search("  ", listOf(entry("Maps")), emptyList()).isEmpty())
         assertNull(AppSearch.score("Maps", "xyz"))

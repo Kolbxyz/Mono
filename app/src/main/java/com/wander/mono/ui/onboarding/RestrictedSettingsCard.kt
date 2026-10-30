@@ -23,6 +23,7 @@ import com.wander.mono.R
 internal fun RestrictedSettingsCard(onOpenAppInfo: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {

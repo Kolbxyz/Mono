@@ -1,7 +1,9 @@
 package com.wander.mono.core.apps
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
+import android.os.Build
 import com.wander.mono.data.CustomLabels
 import com.wander.mono.di.AppScope
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -57,16 +59,39 @@ class AppCatalog @Inject constructor(
         loaded?.let { withCustomLabels(it, labels).sortedWith(byLabel) }
     }.flowOn(Dispatchers.Default).stateIn(scope, SharingStarted.Eagerly, null)
 
-    /** A locked private space lists nothing: its apps are neither shown nor searchable until it is unlocked. */
+    /**
+     * A locked private space lists nothing: its apps are neither shown nor searchable until it is
+     * unlocked. Install times are read here, once per package and load, never on a timer.
+     */
     private fun load(): List<LaunchableApp> = profiles.listed().flatMap { user ->
         val serial = profiles.serialOf(user)
         val isMain = user == profiles.main
         val isPrivate = profiles.isPrivate(user)
+        val installTimes = mutableMapOf<String, Long?>()
         launcherApps.getActivityList(null, user).map { info ->
             val component = info.componentName
             val key = AppKey(component.packageName, component.className, serial)
-            val app = LaunchableApp(key, info.label.toString(), isMain, isPrivate = isPrivate)
-            LabeledActivity(app, info.applicationInfo.loadLabel(packageManager).toString())
+            val appInfo = info.applicationInfo
+            val archived = isArchived(appInfo)
+            val installedAt = if (isMain && !archived) {
+                installTimes.getOrPut(component.packageName) { firstInstallTime(packageManager, component.packageName) }
+            } else {
+                null
+            }
+            val app = LaunchableApp(
+                key,
+                info.label.toString(),
+                isMain,
+                isPrivate = isPrivate,
+                category = appCategory(appInfo.category),
+                installedAt = installedAt,
+                archived = archived,
+            )
+            LabeledActivity(app, appInfo.loadLabel(packageManager).toString())
         }
     }.let(::resolveLabelClashes)
+
+    /** Android 15 lists archived apps too, their code offloaded until a launch restores it. */
+    private fun isArchived(info: ApplicationInfo): Boolean =
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && info.isArchived
 }

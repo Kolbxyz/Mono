@@ -1,7 +1,9 @@
 package com.wander.mono.ui.quiet
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,8 +14,10 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -29,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -82,20 +88,33 @@ private fun Gate(backdrop: Color, onShowAll: () -> Unit, onClose: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.Start,
             ) {
-                Icon(
-                    painterResource(R.drawable.sym_quiet),
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(32.dp),
+                // The drawer's own symbol disc, as its private space and work profile wear, only larger.
+                Box(
+                    Modifier.size(56.dp).background(MaterialTheme.colorScheme.secondaryContainer, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.sym_quiet),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    )
+                }
+                Text(
+                    stringResource(R.string.quiet_gate_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.semantics { heading() },
                 )
-                Text(stringResource(R.string.quiet_gate_title), style = MaterialTheme.typography.headlineMedium)
                 Text(
                     stringResource(R.string.quiet_gate_body),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Button(onClick = onShowAll) { Text(stringResource(R.string.quiet_gate_show_all)) }
-                TextButton(onClick = onClose) { Text(stringResource(R.string.quiet_gate_back)) }
+                Button(onClick = onShowAll, shapes = ButtonDefaults.shapes()) {
+                    Text(stringResource(R.string.quiet_gate_show_all))
+                }
+                TextButton(onClick = onClose, shapes = ButtonDefaults.shapes()) {
+                    Text(stringResource(R.string.quiet_gate_back))
+                }
             }
         }
     }
