@@ -52,6 +52,19 @@ class ClockActions @Inject constructor(@ApplicationContext private val context: 
         R.string.error_no_clock_app,
     )
 
+    /** Resolves an intent, so not on the main thread. */
+    fun canDismissAlarm(): Boolean = handles(AlarmClock.ACTION_DISMISS_ALARM)
+
+    /**
+     * Asks the clock app to dismiss its next alarm. The clock app decides and confirms on its own
+     * screen; Android offers no way to skip another app's alarm silently.
+     */
+    fun dismissNextAlarm(): ActionResult = start(
+        Intent(AlarmClock.ACTION_DISMISS_ALARM)
+            .putExtra(AlarmClock.EXTRA_ALARM_SEARCH_MODE, AlarmClock.ALARM_SEARCH_MODE_NEXT),
+        R.string.error_no_clock_dismiss,
+    )
+
     private fun handles(action: String): Boolean =
         context.packageManager.resolveActivity(Intent(action), PackageManager.MATCH_DEFAULT_ONLY) != null
 
@@ -65,3 +78,12 @@ class ClockActions @Inject constructor(@ApplicationContext private val context: 
         ActionResult.Failed(R.string.error_not_allowed)
     }
 }
+
+/**
+ * Whether Dismiss is worth offering for the next alarm at [alarm] (null: none): it is still ahead
+ * and at most a day away, as AOSP's clock app refuses to dismiss an alarm further out.
+ */
+fun canOfferAlarmDismiss(alarm: Long?, now: Long): Boolean =
+    alarm != null && alarm >= now && alarm - now <= DISMISS_HORIZON_MS
+
+private const val DISMISS_HORIZON_MS = 24 * 60 * 60 * 1_000L
