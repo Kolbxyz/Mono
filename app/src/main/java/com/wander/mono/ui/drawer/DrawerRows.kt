@@ -1,7 +1,6 @@
 package com.wander.mono.ui.drawer
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.clickable
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,9 +28,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcon
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.AppLabel
+import com.wander.mono.ui.components.rememberRowAccent
 
 /**
  * An app in the drawer or in search results: icon and name, with what search matched in [name]
@@ -50,15 +50,18 @@ fun DrawerAppRow(
     labelStyle: TextStyle = MaterialTheme.typography.titleMedium,
     name: AnnotatedString = AnnotatedString(entry.app.label),
 ) {
+    // A hint of the app's own colour in its press, when rows are tinted; none to fetch in text-only mode.
+    val accent = rememberRowAccent(entry.app.key.takeIf { icons.mode != IconMode.TextOnly }, icons, iconSize)
     Row(
         modifier
             .fillMaxWidth()
             .heightIn(min = MIN_ROW_HEIGHT)
-            .combinedClickable(
+            .rowPress(
                 onClickLabel = stringResource(R.string.action_open),
+                onClick = onLaunch,
                 onLongClickLabel = stringResource(R.string.action_app_options),
                 onLongClick = onLongPress,
-                onClick = onLaunch,
+                accent = accent,
             )
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -110,7 +113,7 @@ fun ShortcutRow(
         modifier
             .fillMaxWidth()
             .heightIn(min = MIN_ROW_HEIGHT)
-            .clickable(onClickLabel = stringResource(R.string.action_open), onClick = onLaunch)
+            .rowPress(onClickLabel = stringResource(R.string.action_open), onClick = onLaunch)
             .unreadState(hit.badge)
             .padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
