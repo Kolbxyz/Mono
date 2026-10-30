@@ -36,3 +36,19 @@ internal fun unreadPerConversation(facts: List<NotificationFacts>): Map<Conversa
     .filter { it.isNews && it.shortcutId != null }
     .groupingBy { ConversationKey(it.owner, it.shortcutId.orEmpty()) }
     .fold(0) { total, fact -> total + fact.unread.coerceAtLeast(1) }
+
+/** [owner]'s news, silent or not: what an expanded row may show and what Mark read and Mute reach. */
+internal fun newsOf(facts: List<NotificationFacts>, owner: PackageUser): List<NotificationFacts> =
+    facts.filter { it.isNews && it.owner == owner }
+
+/**
+ * The notification to read for each conversation of [news], newest conversation first, at most
+ * [limit]: a conversation is the notifications sharing a shortcut, or one notification on its own.
+ */
+internal fun conversationKeys(news: List<NotificationFacts>, limit: Int): List<String> = news
+    .groupBy { it.shortcutId ?: it.key }
+    .values
+    .map { group -> group.maxBy { it.postTime } }
+    .sortedByDescending { it.postTime }
+    .take(limit)
+    .map { it.key }
