@@ -8,7 +8,7 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -34,19 +34,26 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.R
 import com.wander.mono.core.media.PlayingMedia
+import com.wander.mono.data.settings.BooleanSetting
+import com.wander.mono.data.settings.MediaSettings
 import com.wander.mono.ui.components.PressMorph
 import com.wander.mono.ui.components.expressivePress
 import com.wander.mono.ui.home.media.NowPlayingCollapsed
 import com.wander.mono.ui.home.media.NowPlayingExpanded
+import com.wander.mono.ui.settings.SettingsViewModel
+import com.wander.mono.ui.settings.collect
 import kotlin.math.abs
 
 /**
- * The playing media, inline under its app and tinted by the artwork. Collapsed it is one balanced
- * line (artwork, title and artist, play/pause) over a thin wavy progress line. A tap expands it to
- * a centred player: large artwork, the wavy seek bar, the connected transport, the output device
- * and what plays next. A horizontal swipe skips either way.
+ * The playing media, inline under its app (or where the user placed it) and tinted by the artwork.
+ * Collapsed it is one balanced line (artwork, title and artist, play/pause) over a thin wavy
+ * progress line. A tap expands it to a centred player: large artwork, the wavy seek bar, the
+ * connected transport, the output device and what plays next. A horizontal swipe skips either way;
+ * a long press opens its options ([onLongPress]). [MediaSettings] choose whether it starts
+ * expanded, takes the artwork's colour and skips on a swipe.
  *
  * Both states are one column with no spacing of its own: each state carries its spacing inside its
  * own [AnimatedVisibility], and both resize on the same spatial spec as the card's corners, so the
@@ -61,12 +68,18 @@ fun NowPlayingCard(
     onSeek: (positionMs: Long) -> Unit,
     onPlayQueueItem: (id: Long) -> Unit,
     onOpenOutput: () -> Unit,
+    onLongPress: () -> Unit,
     modifier: Modifier = Modifier,
+    settings: SettingsViewModel = viewModel(),
 ) {
     val motion = MaterialTheme.motionScheme
     val scheme = MaterialTheme.colorScheme
-    var expanded by rememberSaveable { mutableStateOf(false) }
-    val tint = media.artColor?.let { lerp(scheme.surfaceContainerHigh, Color(it), ART_TINT) }
+    val startExpanded = settings.value(MediaSettings.ExpandedByDefault)
+    val swipeToSkip = settings.value(MediaSettings.SwipeToSkip)
+    val artTint = settings.value(MediaSettings.ArtTint)
+    // Keyed by the choice, so changing it in the media sheet shows at once.
+    var expanded by rememberSaveable(startExpanded) { mutableStateOf(startExpanded) }
+    val tint = media.artColor?.takeIf { artTint }?.let { lerp(scheme.surfaceContainerHigh, Color(it), ART_TINT) }
         ?: scheme.surfaceContainerHigh
     val container by animateColorAsState(tint, motion.defaultEffectsSpec(), label = "art-tint")
     // Chosen for the tint it goes to and eased alongside it, so the text never flips in one frame.
@@ -87,22 +100,30 @@ fun NowPlayingCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = HomeCardMargin)
-            .skipSwipe(media.canSkipNext, media.canSkipPrevious) {
-                when (it) {
-                    SkipDirection.Next -> onSkipNext()
-                    SkipDirection.Previous -> onSkipPrevious()
-                }
-            }
+            .then(
+                if (swipeToSkip) {
+                    Modifier.skipSwipe(media.canSkipNext, media.canSkipPrevious) {
+                        when (it) {
+                            SkipDirection.Next -> onSkipNext()
+                            SkipDirection.Previous -> onSkipPrevious()
+                        }
+                    }
+                } else {
+                    Modifier
+                },
+            )
             .expressivePress(interaction, PressMorph.squarer(corner)),
         shape = RoundedCornerShape(corner),
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
         Column(
             Modifier
-                .clickable(
+                .combinedClickable(
                     interactionSource = interaction,
                     indication = ripple(),
                     onClickLabel = stringResource(if (expanded) R.string.media_collapse else R.string.media_expand),
+                    onLongClickLabel = stringResource(R.string.media_sheet_open),
+                    onLongClick = onLongPress,
                 ) { expanded = !expanded }
                 .semantics { customActions = mediaActions }
                 .padding(HomeCardInset),
@@ -180,6 +201,10 @@ private fun mediaActions(
         }
     }
 }
+
+/** [setting]'s stored value, its default only before the settings file is first read. */
+@Composable
+private fun SettingsViewModel.value(setting: BooleanSetting): Boolean = collect(setting) ?: setting.default
 
 /** Whichever of [first] and [second] stands out more against [background]. */
 private fun mostContrasting(background: Color, first: Color, second: Color): Color {

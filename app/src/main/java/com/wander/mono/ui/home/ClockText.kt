@@ -11,6 +11,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.wander.mono.data.settings.ClockAlignment
@@ -74,22 +76,31 @@ internal fun clockSize(look: ClockLook, compact: Boolean): Int {
 /**
  * The glyphs in a row, each rolling in its [ClockGlyph.slot]. The roll is clipped above and below,
  * with [ROLL_SLACK] for the text shadow, and never at the sides, where a glyph's shadow or halo
- * reaches over its neighbours.
+ * reaches over its neighbours. Glyphs align at the top, since [AnimatedContent] does not carry a
+ * baseline; the smaller marker is pushed down by the measured gap so it sits on the digits' baseline.
  */
 @Composable
 private fun RollingGlyphs(glyphs: List<ClockGlyph>, style: TextStyle) {
     val motion = MaterialTheme.motionScheme
-    val slack = with(LocalDensity.current) { ROLL_SLACK.toPx() }
+    val density = LocalDensity.current
+    val slack = with(density) { ROLL_SLACK.toPx() }
+    val markerStyle = style.copy(fontSize = style.fontSize * MARKER_FRACTION)
+    val measurer = rememberTextMeasurer()
+    val markerDrop = remember(style, measurer, density) {
+        val digit = measurer.measure("0", style).firstBaseline
+        val marker = measurer.measure("M", markerStyle).firstBaseline
+        with(density) { (digit - marker).coerceAtLeast(0f).toDp() }
+    }
     Row(
         Modifier.drawWithContent {
             clipRect(-size.width, -slack, size.width * 2, size.height + slack) { this@drawWithContent.drawContent() }
         },
+        verticalAlignment = Alignment.Top,
     ) {
         glyphs.forEach { glyph ->
             key(glyph.slot) {
                 AnimatedContent(
                     targetState = glyph,
-                    modifier = Modifier.alignByBaseline(),
                     transitionSpec = {
                         val enter = slideInVertically(motion.defaultSpatialSpec()) { it } +
                             fadeIn(motion.defaultEffectsSpec())
@@ -100,12 +111,12 @@ private fun RollingGlyphs(glyphs: List<ClockGlyph>, style: TextStyle) {
                     },
                     label = "clockGlyph",
                 ) { shown ->
-                    val glyphStyle = if (shown.marker) {
-                        style.copy(fontSize = style.fontSize * MARKER_FRACTION)
-                    } else {
-                        style
-                    }
-                    Text(shown.char.toString(), style = glyphStyle, color = MaterialTheme.colorScheme.onSurface)
+                    Text(
+                        shown.char.toString(),
+                        modifier = if (shown.marker) Modifier.padding(top = markerDrop) else Modifier,
+                        style = if (shown.marker) markerStyle else style,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                 }
             }
         }

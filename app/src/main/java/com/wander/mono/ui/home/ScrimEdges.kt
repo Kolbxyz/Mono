@@ -1,5 +1,6 @@
 package com.wander.mono.ui.home
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -44,4 +45,10 @@ internal class ScrimEdges {
         header?.takeIf { it.isAttached }?.let { headerBottom = frame.localBoundingBoxOf(it, clipBounds = false).bottom }
         list?.takeIf { it.isAttached }?.let { listTop = frame.localPositionOf(it, Offset.Zero).y }
     }
+}
+
+/** Where the first row starts inside the list viewport: 0 once the list is scrolled or full. */
+internal fun LazyListState.contentTop(): Float {
+    val first = layoutInfo.visibleItemsInfo.firstOrNull() ?: return 0f
+    return if (first.index == 0) (first.offset - layoutInfo.viewportStartOffset).toFloat().coerceAtLeast(0f) else 0f
 }
