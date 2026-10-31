@@ -5,7 +5,8 @@ import androidx.datastore.preferences.core.Preferences
 
 /**
  * The settings a backup file carries: every user choice. Quiet mode's on/off is left out, since it
- * is a state of the moment rather than a preference. A new setting is added here too.
+ * is a state of the moment rather than a preference. A new setting is added here too; a removed
+ * one is dropped, and an older file that still carries it restores without it.
  */
 val backedUpSettings: List<Setting<*>> = listOf(
     ThemeSettings.Mode,
@@ -41,14 +42,10 @@ val backedUpSettings: List<Setting<*>> = listOf(
     SearchSettings.RememberRecent,
     QuietSettings.LinkDoNotDisturb,
     HiddenAppSettings.Lock,
-    UsageSettings.ShowInSheet,
     DrawerSettings.Background,
-    DrawerSettings.KeyboardOnOpen,
     DrawerSettings.RailAtStart,
     DrawerSettings.NewApps,
     DrawerSettings.Sort,
-    HeadphoneSettings.LiftApps,
-    RoutineSettings.Enabled,
     ScreenTimeSettings.Nudge,
     GestureSettings.DoubleTapLock,
     GestureSettings.LegacySwipeDownNotifications,
@@ -67,7 +64,6 @@ val backedUpSettings: List<Setting<*>> = listOf(
     MediaSettings.ShowPlayer,
     MediaSettings.ExpandedByDefault,
     MediaSettings.SwipeToSkip,
-    MediaSettings.ArtTint,
     MediaSettings.PausedHideAfter,
 )
 

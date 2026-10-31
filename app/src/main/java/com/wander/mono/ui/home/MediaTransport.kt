@@ -151,8 +151,9 @@ private fun TransportButton(
     }
 }
 
-private val EXPANDED_PLAY = DpSize(96.dp, 64.dp)
-private val SKIP_SIZE = DpSize(64.dp, 64.dp)
+/** Big enough to lead the expanded player, short enough that home keeps room under it. */
+private val EXPANDED_PLAY = DpSize(88.dp, 56.dp)
+private val SKIP_SIZE = DpSize(56.dp, 56.dp)
 
 /** How much wider a pressed transport button gets. */
 private val PRESSED_GROWTH: Dp = 12.dp

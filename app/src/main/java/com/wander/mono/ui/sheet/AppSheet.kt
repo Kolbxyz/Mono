@@ -75,7 +75,7 @@ fun AppSheet(
         Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
             SheetHeader(
                 title = state.app.label,
-                leading = { AppIcon(key, icons, size = 48.dp) },
+                leading = { AppIcon(key, icons, size = 56.dp) },
                 supporting = if (usageToday != SheetUsage.Hidden) {
                     { UsageSlot(usageToday) }
                 } else {

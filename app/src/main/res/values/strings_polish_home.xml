@@ -7,10 +7,9 @@
 
     <!-- The now-playing player's settings, in its sheet and in settings. -->
     <string name="settings_media">Now playing</string>
-    <string name="settings_media_expanded">Open as the full player</string>
-    <string name="settings_media_swipe">Swipe to skip tracks</string>
-    <string name="settings_media_tint">Colour from the artwork</string>
-    <string name="settings_media_paused">Hide when paused for</string>
+    <string name="settings_media_expanded">Open expanded</string>
+    <string name="settings_media_swipe">Swipe to skip</string>
+    <string name="settings_media_paused">Hide paused</string>
     <string name="settings_media_paused_5">5 min</string>
     <string name="settings_media_paused_10">10 min</string>
     <string name="settings_media_paused_30">30 min</string>

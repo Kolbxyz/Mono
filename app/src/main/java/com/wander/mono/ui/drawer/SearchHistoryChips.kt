@@ -38,7 +38,7 @@ import com.wander.mono.data.RecentSearch
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
- * Recent searches under the search field while it is [visible] (focused and empty): one chip each,
+ * Recent searches just above the search field while it is [visible] (focused and empty): one chip each,
  * newest first, scrolling sideways. Tapping a chip types its query again; its cross forgets it.
  */
 @Composable
@@ -54,7 +54,7 @@ internal fun RecentSearchChips(
         enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
         exit = shrinkVertically(motion.fastSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
     ) {
-        Column(Modifier.padding(top = 8.dp)) {
+        Column(Modifier.padding(bottom = 8.dp)) {
             Text(
                 stringResource(R.string.search_recent),
                 style = MaterialTheme.typography.labelLarge,

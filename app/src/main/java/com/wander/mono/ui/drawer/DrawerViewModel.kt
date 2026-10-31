@@ -144,9 +144,7 @@ class DrawerViewModel @Inject constructor(
         .combine(listChoices.inputs(catalog.apps.filterNotNull())) { state, (choices, opened, now) ->
             state.shaped(choices, opened, now)
         }
-        .combine(
-            combine(settings[DrawerSettings.KeyboardOnOpen], settings[DrawerSettings.RailAtStart], ::Pair),
-        ) { state, (keyboard, railAtStart) -> state.copy(keyboardOnOpen = keyboard, railAtStart = railAtStart) }
+        .combine(settings[DrawerSettings.RailAtStart]) { state, railAtStart -> state.copy(railAtStart = railAtStart) }
         .combine(conversationUnread(previews, phalanx, settings)) { state, unread ->
             val results = state.results.withUnread(unread.notified, unread.showCounts)
                 .withRoomUnread(unread.phalanx, unread.showCounts)

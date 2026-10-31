@@ -46,7 +46,6 @@
 
     <!-- Settings: routines -->
     <string name="settings_routines">Routines</string>
-    <string name="settings_routines_on">Use routines</string>
     <string name="settings_routines_summary">Favourites you pick go first at set times</string>
     <string name="settings_routine_add">Add routine</string>
     <string name="settings_routine_title">Routine %1$d</string>
@@ -60,6 +59,6 @@
 
     <!-- Settings: screen time -->
     <string name="settings_screen_time">Screen time</string>
-    <string name="settings_screen_time_nudge">Fade apps past their daily limit</string>
-    <string name="settings_screen_time_short">Set a limit from a favourite\'s options</string>
+    <string name="settings_screen_time_nudge">Time and limits</string>
+    <string name="settings_screen_time_short">Long-press an app to set a limit</string>
 </resources>

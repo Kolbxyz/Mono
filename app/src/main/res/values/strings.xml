@@ -89,7 +89,7 @@
     <string name="settings_home_look">Layout</string>
     <string name="settings_text_shadow">Text shadow</string>
     <string name="settings_accessibility">Accessibility</string>
-    <string name="settings_high_contrast_text">High contrast text</string>
+    <string name="settings_high_contrast_text">High contrast</string>
     <string name="settings_icons">Icons</string>
     <string name="settings_icon_mode">App icons</string>
     <string name="settings_icon_colour">Full colour</string>
@@ -97,8 +97,7 @@
     <string name="settings_icon_text_only">Text only</string>
 
     <!-- Badges -->
-    <string name="settings_badge_counts">Show unread count</string>
-    <string name="settings_badge_counts_summary">Off shows a dot instead</string>
+    <string name="settings_badge_counts">Unread count</string>
 
     <!-- Quiet mode -->
     <string name="home_sheet_quiet_on">Turn on quiet mode</string>
@@ -111,7 +110,7 @@
     <string name="quiet_gate_back">Back to home</string>
     <string name="settings_quiet">Quiet mode</string>
     <string name="settings_quiet_mode">Use quiet mode</string>
-    <string name="settings_quiet_apps">Apps that stay on home</string>
+    <string name="settings_quiet_apps">Quiet apps</string>
     <string name="settings_quiet_apps_empty">Add favourites to home first</string>
     <string name="settings_quiet_dnd">Also turn on Do Not Disturb</string>
     <string name="settings_quiet_dnd_grant">Do Not Disturb with quiet mode</string>
@@ -133,7 +132,6 @@
     <string name="sheet_usage_under_minute">Today: under a minute</string>
     <string name="sheet_usage_minutes">Today: %1$d min</string>
     <string name="sheet_usage_hours">Today: %1$d h %2$d min</string>
-    <string name="settings_usage_in_sheet">Today\'s time in app options</string>
 
     <string name="settings_backup">Backup</string>
     <string name="settings_backup_export">Save to a file</string>
@@ -155,7 +153,7 @@
     <string name="backup_error_restore">Restoring stopped partway. Try again.</string>
     <string name="backup_error_no_picker">No app on this phone can pick a file</string>
     <!-- Notification previews -->
-    <string name="settings_previews_show">Show notification previews</string>
+    <string name="settings_previews_show">Previews</string>
     <string name="preview_hidden">New notification</string>
     <string name="preview_reply">Reply</string>
     <string name="preview_reply_hint">Message</string>
@@ -213,9 +211,6 @@
     <!-- Rename -->
     <string name="sheet_rename">Rename</string>
     <string name="sheet_headphones_top">First on home with headphones</string>
-    <string name="settings_headphones">Headphones</string>
-    <string name="settings_headphones_lift">Apps first with headphones</string>
-    <string name="settings_headphones_lift_summary">Pick them in a favourite\'s options</string>
     <string name="rename_title">Rename app</string>
     <string name="rename_field">Name</string>
     <string name="rename_original">Original name: %1$s</string>

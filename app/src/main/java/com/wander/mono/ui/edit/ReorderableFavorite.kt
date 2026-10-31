@@ -118,6 +118,7 @@ fun ReorderableFavorite(
         if (editing.active) {
             EditFavoriteRow(
                 row = row,
+                icons = icons,
                 toggles = editing.toggles[row.app.key].orEmpty(),
                 lifted = lifted,
                 onRename = { editing.onRename(row.app.key) },

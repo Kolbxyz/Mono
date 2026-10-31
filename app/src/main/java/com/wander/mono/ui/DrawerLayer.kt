@@ -7,6 +7,7 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -17,6 +18,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.util.lerp
 import com.wander.mono.ui.components.rememberPullDownConnection
+import com.wander.mono.ui.drawer.LocalDrawerLift
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
@@ -24,7 +26,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * [open] or any part of it shows. Dragging down past the top of its list, or on anything that does
  * not scroll, pulls it back down with the finger; predictive back lets it give way before closing
  * through [onBack]. [onClosed] runs once it has closed and nothing of it shows, so whatever it was
- * showing stays put while it fades out.
+ * showing stays put while it fades out. How far it is still drawn below its resting place reaches the
+ * content as [LocalDrawerLift], so its backdrop can stay put while only the content rises.
  */
 @Composable
 fun DrawerLayer(
@@ -43,6 +46,7 @@ fun DrawerLayer(
     val pullDown = rememberPullDownConnection(motion)
     // The search field and headers do not scroll; this lets drags on them reach pullDown too.
     val stillDrag = rememberScrollableState { 0f }
+    val lift = remember(motion) { { (1f - motion.shown) * motion.travel } }
     PredictiveBackHandler(enabled = open && backEnabled) { events ->
         try {
             events.collect { motion.back(it.progress) }
@@ -55,14 +59,13 @@ fun DrawerLayer(
         Modifier
             .fillMaxSize()
             .graphicsLayer {
-                val shown = motion.shown
-                translationY = (1f - shown) * size.height * TRAVEL_FRACTION
-                alpha = shown
+                translationY = lift()
+                alpha = motion.shown
             }
             .nestedScroll(pullDown)
             .scrollable(stillDrag, Orientation.Vertical),
     ) {
-        content()
+        CompositionLocalProvider(LocalDrawerLift provides lift, content = content)
     }
 }
 

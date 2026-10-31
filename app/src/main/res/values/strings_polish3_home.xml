@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Glance pill for the event under way: "until 15:00", after its title. -->
+    <string name="home_event_until">until %1$s</string>
+    <!-- Glance pill for the next alarm within 12 hours: its time, then how long is left ("07:00 · 7h 20m"). -->
+    <string name="glance_alarm_countdown">%1$s · %2$s</string>
+    <!-- TalkBack: the alarm pill with its countdown ("Alarm 07:00, in 7 hours, 20 minutes"). -->
+    <string name="glance_alarm_countdown_description">Alarm %1$s, in %2$s</string>
+</resources>

@@ -28,8 +28,8 @@ import com.wander.mono.ui.components.instantPress
 import com.wander.mono.ui.components.rememberPressShape
 
 /**
- * One place on the settings hub: a shaped badge in a theme colour, the title, and one short line of
- * what is inside. Under the finger the row shrinks a little and the badge relaxes into a circle;
+ * One place on the settings hub: a shaped badge in a theme colour, the title, and a short line of
+ * what is inside (taking a second line rather than an ellipsis at large font sizes). Under the finger the row shrinks a little and the badge relaxes into a circle;
  * both on the theme's motion. The badge and row show the press, so no ripple is drawn over them.
  */
 @Composable
@@ -58,14 +58,14 @@ internal fun SettingsCategoryRow(category: SettingsCategory, onClick: () -> Unit
             Text(
                 stringResource(category.title),
                 style = MaterialTheme.typography.titleMedium,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 stringResource(category.subtitle),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         }

@@ -16,14 +16,12 @@ import com.wander.mono.core.security.AppLock
 import com.wander.mono.core.usage.AppUsage
 import com.wander.mono.data.HeadphoneApps
 import com.wander.mono.data.LauncherPrefs
-import com.wander.mono.data.settings.HeadphoneSettings
 import com.wander.mono.data.settings.SettingsStore
-import com.wander.mono.data.settings.UsageSettings
+import com.wander.mono.data.settings.ScreenTimeSettings
 import com.wander.mono.ui.MessageAction
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -55,7 +53,7 @@ class AppSheetViewModel @Inject constructor(
         target,
         catalog.apps,
         prefs.favorites,
-        combine(prefs.hidden, headphoneChoices(settings, headphoneApps), lock.apps, ::Triple),
+        combine(prefs.hidden, headphoneApps.apps, lock.apps, ::Triple),
         shortcuts.all,
     ) { encoded, apps, favorites, (hidden, lifting, locked), allShortcuts ->
         val key = encoded?.let(AppKey::decode) ?: return@combine null
@@ -65,7 +63,7 @@ class AppSheetViewModel @Inject constructor(
             isFavorite = key in favorites,
             isHidden = key in hidden,
             shortcuts = allShortcuts.filter { it.packageName == key.packageName && it.userSerial == key.userSerial },
-            liftsWithHeadphones = lifting?.takeIf { key in favorites }?.contains(key),
+            liftsWithHeadphones = (key in lifting).takeIf { key in favorites },
             isLocked = key in locked,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
@@ -73,7 +71,7 @@ class AppSheetViewModel @Inject constructor(
     /** Today's time in the sheet's app, read once as it opens. */
     val usageToday: StateFlow<SheetUsage> = combine(
         state.map { it?.app }.distinctUntilChanged(),
-        settings[UsageSettings.ShowInSheet],
+        settings[ScreenTimeSettings.Nudge],
     ) { app, show -> app.takeIf { show } }
         .transformLatest { app ->
             // Reading first, so one app's time never shows on another's sheet.
@@ -133,10 +131,6 @@ class AppSheetViewModel @Inject constructor(
     private fun finish(result: ActionResult) {
         messages.report(result)
     }
-
-    /** The apps chosen for headphones, or null while the setting is off. */
-    private fun headphoneChoices(settings: SettingsStore, apps: HeadphoneApps): Flow<Set<AppKey>?> =
-        combine(settings[HeadphoneSettings.LiftApps], apps.apps) { on, chosen -> chosen.takeIf { on } }
 
     private companion object {
         const val TARGET = "sheet_target"

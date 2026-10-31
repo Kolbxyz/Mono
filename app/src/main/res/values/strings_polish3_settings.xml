@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings › Home: one group for how notifications show on home. -->
+    <string name="settings_notifications">Notifications</string>
+    <!-- Settings › Home › Under the clock: the lines it may show, as toggles. -->
+    <string name="settings_glance_shows">Show</string>
+    <!-- Settings › Drawer & search: the everyday sources besides apps, as toggles. -->
+    <string name="settings_search_finds">Also finds</string>
+</resources>

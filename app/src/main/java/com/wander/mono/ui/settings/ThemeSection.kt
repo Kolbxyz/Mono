@@ -27,7 +27,6 @@ fun ThemeSection(settings: SettingsViewModel) {
             settings,
             ThemeSettings.AmoledBlack,
             title = R.string.settings_amoled_black,
-            summary = R.string.settings_amoled_black_short,
             icon = R.drawable.sym_invert_colors,
         )
         if (amoled == true) {
@@ -35,7 +34,6 @@ fun ThemeSection(settings: SettingsViewModel) {
                 settings,
                 ThemeSettings.BlackWallpaper,
                 title = R.string.settings_black_wallpaper,
-                summary = R.string.settings_black_wallpaper_short,
                 icon = R.drawable.sym_contrast,
             )
         }

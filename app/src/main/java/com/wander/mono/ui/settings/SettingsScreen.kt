@@ -28,15 +28,16 @@ import com.wander.mono.ui.components.backLean
 import com.wander.mono.ui.components.backMorph
 import com.wander.mono.ui.components.depthBlur
 import com.wander.mono.ui.overlayScrim
-import com.wander.mono.ui.theme.LocalReducedMotion
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Mono's own settings: a hub of [SettingsCategory] rows, each opening its page of sections. The
  * page is state inside this overlay, not a route, laid over the hub, which stays composed under
- * it (its scroll kept): the page opens out of a rounded card as the hub steps back, dims and
- * blurs; back (predictive, the page shrinking into that card and leaning off the swiped edge as
- * the hub comes forward) returns to the hub, and back on the hub closes settings via [onBack].
+ * it (its scroll kept, nothing in it re-animated on return): the page opens out of a rounded card
+ * as the hub steps back and dims; back (predictive, the page shrinking into that card and leaning
+ * off the swiped edge as the hub comes forward, then fading on the swipe's own path) returns to
+ * the hub, and back on the hub closes settings via [onBack]. The hub only dims, never blurs: text
+ * coming back into focus as the page leaves would read as a flicker.
  */
 @Composable
 fun SettingsScreen(
@@ -53,32 +54,33 @@ fun SettingsScreen(
     val keyboard = LocalSoftwareKeyboardController.current
     LaunchedEffect(keyboard) { keyboard?.hide() }
     val motion = MaterialTheme.motionScheme
-    val enterSpec = motion.defaultSpatialSpec<Float>()
-    val exitSpec = motion.fastSpatialSpec<Float>()
+    // One spatial spring both ways: a page leaves as gently as it came, the fade (which never
+    // overshoots) done while it is still settling into its card.
+    val spatial = motion.defaultSpatialSpec<Float>()
+    val fade = motion.defaultEffectsSpec<Float>()
     val open = page != null
-    LaunchedEffect(open) { back.follow(open, if (open) enterSpec else exitSpec) }
+    LaunchedEffect(open) { back.follow(open, spatial, fade) }
     PredictiveBackHandler(enabled = open) { progress ->
         try {
             progress.collect { back.swipe(it.progress, backLean(it.swipeEdge)) }
             page = null
         } catch (_: CancellationException) {
-            // The swipe was abandoned: the page stays and grows back. A commit leaves the
-            // progress alone, so the outgoing page carries on from its shrunk card.
-            back.cancelled(exitSpec)
+            // The swipe was abandoned: the page stays and grows back, on the default spring so
+            // it settles rather than snaps. A commit leaves the progress alone, so the outgoing
+            // page carries on from its shrunk card.
+            back.cancelled(spatial)
         }
     }
-    val pageComposed by remember { derivedStateOf { page != null || back.presence != 0f } }
-    // The blur is motion of its own: with motion reduced the hub only dims and steps back.
-    val blur = !LocalReducedMotion.current
+    val pageComposed by remember { derivedStateOf { page != null || back.visible } }
     val scrim = overlayScrim()
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
         SettingsPage(
             R.string.settings_title,
             onBack,
             Modifier
-                // Under a whole page the hub is hidden: no blur pass for nothing.
+                // Under a whole page the hub is hidden: nothing drawn for nothing.
                 .drawWithContent { if (!back.covers) drawContent() }
-                .depthBlur({ back.depth }, scrim, blur)
+                .depthBlur({ back.depth }, scrim, blur = false)
                 .then(if (open) Modifier.clearAndSetSemantics {} else Modifier),
         ) {
             item(key = "hub") {
@@ -99,7 +101,7 @@ fun SettingsScreen(
                 SettingsPage(
                     showing.title,
                     onBack = { page = null },
-                    modifier = Modifier.backMorph({ back.morph }, { back.lean }, fade = { back.presence }),
+                    modifier = Modifier.backMorph({ back.morph }, { back.lean }, fade = { back.opacity }),
                 ) {
                     categoryPage(showing, settings)
                 }

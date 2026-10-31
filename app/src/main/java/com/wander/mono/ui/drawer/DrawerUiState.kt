@@ -30,7 +30,6 @@ data class DrawerUiState(
     val privateApps: List<DrawerEntry> = emptyList(),
     val work: List<WorkSection> = emptyList(),
     val look: DrawerLook = DrawerLook(),
-    val keyboardOnOpen: Boolean = false,
     val railAtStart: Boolean = false,
     val controls: ListControls = ListControls(),
 )

@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
+import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppBadge
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.CountBadge
@@ -50,8 +51,9 @@ import com.wander.mono.ui.theme.secondaryTextColor
 
 /**
  * A folder on home, sized like a favourite: a tonal tile of its first apps' icons, its name and
- * badge, the names inside while it is closed, and a chevron that turns as it opens. A tap opens
- * or closes it (its apps then show under it, indented); a hold offers rename and ungroup.
+ * badge (in text-only mode the names inside while it is closed), and a chevron that turns as it
+ * opens. A tap opens or closes it (its apps then show under it, indented); a hold offers rename
+ * and ungroup.
  */
 @Composable
 internal fun FolderRow(
@@ -66,9 +68,13 @@ internal fun FolderRow(
     val motion = MaterialTheme.motionScheme
     val interactions = remember { MutableInteractionSource() }
     val turn by animateFloatAsState(if (open) HALF_TURN else 0f, motion.defaultSpatialSpec())
+    val namesShown = icons.mode == IconMode.TextOnly
+    val names = row.apps.joinToString(", ") { it.app.label }
     val state = listOfNotNull(
         stringResource(if (open) R.string.state_folder_open else R.string.state_folder_closed),
         badgeState(row.badge),
+        // TalkBack still hears what is inside when the tile alone shows it.
+        names.takeIf { !open && !namesShown },
     ).joinToString(", ")
     Row(
         modifier
@@ -106,14 +112,15 @@ internal fun FolderRow(
                     is AppBadge.Count -> CountBadge(badge)
                 }
             }
-            // Closed, the folder says what is in it; open, its apps say it themselves.
+            // Closed, the folder says what is in it; open, its apps say it themselves. With icons
+            // its tile already shows them, so the names would only repeat it in words.
             AnimatedVisibility(
-                visible = !open,
+                visible = !open && namesShown,
                 enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
                 exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
             ) {
                 Text(
-                    row.apps.joinToString(", ") { it.app.label },
+                    names,
                     style = MaterialTheme.typography.bodyMedium.onWallpaper(),
                     color = secondaryTextColor(),
                     maxLines = 1,

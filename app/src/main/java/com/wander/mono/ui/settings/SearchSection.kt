@@ -17,32 +17,28 @@ import com.wander.mono.R
 import com.wander.mono.data.settings.SearchSettings
 
 /**
- * What search looks in besides apps (a source switched off is not even asked), then, as a group of
- * its own, whether it remembers recent searches.
+ * What search looks in besides apps (a source switched off is not even asked): the everyday
+ * sources at a glance, then the two that read personal data, each with its access, then whether
+ * recent searches are kept (and, once some are, clearing them; switching it off forgets them too).
  */
 @Composable
 fun SearchSection(settings: SettingsViewModel, history: SearchHistoryViewModel = viewModel()) {
+    val remembering = settings.collect(SearchSettings.RememberRecent) ?: return
+    val hasHistory by history.hasHistory.collectAsStateWithLifecycle(initialValue = false)
     SettingsGroup(R.string.settings_search_sources) {
-        SwitchSetting(
+        ToggleChipsSetting(
             settings,
-            SearchSettings.QuickAnswers,
-            title = R.string.search_source_quick_answers,
-            summary = R.string.search_source_quick_answers_summary,
-            icon = R.drawable.sym_calculate,
-        )
-        SwitchSetting(
-            settings,
-            SearchSettings.Shortcuts,
-            title = R.string.search_source_shortcuts,
-            summary = R.string.search_source_shortcuts_summary,
-            icon = R.drawable.sym_arrow_outward,
-        )
-        SwitchSetting(
-            settings,
-            SearchSettings.SettingsPages,
-            title = R.string.search_source_settings_pages,
-            summary = R.string.search_source_settings_pages_summary,
-            icon = R.drawable.sym_settings,
+            title = R.string.settings_search_finds,
+            icon = R.drawable.sym_search,
+            chips = listOf(
+                ToggleChip(SearchSettings.QuickAnswers, R.string.search_source_quick_answers, R.drawable.sym_calculate),
+                ToggleChip(SearchSettings.Shortcuts, R.string.search_source_shortcuts, R.drawable.sym_arrow_outward),
+                ToggleChip(
+                    SearchSettings.SettingsPages,
+                    R.string.search_source_settings_pages,
+                    R.drawable.sym_settings,
+                ),
+            ),
         )
         ContactsSwitch(settings)
         SwitchSetting(
@@ -52,16 +48,6 @@ fun SearchSection(settings: SettingsViewModel, history: SearchHistoryViewModel =
             summary = R.string.search_source_notifications_summary,
             icon = R.drawable.sym_notifications,
         )
-    }
-    RecentGroup(settings, history)
-}
-
-/** Remembering recent searches, and once some are, clearing them. Switching it off forgets them too. */
-@Composable
-private fun RecentGroup(settings: SettingsViewModel, history: SearchHistoryViewModel) {
-    val remembering = settings.collect(SearchSettings.RememberRecent) ?: return
-    val hasHistory by history.hasHistory.collectAsStateWithLifecycle(initialValue = false)
-    SettingsGroup(R.string.settings_search_recent) {
         SwitchRow(
             checked = remembering,
             onCheckedChange = history::setRemembering,

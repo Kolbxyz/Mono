@@ -7,18 +7,13 @@
     <string name="drawer_jump_to_letter">Jump to %1$s</string>
 
     <!-- Settings: drawer -->
-    <string name="drawer_keyboard_on_open">Show keyboard on open</string>
-    <string name="drawer_keyboard_on_open_summary">Opening the drawer goes straight to search</string>
     <string name="drawer_rail_left">Letters on the left</string>
     <string name="drawer_rail_right">Letters on the right</string>
 
     <!-- Settings: search sources -->
-    <string name="search_source_quick_answers">Quick answers</string>
-    <string name="search_source_quick_answers_summary">Sums, unit conversions, timers and alarms</string>
-    <string name="search_source_shortcuts">App shortcuts</string>
-    <string name="search_source_shortcuts_summary">Chats, actions and pages inside apps</string>
-    <string name="search_source_settings_pages">Android settings</string>
-    <string name="search_source_settings_pages_summary">Pages such as Wi-Fi or Bluetooth</string>
+    <string name="search_source_quick_answers">Answers</string>
+    <string name="search_source_shortcuts">Shortcuts</string>
+    <string name="search_source_settings_pages">Settings</string>
 
     <!-- Settings: gestures -->
     <string name="gesture_swipe_up">Swipe up</string>

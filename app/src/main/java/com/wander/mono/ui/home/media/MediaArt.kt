@@ -54,16 +54,25 @@ internal fun MediaArt(art: ImageBitmap?, size: Dp, modifier: Modifier = Modifier
     }
 }
 
-/** Title over artist; [large] for the expanded player, [centred] when they sit on its axis. */
+/**
+ * Title over artist; [large] for the expanded player, [centred] when they sit on its axis, the
+ * title wrapping to at most [titleLines].
+ */
 @Composable
-internal fun MediaTitle(media: PlayingMedia, large: Boolean, modifier: Modifier = Modifier, centred: Boolean = large) {
+internal fun MediaTitle(
+    media: PlayingMedia,
+    large: Boolean,
+    modifier: Modifier = Modifier,
+    centred: Boolean = large,
+    titleLines: Int = if (large) 2 else 1,
+) {
     val align = if (centred) TextAlign.Center else TextAlign.Start
     Column(modifier, horizontalAlignment = if (centred) Alignment.CenterHorizontally else Alignment.Start) {
         Text(
             media.title,
             style = with(MaterialTheme.typography) { if (large) titleLarge else titleMedium },
             textAlign = align,
-            maxLines = if (large) 2 else 1,
+            maxLines = titleLines,
             overflow = TextOverflow.Ellipsis,
         )
         media.artist?.let {
