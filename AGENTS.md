@@ -27,7 +27,7 @@ Single module `:app`, package root `com.wander.mono`.
 | Package | Owns |
 | --- | --- |
 | `core/apps` | `LauncherApps` catalog, profile callbacks, shortcuts, icon cache, launch / app info / uninstall. |
-| `core/notifications` | `MonoNotificationListener`, per-app notification counts and previews, live activities (ongoing timers, navigation, progress), notification-access state; opening, replying and buttons (through the app lock). |
+| `core/notifications` | `MonoNotificationListener`, per-app notification counts and previews, live activities (ongoing timers, navigation, progress), the quiet digest (what arrived during quiet mode, in memory only), notification-access state; opening, replying and buttons (through the app lock). |
 | `core/media` | Active media sessions (through the listener's grant), the playing item and opening its app (`PlayerApp`, through the app lock). |
 | `core/calendar` | Opt-in upcoming events (`READ_CALENDAR`) from `CalendarContract.Instances`, observed, re-read only at event boundaries. |
 | `core/system` | Clock tick and next alarm (and dismissing it), battery, from system broadcasts; wallpaper colours and hints; settings pages, web search and text hand-offs, clipboard, gestures. |
@@ -38,7 +38,7 @@ Single module `:app`, package root `com.wander.mono`.
 | `core/usage` | Opt-in usage access (`UsageStatsManager`): today's foreground time per app, read on demand. |
 | `core/widgets` | The `AppWidgetHost`, widget providers, binding and configure flow, placement and sizes. |
 | `core/siblings` | Wanda and Phalanx providers (signature permission, `docs/design/sibling-contract.md`): up next, library search, per-room unread; absent means hidden. |
-| `data` | DataStore, one small file per choice: ordered favourites, hidden apps, names, folders, swipe-left actions, routines, muted apps, daily usage limits, headphone and quiet apps, live rows, widgets; opened new apps and search history (never backed up). Locked apps live in `core/security`. |
+| `data` | DataStore, one small file per choice: ordered favourites, hidden apps, names, folders, swipe-left actions, routines, muted apps, daily usage limits, headphone and quiet apps, live rows, widgets; opened new apps, search history, hourly launch counts (`LaunchHours`, for the likely favourite and the drawer's suggestion) and the focused favourite (never backed up). Locked apps live in `core/security`. |
 | `data/backup` | Backup file the user saves and restores through the file picker: favourites, hidden apps, names, live rows, quiet apps, locked apps, home structure (folders, swipes, muted apps, limits, routines), settings (no widgets); optionally encrypted with a passphrase. |
 | `data/settings` | User settings: `Setting` types, `SettingsStore` (its own DataStore file), one `*Settings.kt` per feature. |
 | `di` | Hilt modules and the app coroutine scope. |
@@ -71,9 +71,9 @@ Settings opens from long-pressing the clock or an empty spot on home (`HomeSheet
 3. Register the section with one line in `ui/settings/SettingsSections.kt`, in the hub page it belongs to (the pages are the categories in `ui/settings/SettingsCategory.kt`), and the setting in `backedUpSettings` (`data/settings/BackedUpSettings.kt`) so backups carry it. Read the value elsewhere with `SettingsStore[setting]` (a `Flow`).
 
 ```kotlin
-object DrawerSettings { val KeyboardOnOpen = BooleanSetting("drawer_keyboard_on_open", default = false) }
+object DrawerSettings { val NewApps = BooleanSetting("drawer_new_apps", default = true) }
 @Composable fun DrawerSection(settings: SettingsViewModel) = SettingsGroup(R.string.drawer_settings_title) {
-    SwitchSetting(settings, DrawerSettings.KeyboardOnOpen, title = R.string.drawer_keyboard_on_open)
+    SwitchSetting(settings, DrawerSettings.NewApps, title = R.string.drawer_new_apps)
 }
 ```
 

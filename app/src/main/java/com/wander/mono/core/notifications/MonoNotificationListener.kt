@@ -42,7 +42,7 @@ class MonoNotificationListener : NotificationListenerService() {
     override fun onListenerDisconnected() {
         access.recheck()
         cancels.bind(null)
-        counts.publish(emptyMap())
+        counts.disconnected()
         previews.clear()
         live.clear()
     }

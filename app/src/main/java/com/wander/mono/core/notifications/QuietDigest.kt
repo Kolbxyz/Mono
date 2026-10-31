@@ -38,8 +38,12 @@ class QuietDigest @Inject constructor(
                 val gathered = HashMap<PackageUser, Int>()
                 var before: Map<PackageUser, Int>? = null
                 try {
-                    counts.counts.collect { now ->
-                        before?.let { previous -> gathered.addGrowth(previous, now) }
+                    // Only between two readings of a connected listener: once it binds (the process
+                    // started in quiet mode) or comes back, what it finds already posted is the new
+                    // baseline, not a burst of notifications that came in.
+                    counts.read.collect { now ->
+                        val previous = before
+                        if (previous != null && now != null) gathered.addGrowth(previous, now)
                         before = now
                     }
                 } finally {
