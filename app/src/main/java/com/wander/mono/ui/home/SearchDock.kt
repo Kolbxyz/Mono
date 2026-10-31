@@ -4,8 +4,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +37,8 @@ fun SearchDock(onOpen: () -> Unit, modifier: Modifier = Modifier) {
         onClick = onOpen,
         modifier = modifier
             .fillMaxWidth()
-            .height(DOCK_HEIGHT)
+            // Required, not just preferred: whatever runs short above it, the pill keeps its shape.
+            .requiredHeight(DOCK_HEIGHT)
             .expressivePress(interaction)
             .clearAndSetSemantics {
                 contentDescription = label
@@ -67,3 +68,9 @@ fun SearchDock(onOpen: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 private val DOCK_HEIGHT = 56.dp
+
+/**
+ * The height home gives the dock, with the 8 dp home sets above and below it, so the player under
+ * the clock leaves it this much ([HomePlayerSlot]).
+ */
+internal val SearchDockRoom = DOCK_HEIGHT + 16.dp

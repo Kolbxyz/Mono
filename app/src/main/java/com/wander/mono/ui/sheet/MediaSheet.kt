@@ -14,7 +14,7 @@ import com.wander.mono.ui.settings.SettingsViewModel
 
 /**
  * The player's sheet, from a long press on it under the clock: whether it shows, how it opens,
- * whether a swipe skips, whether it takes the artwork's colour and how long it stays once paused.
+ * whether a swipe skips and how long it stays once paused.
  * The player under the sheet follows each change.
  */
 @Composable

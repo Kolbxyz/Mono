@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Settings: whether the now-playing player shows under the clock. -->
-    <string name="settings_media_show">Show the player</string>
-    <string name="settings_media_show_short">Under the clock, while something plays</string>
+    <string name="settings_media_show">Show player</string>
 
     <!-- TalkBack: tapping the player's artwork, or its action, opens the app that plays. -->
     <string name="media_open_player">Open the player</string>
@@ -10,10 +9,8 @@
     <string name="media_open_app">Open %1$s</string>
     <!-- Between the title and the artist on the player's one-line strip. -->
     <string name="media_title_separator" translatable="false">" · "</string>
-    <!-- An up-next entry's place in line, when it has no artwork: 1 plays next. -->
-    <string name="media_up_next_place" translatable="false">%1$d</string>
 
-    <!-- Where a list shorter than home sits: slider in settings and in edit mode. -->
+    <!-- Where a list shorter than home sits: the slider in edit mode. -->
     <string name="settings_list_position">List position</string>
     <string name="list_position_top">Top</string>
     <string name="list_position_bottom">Bottom</string>

@@ -38,6 +38,11 @@ class LauncherPrefs @Inject constructor(@ApplicationContext context: Context) {
 
     suspend fun removeFavorite(key: AppKey) = editFavorites { it - key }
 
+    /** Puts [key] back on home at [index] (last, if the list has shrunk since), for Undo; once only. */
+    suspend fun insertFavorite(key: AppKey, index: Int) = editFavorites {
+        if (key in it) it else it.toMutableList().apply { add(index.coerceIn(0, size), key) }
+    }
+
     suspend fun moveFavorite(key: AppKey, by: Int) = editFavorites { it.moved(key, by) }
 
     /** Saves a drag in edit mode: [order] is the shown favourites, in their new order. */

@@ -55,8 +55,7 @@
     <string name="privacy_hidden_profiles_use">Lists private space apps; Android allows it only while Mono is the home app</string>
 
     <!-- Appearance: solid black and icon shape -->
-    <string name="settings_black_wallpaper">Solid black wallpaper</string>
-    <string name="settings_black_wallpaper_short">Black instead of the wallpaper in dark theme</string>
+    <string name="settings_black_wallpaper">Black wallpaper</string>
     <string name="settings_icon_shape">Icon shape</string>
     <string name="settings_icon_shape_system">System</string>
     <string name="settings_icon_shape_circle">Circle</string>

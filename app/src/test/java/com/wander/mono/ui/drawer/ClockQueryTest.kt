@@ -91,4 +91,29 @@ class ClockQueryTest {
         assertNull(alarm("alarm 0am"))
         assertNull(alarm("wakelock"))
     }
+
+    @Test
+    fun `french timers`() {
+        assertEquals(600, timer("minuteur 10"))
+        assertEquals(600, timer("Minuteur de 10 minutes"))
+        assertEquals(300, timer("mets un minuteur de 5 min"))
+        assertEquals(5400, timer("minuteur 1 heure et 30 minutes"))
+        assertEquals(45, timer("minuteur 45 secondes"))
+        assertEquals(7200, timer("2 heures"))
+        assertEquals(600, timer("10 min minuteur"))
+        assertNull(timer("minuteur"))
+    }
+
+    @Test
+    fun `french alarms, with or without accents`() {
+        assertEquals(AlarmTime(7, 30), alarm("réveil 7h30"))
+        assertEquals(AlarmTime(7, 30), alarm("reveil 7h30"))
+        assertEquals(AlarmTime(7, 0), alarm("réveil à 7h"))
+        assertEquals(AlarmTime(7, 0), alarm("alarme à 7 h"))
+        assertEquals(AlarmTime(6, 45), alarm("réveille-moi à 6 h 45"))
+        assertEquals(AlarmTime(18, 0), alarm("mets une alarme à 18h"))
+        assertEquals(AlarmTime(7, 0), alarm("alarm 7h"))
+        assertNull(alarm("réveil"))
+        assertNull(alarm("réveil 25h"))
+    }
 }

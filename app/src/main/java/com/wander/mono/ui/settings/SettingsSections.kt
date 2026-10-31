@@ -14,31 +14,25 @@ internal fun sectionsOf(category: SettingsCategory): List<SettingsSection> = whe
         { ClockSection(it) },
         { GlanceLinesSection(it) },
         { CalendarSection() },
-        { HomeLookSection(it) },
         { MediaSection(it) },
+        { NotificationSection(it) },
+        { GestureSection(it) },
     )
     SettingsCategory.Appearance -> listOf(
         { LooksSection(it) },
         { ThemeSection(it) },
         { WallpapersSection() },
         { IconSection(it) },
+        { HomeLookSection(it) },
         { AccessibilitySection(it) },
     )
     SettingsCategory.DrawerSearch -> listOf(
         { DrawerSection(it) },
         { SearchSection(it) },
     )
-    SettingsCategory.Notifications -> listOf(
-        { NotificationSection(it) },
-        { LiveActivitySection(it) },
-    )
-    SettingsCategory.Gestures -> listOf(
-        { GestureSection(it) },
-    )
     SettingsCategory.Focus -> listOf(
         { QuietSection() },
-        { RoutinesSection(it) },
-        { HeadphoneSection(it) },
+        { RoutinesSection() },
         { ScreenTimeSection(it) },
     )
     SettingsCategory.Privacy -> listOf(

@@ -126,7 +126,7 @@ private fun PagePane(category: SettingsCategory, settings: SettingsViewModel) {
                 .padding(top = padding.calculateTopPadding())
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End))
                 .readableColumn(),
-            contentPadding = PaddingValues(bottom = padding.calculateBottomPadding()),
+            contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + PageEndSpace),
         ) {
             categoryPage(category, settings)
         }

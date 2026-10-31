@@ -12,13 +12,14 @@ import javax.inject.Singleton
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 
-/** The charge in percent and whether a charger is feeding it. */
-data class BatteryState(val percent: Int, val charging: Boolean)
+/** The charge in percent, whether a charger is feeding it and whether battery [saver] is on. */
+data class BatteryState(val percent: Int, val charging: Boolean, val saver: Boolean = false)
 
-/** The header's battery chip stays quiet unless the battery is low or charging (spec 4.2). */
-fun BatteryState.isWorthShowing(): Boolean = charging || percent <= LOW_BATTERY_PERCENT
+/** The header's battery chip stays quiet unless the battery is low, charging or saving (spec 4.2). */
+fun BatteryState.isWorthShowing(): Boolean = charging || saver || percent <= LOW_BATTERY_PERCENT
 
 const val LOW_BATTERY_PERCENT = 15
 
@@ -37,11 +38,16 @@ private const val PERCENT = 100
 
 /**
  * The battery, from the sticky `ACTION_BATTERY_CHANGED` broadcast: the registration hands back the
- * last state at once, and the system sends a new one on each change. Registered only while collected.
+ * last state at once, and the system sends a new one on each change. Battery saver comes from its own
+ * broadcast ([powerSaveMode]). Both are registered only while collected.
  */
 @Singleton
 class Battery @Inject constructor(@ApplicationContext private val context: Context) {
-    val state: Flow<BatteryState?> = callbackFlow {
+    val state: Flow<BatteryState?> = combine(charge(), powerSaveMode(context)) { charge, saver ->
+        charge?.copy(saver = saver)
+    }.distinctUntilChanged()
+
+    private fun charge(): Flow<BatteryState?> = callbackFlow {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 trySend(read(intent))

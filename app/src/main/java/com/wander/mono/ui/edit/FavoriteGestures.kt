@@ -18,7 +18,7 @@ import kotlin.math.abs
 
 /**
  * Tap, swipes, hold, and hold-then-drag on one favourite. A tap launches; a swipe right before
- * the hold shows its notifications, a swipe left runs the action the user chose for it; the hold
+ * the hold unfolds its shortcuts, a swipe left runs the action the user chose for it; the hold
  * opens its options at once, under the finger; moving on from the hold closes them again and lifts
  * the row into a drag (in edit mode the hold alone lifts it). A drag of the list before the hold
  * timeout is a scroll and is left to the list.

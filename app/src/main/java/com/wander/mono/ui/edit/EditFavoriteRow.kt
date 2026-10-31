@@ -18,18 +18,21 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.data.LiveRowRef
 import com.wander.mono.ui.components.AppBadge
+import com.wander.mono.ui.components.AppIcon
+import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.AppLabel
 import com.wander.mono.ui.home.HomeRow
 
 /**
- * A favourite in edit mode (spec 4.6): drag handle, name, rename and remove, then a compact
- * placeholder card for each of its live rows, where that row shows on home, with its on/off
- * switch. The placeholders ride with their app: while [lifted] the whole item rises, the
+ * A favourite in edit mode (spec 4.6): drag handle, icon (none in text-only mode), name, rename
+ * and remove, then a compact placeholder card for each of its live rows, where that row shows on
+ * home, with its on/off switch. The placeholders ride with their app: while [lifted] the whole item rises, the
  * favourite's card gaining larger corners, a shadow and a brighter container.
  */
 @Composable
 internal fun EditFavoriteRow(
     row: HomeRow.App,
+    icons: AppIcons,
     toggles: List<LiveRowToggle>,
     lifted: Boolean,
     onRename: () -> Unit,
@@ -54,6 +57,8 @@ internal fun EditFavoriteRow(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             DragHandle(handle)
+            // The icon home shows, so the row is recognised at a look while moving it.
+            AppIcon(row.app.key, icons, Modifier.padding(end = 12.dp), size = EDIT_ICON_SIZE)
             AppLabel(
                 app = row.app,
                 badge = AppBadge.None,
@@ -83,3 +88,6 @@ internal fun EditFavoriteRow(
 
 /** Placeholders sit under their app, indented as far as the drag handle, so they read as its rows. */
 private val PLACEHOLDER_INDENT = 24.dp
+
+/** Smaller than home's icon: the card also holds a handle and two buttons. */
+private val EDIT_ICON_SIZE = 32.dp

@@ -61,7 +61,6 @@ fun GestureSection(settings: SettingsViewModel, gestures: GestureViewModel = vie
             settings,
             GestureSettings.DoubleTapLock,
             title = R.string.gesture_double_tap_lock,
-            summary = R.string.gesture_double_tap_lock_summary,
             icon = R.drawable.sym_lock,
         )
     }

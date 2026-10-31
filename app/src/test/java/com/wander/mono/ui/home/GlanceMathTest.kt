@@ -45,4 +45,13 @@ class GlanceMathTest {
         assertEquals(44, clockSize(ClockLook(size = 88, style = ClockStyle.Small), compact = false))
         assertEquals(56, clockSize(ClockLook(size = 88), compact = true))
     }
+
+    @Test
+    fun `the alarm counts down only within twelve hours, rounding up`() {
+        assertEquals(1L, alarmCountdownMinutes(now + 30_000, now))
+        assertEquals(12 * 60L, alarmCountdownMinutes(now + 12 * hour, now))
+        assertNull(alarmCountdownMinutes(now + 12 * hour + 1, now))
+        assertNull(alarmCountdownMinutes(now - 1, now))
+        assertNull(alarmCountdownMinutes(null, now))
+    }
 }

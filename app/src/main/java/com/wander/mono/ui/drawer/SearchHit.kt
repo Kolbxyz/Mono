@@ -12,7 +12,8 @@ import java.util.Locale
 
 /**
  * One search result: an app (hidden ones included), a shortcut, a sum or conversion, a timer or
- * alarm, a link or text to hand off, a contact, a notification, a song, a settings page or the web.
+ * alarm, a note or a call, a link or text to hand off, a contact, a notification, a song, a settings
+ * page or the web.
  */
 sealed interface SearchHit {
     val key: String
@@ -20,6 +21,9 @@ sealed interface SearchHit {
 
     /** The characters of [label] the query matched, highlighted in its row; empty for none. */
     val matched: List<IntRange> get() = emptyList()
+
+    /** A result tapping hands to another app ([SearchHandOffs]): a note, a call, a link, text, a notification. */
+    sealed interface HandOff : SearchHit
 
     data class App(val entry: DrawerEntry, override val matched: List<IntRange> = emptyList()) : SearchHit {
         override val key: String get() = "app:${entry.app.key.encode()}"
@@ -58,14 +62,29 @@ sealed interface SearchHit {
         override val label: String get() = "%02d:%02d".format(Locale.ROOT, time.hour, time.minute)
     }
 
+    /** A note typed after "note" ([CommandQuery]); tapping hands [text] to the app the user picks. */
+    data class Note(val text: String) : HandOff {
+        override val key: String get() = "note"
+        override val label: String get() = text
+    }
+
+    /**
+     * A call typed after "call" ([CommandQuery]): [number] in the dialer, ready for the user to press
+     * call. [contact] is the one it was found as, null when the number itself was typed.
+     */
+    data class Dial(val number: String, val contact: Contact? = null) : HandOff {
+        override val key: String get() = contact?.let { "dial:${it.id}" } ?: "dial"
+        override val label: String get() = contact?.name ?: number
+    }
+
     /** The query read as a web address; tapping opens it in the app that takes it. */
-    data class Link(val url: String) : SearchHit {
+    data class Link(val url: String) : HandOff {
         override val key: String get() = "link"
         override val label: String get() = url
     }
 
     /** Pasted text (or a link) handed to another app through Android's share sheet. */
-    data class ShareText(val text: String) : SearchHit {
+    data class ShareText(val text: String) : HandOff {
         override val key: String get() = "share"
         override val label: String get() = text
     }
@@ -98,7 +117,7 @@ sealed interface SearchHit {
         val text: String?,
         override val matched: List<IntRange> = emptyList(),
         val textMatched: List<IntRange> = emptyList(),
-    ) : SearchHit {
+    ) : HandOff {
         override val key: String get() = "notice:${conversation?.key ?: preview.key}"
         override val label: String get() = title
     }

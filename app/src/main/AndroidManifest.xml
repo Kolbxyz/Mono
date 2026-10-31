@@ -138,6 +138,11 @@
         <intent>
             <action android:name="android.intent.action.SET_ALARM" />
         </intent>
+        <!-- Search: the dialer that takes "call 06 12 34 56 78" (core/system/TextHandOff). -->
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
         <!-- The glance header's long press on the next alarm (core/system/AlarmDismiss). -->
         <intent>
             <action android:name="android.intent.action.DISMISS_ALARM" />

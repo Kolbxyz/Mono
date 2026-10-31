@@ -10,7 +10,9 @@ import com.wander.mono.core.system.WebSearchTarget
 
 /**
  * Everything search shows for a query, in this order: its [actions] (a sum, a conversion, a timer
- * or an alarm, from [SearchActions]), apps (the best one first), shortcuts, the query as a link to
+ * or an alarm, from [SearchActions]), a typed command ([CommandQuery]: a note, or a call to the best
+ * contact with a number; a typed number is one of the [actions]), apps (the best one first; before the command when
+ * an app's name starts with the query, so "note pad" still finds Note Pad), shortcuts, the query as a link to
  * open, contacts, notifications, songs in Wanda, settings pages, and only when nothing else matched,
  * a web search handed to the browser; then, last, sharing the query when it was pasted text. A
  * result the user opened for this very query before ([SearchHistory][com.wander.mono.data.SearchHistory])
@@ -39,11 +41,18 @@ internal object SearchResults {
         webTarget: () -> WebSearchTarget?,
     ): List<SearchHit> {
         if (query.isBlank()) return emptyList()
+        // Contacts were looked up by the name after "call", so they are ranked by it too.
+        val callee = CommandQuery.callee(query)
+        val dial = callee?.takeIf { CommandQuery.number(it) == null }?.let { dialFor(it, contacts) }
+        val (commands, answers) = (actions + listOfNotNull(dial)).partition(::isCommand)
         val hits = buildList {
-            addAll(actions)
-            addAll(AppSearch.search(query, entries, shortcuts))
+            addAll(answers)
+            val apps = AppSearch.search(query, entries, shortcuts)
+            if (namedBy(query, apps)) addAll(apps + commands) else addAll(commands + apps)
             addAll(handOffs.filterIsInstance<SearchHit.Link>())
-            val people = AppSearch.rankMatched(query, contacts, label = { it.name }).take(MAX_CONTACTS)
+            val people = AppSearch.rankMatched(callee ?: query, contacts, label = { it.name })
+                .filterNot { it.item == dial?.contact }
+                .take(MAX_CONTACTS)
             addAll(people.map { SearchHit.Person(it.item, it.matched) })
             addAll(SearchNotices.find(query, notices, entries))
             // Wanda already matched and ordered them (most played first); its order is kept.
@@ -54,6 +63,20 @@ internal object SearchResults {
         val found = hits.ifEmpty { listOfNotNull(webTarget()?.let { SearchHit.Web(query.trim(), it.appLabel) }) }
         // Sharing is no answer to the query: it never keeps the web search out.
         return preferredFirst(found + handOffs.filterIsInstance<SearchHit.ShareText>(), preferred)
+    }
+
+    private fun isCommand(hit: SearchHit) = hit is SearchHit.Note || hit is SearchHit.Dial
+
+    /** The best match for [callee] among [contacts] with a number, to call. */
+    private fun dialFor(callee: String, contacts: List<Contact>): SearchHit.Dial? {
+        val best = AppSearch.rank(callee, contacts.filter { it.phone != null }, label = { it.name }).firstOrNull()
+        return best?.phone?.let { SearchHit.Dial(it, best) }
+    }
+
+    /** Whether an app's (not a shortcut's) name starts with [query]: then it, not a command, was meant. */
+    private fun namedBy(query: String, apps: List<SearchHit>): Boolean {
+        val typed = AppSearch.normalize(query)
+        return apps.any { it is SearchHit.App && AppSearch.normalize(it.label).startsWith(typed) }
     }
 
     /** The Wanda build that found [track], among the apps search may show. */

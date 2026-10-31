@@ -3,9 +3,8 @@
     <!-- Settings: gestures -->
     <string name="gesture_settings_title">Gestures</string>
     <string name="gesture_double_tap_lock">Double tap to lock</string>
-    <string name="gesture_double_tap_lock_summary">Double tap an empty spot on home to turn the screen off</string>
     <string name="gesture_service_grant">Allow gestures</string>
-    <string name="gesture_service_grant_summary">Turn on Mono gestures in accessibility settings</string>
+    <string name="gesture_service_grant_summary">Turn on in accessibility settings</string>
 
     <!-- The accessibility service, as Android's accessibility settings list it. -->
     <string name="gesture_service_label">Mono gestures</string>

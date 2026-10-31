@@ -56,12 +56,12 @@ import kotlin.math.abs
  * forms on the motion scheme, never swapping one layout for another: collapsed, a pill-like strip
  * (artwork thumb, title · artist, previous / play / next, a thin progress line that scrubs when
  * dragged); a tap grows the same artwork in place, its corners easing, while the strip's buttons
- * fold away and the full player opens under it (app chip, wavy seek bar, connected transport,
- * output, what plays next) over the blurred artwork. A tap on it again, outside it, back or a
- * scroll of home collapses it ([expansion]). The artwork and the app chip open the player app; a
- * horizontal swipe skips; a long press opens its options ([onLongPress]). [MediaSettings] choose
- * whether it starts expanded, takes the artwork's colour and skips on a swipe. [compact] (a phone
- * on its side) keeps the expanded player short.
+ * fold away and the full player opens under it (app and output chips in one row, wavy seek bar,
+ * connected transport, one line of what plays next) over the blurred artwork. A tap on it again,
+ * outside it, back or a scroll of home collapses it ([expansion]). The artwork and the app chip
+ * open the player app; a horizontal swipe skips; a long press opens its options ([onLongPress]).
+ * [MediaSettings] choose whether it starts expanded and skips on a swipe. [compact] (a phone on its
+ * side, or home short of room under the clock) keeps the expanded player short.
  */
 @Composable
 fun NowPlayingCard(
@@ -79,8 +79,7 @@ fun NowPlayingCard(
     val scheme = MaterialTheme.colorScheme
     val expanded = expansion.expanded
     val swipeToSkip = settings.value(MediaSettings.SwipeToSkip)
-    val artTint = settings.value(MediaSettings.ArtTint)
-    val tint = media.artColor?.takeIf { artTint }?.let { lerp(scheme.surfaceContainerHigh, Color(it), ART_TINT) }
+    val tint = media.artColor?.let { lerp(scheme.surfaceContainerHigh, Color(it), ART_TINT) }
         ?: scheme.surfaceContainerHigh
     val container by animateColorAsState(tint, motion.defaultEffectsSpec(), label = "art-tint")
     // Chosen for the tint it goes to and eased alongside it, so the text never flips in one frame.
@@ -106,7 +105,7 @@ fun NowPlayingCard(
         colors = CardDefaults.cardColors(containerColor = container, contentColor = content),
     ) {
         Box {
-            if (artTint) PlayerBackdrop(media, container, { morph }, Modifier.matchParentSize())
+            PlayerBackdrop(media, container, { morph }, Modifier.matchParentSize())
             Column(
                 Modifier
                     .combinedClickable(

@@ -1,29 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Settings hub -->
-    <string name="settings_category_home">Home &amp; clock</string>
-    <string name="settings_category_home_sub">Clock, lines under it, layout</string>
+    <string name="settings_category_home">Home</string>
+    <string name="settings_category_home_sub">Clock, player, gestures</string>
     <string name="settings_category_drawer">Drawer &amp; search</string>
-    <string name="settings_category_drawer_sub">Background, order, what search finds</string>
-    <string name="settings_category_appearance">Appearance</string>
-    <string name="settings_category_appearance_sub">Theme, icons, large text</string>
-    <string name="settings_category_notifications">Notifications</string>
-    <string name="settings_category_notifications_sub">Badges, previews, live rows</string>
-    <string name="settings_category_gestures">Gestures</string>
-    <string name="settings_category_gestures_sub">Swipes and double tap</string>
-    <string name="settings_category_privacy">Privacy &amp; backup</string>
-    <string name="settings_category_privacy_sub">What Mono can see, hidden apps, backup</string>
+    <string name="settings_category_drawer_sub">Background, search</string>
+    <string name="settings_category_appearance">Look</string>
+    <string name="settings_category_appearance_sub">Theme, icons, text size</string>
+    <string name="settings_category_privacy">Privacy</string>
+    <string name="settings_category_privacy_sub">Access, hidden apps, backup</string>
 
     <!-- Short summaries: one line, only where the title needs it -->
-    <string name="settings_text_shadow_short">Instead of dimming the wallpaper</string>
-    <string name="settings_high_contrast_short">Stronger backdrop behind home text</string>
     <string name="settings_calendar_short">Read only, never leaves your phone</string>
     <string name="settings_calendar_denied_short">Access refused. Tap to allow in App info</string>
     <string name="settings_search_contacts_short">Read only while you type</string>
-    <string name="settings_quiet_mode_short">Only your quiet apps on home</string>
     <string name="settings_quiet_dnd_grant_short">Needs Do Not Disturb access. Tap to allow</string>
     <string name="settings_hidden_lock_short">Ask for your screen lock first</string>
-    <string name="settings_usage_short">Long-press an app to see it</string>
     <string name="settings_usage_grant_short">Needs usage access. Tap to allow</string>
 
     <!-- Icon packs -->
@@ -51,12 +43,9 @@
     <string name="settings_clock_date">Date</string>
     <string name="settings_glance_lines">Under the clock</string>
     <string name="settings_glance_date">Date</string>
-    <string name="settings_glance_alarm">Next alarm</string>
-    <string name="settings_glance_alarm_short">Within the next 24 hours</string>
-    <string name="settings_glance_event">Next event</string>
-    <string name="settings_glance_event_short">Needs the calendar on</string>
+    <string name="settings_glance_alarm">Alarm</string>
+    <string name="settings_glance_event">Event</string>
     <string name="settings_glance_battery">Battery</string>
-    <string name="settings_glance_battery_short">When low or charging</string>
 
     <!-- Glance header -->
     <string name="glance_open_clock">Open alarms</string>

@@ -11,7 +11,7 @@ import com.wander.mono.data.settings.IconMode
  * query, how rows show icons, whether search leaves out hidden apps until the screen lock is
  * confirmed, the work profiles and the private space at the bottom with their apps (listed only while
  * open), what the drawer is drawn on, whether opening it brings up the keyboard, which edge the
- * letter rail is on, and the toolbar's [controls].
+ * letter rail is on, the toolbar's [controls] and the app [predicted] for now.
  */
 data class DrawerUiState(
     val apps: List<DrawerEntry> = emptyList(),
@@ -30,9 +30,10 @@ data class DrawerUiState(
     val privateApps: List<DrawerEntry> = emptyList(),
     val work: List<WorkSection> = emptyList(),
     val look: DrawerLook = DrawerLook(),
-    val keyboardOnOpen: Boolean = false,
     val railAtStart: Boolean = false,
     val controls: ListControls = ListControls(),
+    /** The one listed app most likely wanted now ([AppPrediction]), offered above the search field. */
+    val predicted: DrawerEntry? = null,
 )
 
 /** What the drawer is drawn on, and what its scrim needs to keep text legible over the wallpaper. */

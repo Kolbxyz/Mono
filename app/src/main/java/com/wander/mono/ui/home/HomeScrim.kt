@@ -17,7 +17,8 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 
 /**
- * Draws the legibility scrim behind the header and the list only (spec 5.4): [color] at full
+ * Draws the legibility scrim behind the header and the list only (spec 5.4): [color] (read at draw
+ * time, so its tint easing in or out only redraws) at full
  * strength at the screen's top and bottom edges, easing out to nothing over [reach] px past the
  * header and before the list. The ease is a smoothstep sampled finely, so the falloff has no visible
  * edge. Positions and [strength] (0..1, the fade while the window is not focused) are read at draw
@@ -28,37 +29,33 @@ import androidx.compose.ui.unit.dp
  * the wallpaper behind it, no opaque band shows a hard edge. At 0 the scrim reaches every edge.
  */
 fun Modifier.homeScrim(
-    color: Color,
+    color: () -> Color,
     strength: () -> Float,
     headerBottom: () -> Float,
     listTop: () -> Float,
     reach: Float,
     taper: () -> Float,
-): Modifier =
-    if (color.alpha == 0f) {
-        this
+): Modifier = drawBehind {
+    val shade = color()
+    val alpha = shade.alpha * strength()
+    if (alpha <= 0f) return@drawBehind
+    val stops = scrimStops(size.height, headerBottom(), listTop(), reach)
+        .map { (position, share) -> position to shade.copy(alpha = alpha * share) }
+    val gradient = Brush.verticalGradient(*stops.toTypedArray())
+    val edge = taper()
+    // Focused, nothing to taper: no offscreen layer for the mask.
+    if (edge < 1f) {
+        drawRect(gradient)
     } else {
-        drawBehind {
-            val alpha = color.alpha * strength()
-            if (alpha <= 0f) return@drawBehind
-            val stops = scrimStops(size.height, headerBottom(), listTop(), reach)
-                .map { (position, share) -> position to color.copy(alpha = alpha * share) }
-            val gradient = Brush.verticalGradient(*stops.toTypedArray())
-            val edge = taper()
-            // Focused, nothing to taper: no offscreen layer for the mask.
-            if (edge < 1f) {
-                drawRect(gradient)
-            } else {
-                drawIntoCanvas { canvas ->
-                    canvas.saveLayer(Rect(0f, 0f, size.width, size.height), Paint())
-                    drawRect(gradient)
-                    drawRect(Brush.horizontalGradient(*edgeMask(size.width, edge)), blendMode = BlendMode.DstIn)
-                    drawRect(Brush.verticalGradient(*edgeMask(size.height, edge)), blendMode = BlendMode.DstIn)
-                    canvas.restore()
-                }
-            }
+        drawIntoCanvas { canvas ->
+            canvas.saveLayer(Rect(0f, 0f, size.width, size.height), Paint())
+            drawRect(gradient)
+            drawRect(Brush.horizontalGradient(*edgeMask(size.width, edge)), blendMode = BlendMode.DstIn)
+            drawRect(Brush.verticalGradient(*edgeMask(size.height, edge)), blendMode = BlendMode.DstIn)
+            canvas.restore()
         }
     }
+}
 
 /**
  * Whether Mono's activity is the top resumed one. It stops being as soon as another activity takes

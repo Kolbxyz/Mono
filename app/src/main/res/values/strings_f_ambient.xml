@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- TalkBack: the battery pill while battery saver is on ("Battery saver on, 40 percent"). -->
+    <string name="glance_battery_saver">Battery saver on, %1$d percent</string>
+</resources>
