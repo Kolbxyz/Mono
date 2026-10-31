@@ -31,7 +31,8 @@ internal fun playerTint(
  * its tone and only leans toward the artwork. Its alpha is then measured afresh ([scrimAlpha]), so
  * text keeps 4.5:1 over the tinted scrim too.
  */
-internal fun tintedSurface(surface: Int, art: Int?): Int = if (art == null) surface else blend(art, surface, PLAYER_TINT)
+internal fun tintedSurface(surface: Int, art: Int?): Int =
+    if (art == null) surface else blend(art, surface, PLAYER_TINT)
 
 /** How far the scrim leans toward the artwork: a wash, not a colour change. */
 private const val PLAYER_TINT = 0.18f

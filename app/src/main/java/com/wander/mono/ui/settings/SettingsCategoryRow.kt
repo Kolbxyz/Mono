@@ -29,8 +29,8 @@ import com.wander.mono.ui.components.rememberPressShape
 
 /**
  * One place on the settings hub: a shaped badge in a theme colour, the title, and a short line of
- * what is inside (taking a second line rather than an ellipsis at large font sizes). Under the finger the row shrinks a little and the badge relaxes into a circle;
- * both on the theme's motion. The badge and row show the press, so no ripple is drawn over them.
+ * what is inside (taking a second line rather than an ellipsis at large font sizes). Under the
+ * finger the row shrinks a little and the badge relaxes into a circle, both on the theme's motion. The badge and row show the press, so no ripple is drawn over them.
  */
 @Composable
 internal fun SettingsCategoryRow(category: SettingsCategory, onClick: () -> Unit, modifier: Modifier = Modifier) {

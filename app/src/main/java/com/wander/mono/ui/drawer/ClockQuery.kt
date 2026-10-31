@@ -79,9 +79,13 @@ internal object ClockQuery {
 
     /** [text] without its leading keyword or one of its trailing [suffixes]; null when it has neither. */
     private fun withoutKeyword(text: String, prefixes: List<String>, suffixes: List<String>): String? {
-        prefixes.firstOrNull { text.startsWith("$it ") }?.let { return text.removePrefix("$it ").trim() }
-        val suffix = suffixes.firstOrNull { text.endsWith(" $it") } ?: return null
-        return text.removeSuffix(" $suffix").trim()
+        val prefix = prefixes.firstOrNull { text.startsWith("$it ") }
+        val suffix = suffixes.firstOrNull { text.endsWith(" $it") }
+        return when {
+            prefix != null -> text.removePrefix("$prefix ").trim()
+            suffix != null -> text.removeSuffix(" $suffix").trim()
+            else -> null
+        }
     }
 
     /**

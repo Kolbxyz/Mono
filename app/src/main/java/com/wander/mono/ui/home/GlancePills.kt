@@ -43,7 +43,7 @@ internal fun GlancePills(
     val alarm = glance.nextAlarm?.takeIf { lines.alarm }
     val quiet = glance.quiet?.takeIf { withQuiet }
     val power = glance.battery?.takeIf { lines.battery }
-    if (event == null && alarm == null && quiet == null && power == null) return
+    if (listOfNotNull(event, alarm, quiet, power).isEmpty()) return
     val along = if (centred) Alignment.CenterHorizontally else Alignment.Start
     FlowRow(modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, along)) {
         event?.let { EventPill(it, glance.now, timeSkeleton, taps?.onEvent) }

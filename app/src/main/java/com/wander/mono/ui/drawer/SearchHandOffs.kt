@@ -21,6 +21,15 @@ class SearchHandOffs @Inject constructor(
     private val apps: AppActions,
     private val messages: UserMessages,
 ) {
+    /** Opens [hit] with whatever takes its kind. */
+    fun open(hit: SearchHit.HandOff): HitOutcome = when (hit) {
+        is SearchHit.Note -> note(hit)
+        is SearchHit.Dial -> dial(hit)
+        is SearchHit.Link -> open(hit)
+        is SearchHit.ShareText -> share(hit)
+        is SearchHit.Notice -> open(hit)
+    }
+
     /** Whether an app opens the link; resolves an intent, so not on the main thread. */
     fun canOpen(hit: SearchHit.Link): Boolean = text.canOpen(hit.url)
 
