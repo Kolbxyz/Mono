@@ -1,6 +1,7 @@
 package com.wander.mono.ui.drawer
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -23,6 +24,7 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
@@ -35,11 +37,14 @@ import kotlinx.coroutines.launch
 
 /**
  * The listed apps in their groups (new apps, then letters; or by install age), with the letter rail
- * in A–Z order, then a card per work profile and the private space at the very bottom; no private
- * space without [privateActions] (while picking an app for home, where private apps never go).
- * Category chips unfold above it and a floating toolbar sets it up from below, getting out of the
- * way as the list scrolls on. [listState] is the caller's, so the list keeps its place while search
- * results show instead.
+ * in A–Z order, then a card per work profile and the private space at the end; no private space
+ * without [privateActions] (while picking an app for home, where private apps never go).
+ * Built for one hand: the list rests low, its first rows just above the search [dock] (its height
+ * over the navigation bar), with a lead of empty space above them that scrolls away; a short list
+ * sits on the dock. The rail rests low on its edge too ([DrawerRail]); a jump lands its letter at
+ * that same thumb height. Category chips unfold just above the dock, and a floating toolbar above
+ * them sets the list up, getting out of the way as the list scrolls on. [listState] is the
+ * caller's, so the list keeps its place while search results show instead.
  * TalkBack gets a "Jump to" action per letter on the list itself. Rows rise in as the list first
  * shows, and its ends fade out while there is more to scroll to; [railScrub] drives the rail from home.
  */
@@ -52,7 +57,7 @@ internal fun DrawerAppList(
     onSetWorkPaused: (WorkProfile, Boolean) -> Unit,
     onLaunchApp: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
-    bottom: PaddingValues,
+    dock: Dp,
     listState: LazyListState,
     modifier: Modifier = Modifier,
     railScrub: RailScrub? = null,
@@ -82,93 +87,66 @@ internal fun DrawerAppList(
     val atStart = state.railAtStart
     val sideStart = if (atStart && showRail) RAIL_WIDTH else 16.dp
     val sideEnd = if (!atStart && showRail) RAIL_WIDTH else 16.dp
-    // Not the keyboard: the rail would re-measure, and its letters reflow, every frame it slides.
+    // Not the keyboard: the list and rail would re-measure, and the letters reflow, every frame it slides.
     val navigationBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    Box(modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxSize()) {
-            CategoryChips(
-                visible = choices.showCategories,
-                categories = state.controls.categories,
-                selected = choices.category,
-                onSelect = listActions.onCategory,
-            )
-            Box(Modifier.weight(1f)) {
-                LazyColumn(
-                    state = listState,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .listFadingEdges(listState)
-                        .nestedScroll(toolbarScroll)
-                        .semantics { customActions = jumpActions },
-                    contentPadding = PaddingValues(
-                        start = sideStart,
-                        end = sideEnd,
-                        bottom = bottom.calculateBottomPadding() + DrawerToolbarClearance + 16.dp,
-                    ),
-                ) {
-                    appGroupItems(state.groups, icons, listState, entrance, onLaunchApp, onLongPress)
-                    // After the groups, so the rail's indexes still match the list's.
-                    items(state.work, key = { "work:${it.profile.serial}" }) { section ->
-                        WorkSectionCard(section, icons, onSetWorkPaused, onLaunchApp, onLongPress, schemeAnimateItem())
-                    }
-                    if (space != null && privateActions != null) {
-                        item(key = "private") {
-                            PrivateSection(
-                                space,
-                                state.privateApps,
-                                icons,
-                                privateActions,
-                                onLaunchApp,
-                                onLongPress,
-                                schemeAnimateItem(),
-                            )
-                        }
-                    }
+    Column(modifier.fillMaxSize().padding(bottom = navigationBottom + dock)) {
+        BoxWithConstraints(Modifier.weight(1f)) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .listFadingEdges(listState)
+                    .nestedScroll(toolbarScroll)
+                    .semantics { customActions = jumpActions },
+                contentPadding = PaddingValues(
+                    start = sideStart,
+                    end = sideEnd,
+                    top = maxHeight * THUMB_LEAD,
+                    bottom = DrawerToolbarClearance + 8.dp,
+                ),
+                verticalArrangement = Arrangement.Bottom,
+            ) {
+                appGroupItems(state.groups, icons, listState, entrance, onLaunchApp, onLongPress)
+                // After the groups, so the rail's indexes still match the list's.
+                items(state.work, key = { "work:${it.profile.serial}" }) { section ->
+                    WorkSectionCard(section, icons, onSetWorkPaused, onLaunchApp, onLongPress, schemeAnimateItem())
                 }
-                if (showRail) {
-                    val sectionCount = state.sections.size
-                    val current by remember(listState, sectionCount, lead) {
-                        derivedStateOf {
-                            val first = listState.firstVisibleItemIndex
-                            RailEntries.railIndexFor(first, listState.firstVisibleItemScrollOffset, sectionCount, lead)
-                        }
+                if (space != null && privateActions != null) {
+                    item(key = "private") {
+                        PrivateSection(
+                            space,
+                            state.privateApps,
+                            icons,
+                            privateActions,
+                            onLaunchApp,
+                            onLongPress,
+                            schemeAnimateItem(),
+                        )
                     }
-                    // The private space ends the rail: a lock to scrub to, or tap to lock and unlock.
-                    val lock = if (space != null && privateActions != null) {
-                        RailLock(space.locked) { privateActions.onSetLocked(!space.locked) }
-                    } else {
-                        null
-                    }
-                    val privateItem = state.groups.size + state.work.size
-                    LetterRail(
-                        sections = state.sections,
-                        current = current,
-                        // ★ is the top of the list: the drawer has no favourites of its own to jump to.
-                        onSelect = { entry ->
-                            val item = if (lock != null && entry == sectionCount + 1) {
-                                privateItem
-                            } else {
-                                RailEntries.listItemFor(entry, lead)
-                            }
-                            scope.launch { listState.scrollToItem(item) }
-                        },
-                        modifier = Modifier
-                            .align(if (atStart) Alignment.CenterStart else Alignment.CenterEnd)
-                            .padding(bottom = navigationBottom + 8.dp, top = 8.dp),
-                        atStart = atStart,
-                        lock = lock,
-                        scrub = railScrub,
-                    )
                 }
             }
+            if (showRail) DrawerRail(state, listState, maxHeight, space, privateActions, railScrub)
+            DrawerToolbar(
+                visible = toolbarShown,
+                controls = state.controls,
+                actions = listActions,
+                // Centred between the rail's lanes, so it never covers a letter.
+                modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = RAIL_WIDTH),
+            )
         }
-        DrawerToolbar(
-            visible = toolbarShown,
-            controls = state.controls,
-            actions = listActions,
-            bottom = navigationBottom,
-            // Centred between the rail's lanes, so it never covers a letter.
-            modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = RAIL_WIDTH),
+        // In the thumb zone, under the toolbar that unfolds them, over the search field.
+        CategoryChips(
+            visible = choices.showCategories,
+            categories = state.controls.categories,
+            selected = choices.category,
+            onSelect = listActions.onCategory,
         )
     }
 }
+
+/**
+ * Share of the list's height left empty above its first row while it is scrolled to the top: the
+ * first letters rest in the lower part of the screen, where the thumb is, instead of under the
+ * status bar. Scrolling on takes the space away like any other.
+ */
+private const val THUMB_LEAD = 0.4f

@@ -11,9 +11,6 @@ object MediaSettings {
     /** A sideways swipe on the player skips to the next or previous track. */
     val SwipeToSkip = BooleanSetting("media_swipe_to_skip", default = true)
 
-    /** The player takes on the artwork's colour. */
-    val ArtTint = BooleanSetting("media_art_tint", default = true)
-
     /** How long a paused session keeps its player (spec 7.6). */
     val PausedHideAfter = EnumSetting("media_paused_hide_after", PausedHide.TenMinutes, PausedHide.entries)
 }

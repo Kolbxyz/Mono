@@ -31,4 +31,23 @@ class GlanceEventTest {
         assertNull(glanceEvent(agenda, now = 0, rows = null))
         assertNull(glanceEvent(null, now = 0, rows = listOf(favourite)))
     }
+
+    @Test
+    fun `an event under way shows until the next one is close`() {
+        val minute = 60_000L
+        val meeting = CalendarEvent(2, "Meeting", begin = 0, end = 60 * minute, allDay = false, declined = false)
+        val later = CalendarEvent(3, "Later", begin = 45 * minute, end = 90 * minute, allDay = false, declined = false)
+        val both = CalendarAgenda(listOf(meeting, later), at = 0, appPackage = null)
+        val rows = listOf(favourite)
+        assertEquals(meeting, glanceEvent(both, now = 10 * minute, rows = rows))
+        assertEquals(later, glanceEvent(both, now = 30 * minute, rows = rows))
+    }
+
+    @Test
+    fun `an all-day, declined or ended event is never the one under way`() {
+        val allDay = CalendarEvent(4, "Holiday", begin = 0, end = 100, allDay = true, declined = false)
+        val declined = CalendarEvent(5, "No", begin = 0, end = 100, allDay = false, declined = true)
+        val ended = CalendarEvent(6, "Done", begin = 0, end = 50, allDay = false, declined = false)
+        assertNull(currentEvent(listOf(allDay, declined, ended), now = 50))
+    }
 }

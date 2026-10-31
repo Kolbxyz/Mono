@@ -34,11 +34,9 @@ import com.wander.mono.data.MutedApps
 import com.wander.mono.data.Routines
 import com.wander.mono.data.settings.BadgeSettings
 import com.wander.mono.data.settings.ClockSettings
-import com.wander.mono.data.settings.HeadphoneSettings
 import com.wander.mono.data.settings.MediaSettings
 import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.QuietSettings
-import com.wander.mono.data.settings.RoutineSettings
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.clockLook
 import com.wander.mono.data.settings.liveActivityKinds
@@ -152,16 +150,12 @@ class HomeViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
     /**
-     * The favourites to show first: the ones chosen for headphones, while some are connected and the
-     * setting is on, and those of the routines on right now.
+     * The favourites to show first: the ones chosen for headphones, while some are connected, and
+     * those of the routines on right now.
      */
     val lifted: StateFlow<Set<AppKey>> = combine(
-        combine(
-            settings[HeadphoneSettings.LiftApps],
-            listening.connected,
-            headphoneApps.apps,
-        ) { on, connected, apps -> if (on && connected) apps else emptySet() },
-        routineApps(settings[RoutineSettings.Enabled], routines.routines, time.changed),
+        combine(listening.connected, headphoneApps.apps) { connected, apps -> if (connected) apps else emptySet() },
+        routineApps(routines.routines, time.changed),
     ) { headphones, routine -> headphones + routine }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptySet())
 

@@ -14,10 +14,9 @@
 
     <!-- Settings -->
     <string name="settings_live_rows">Live rows</string>
-    <string name="settings_live_updates">Show live updates</string>
-    <string name="settings_live_updates_summary">Downloads, deliveries and other things under way</string>
-    <string name="settings_live_timers">Show timers and stopwatches</string>
-    <string name="settings_live_navigation">Show navigation</string>
+    <string name="settings_live_updates">Progress</string>
+    <string name="settings_live_timers">Timers</string>
+    <string name="settings_live_navigation">Navigation</string>
 
     <!-- Calendar card actions -->
     <string name="calendar_action_join">Join</string>

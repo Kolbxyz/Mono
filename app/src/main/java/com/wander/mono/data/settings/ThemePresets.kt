@@ -66,7 +66,7 @@ enum class ThemePreset(val look: PresetLook, val wallpaper: BundledWallpaper?) {
             clock = PresetClock(font = ClockFont.Serif, weight = 400, style = ClockStyle.Default),
             iconShape = IconShape.Squircle,
             iconMode = IconMode.Colour,
-            drawer = DrawerBackground.Blur,
+            drawer = DrawerBackground.SoftBlur,
             textShadow = false,
             density = RowDensity.Default,
         ),

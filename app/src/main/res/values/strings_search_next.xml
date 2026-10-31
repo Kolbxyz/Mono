@@ -30,8 +30,8 @@
 
     <!-- Settings: search -->
     <string name="search_source_notifications">Notifications</string>
-    <string name="search_source_notifications_summary">Titles and text, with notification access</string>
-    <string name="search_remember_recent">Remember recent searches</string>
-    <string name="search_remember_recent_summary">Kept on this phone only, never in backups</string>
-    <string name="search_clear_history">Clear recent searches</string>
+    <string name="search_source_notifications_summary">Needs notification access</string>
+    <string name="search_remember_recent">Remember searches</string>
+    <string name="search_remember_recent_summary">On this phone only</string>
+    <string name="search_clear_history">Clear searches</string>
 </resources>

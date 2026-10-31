@@ -3,6 +3,7 @@ package com.wander.mono.ui.home.media
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -21,6 +22,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,8 +44,9 @@ import com.wander.mono.ui.theme.textAlpha
 /**
  * The player's first line, the same in both forms so it morphs rather than swaps: the artwork,
  * growing with [morph] from a thumb to a cover and rounding less as it grows; the words (one line
- * of title · artist collapsed, the app chip over title and artist expanded); and, collapsed only,
- * the small transport, which folds away sideways. Tapping the artwork opens the player app.
+ * of title · artist collapsed; expanded, the app and output chips over title and artist); and,
+ * collapsed only, the small transport, which folds away sideways. Tapping the artwork opens the
+ * player app. [compact] keeps the cover and title short when home has little room.
  */
 @Composable
 internal fun PlayerHead(
@@ -57,7 +60,13 @@ internal fun PlayerHead(
 ) {
     val motion = MaterialTheme.motionScheme
     val grown = morph.coerceAtLeast(0f)
-    val artSize = lerp(COLLAPSED_ART, if (compact) COMPACT_ART else EXPANDED_ART, grown)
+    // Eased, so the cover settles smaller when home runs short of room instead of jumping.
+    val cover by animateDpAsState(
+        if (compact) COMPACT_ART else EXPANDED_ART,
+        motion.defaultSpatialSpec(),
+        label = "cover",
+    )
+    val artSize = lerp(COLLAPSED_ART, cover, grown)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         PlayerArt(
             media = player.media,
@@ -66,7 +75,7 @@ internal fun PlayerHead(
             onOpen = controls::openPlayer,
         )
         Spacer(Modifier.width(lerp(COLLAPSED_GAP, EXPANDED_GAP, grown)))
-        PlayerWords(player, expanded, icons, controls, Modifier.weight(1f))
+        PlayerWords(player, expanded, compact, icons, controls, Modifier.weight(1f))
         AnimatedVisibility(
             visible = !expanded,
             enter = expandHorizontally(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
@@ -96,12 +105,14 @@ private fun PlayerArt(media: PlayingMedia, size: Dp, corner: Dp, onOpen: () -> U
 
 /**
  * The words beside the artwork. Collapsed: title · artist on one line, ellipsized, never scrolling.
- * Expanded: the app chip, then the title over the artist. They crossfade while the line resizes.
+ * Expanded: one row with the app chip and where it is heard, then the title (one line when
+ * [compact]) over the artist. They crossfade while the line resizes.
  */
 @Composable
 private fun PlayerWords(
     player: HomePlayer,
     expanded: Boolean,
+    compact: Boolean,
     icons: AppIcons,
     controls: MediaControls,
     modifier: Modifier = Modifier,
@@ -119,8 +130,8 @@ private fun PlayerWords(
     ) { full ->
         if (full) {
             Column {
-                player.app?.let { PlayerAppChip(it, icons, controls::openPlayer, Modifier.padding(bottom = CHIP_GAP)) }
-                MediaTitle(player.media, large = true, centred = false)
+                PlayerChips(player, icons, controls, Modifier.padding(bottom = CHIP_GAP))
+                MediaTitle(player.media, large = true, centred = false, titleLines = if (compact) 1 else 2)
             }
         } else {
             StripLine(player.media)
@@ -146,9 +157,9 @@ private fun StripLine(media: PlayingMedia) {
 }
 
 private val COLLAPSED_ART = 44.dp
-private val EXPANDED_ART = 112.dp
+private val EXPANDED_ART = 96.dp
 
-/** On a phone on its side the cover stays small, so the list keeps room. */
+/** On a phone on its side, or when home is short of room, the cover stays small so the list keeps room. */
 private val COMPACT_ART = 72.dp
 
 /** Expanded artwork corners as a share of its size; collapsed, the thumb is round like the strip. */
@@ -156,7 +167,7 @@ private const val EXPANDED_CORNER = 0.2f
 
 private val COLLAPSED_GAP = 12.dp
 private val EXPANDED_GAP = 16.dp
-private val CHIP_GAP = 8.dp
+private val CHIP_GAP = 6.dp
 
 /** The artist, dimmer than the title in the same contrasting colour. */
 private const val ARTIST_ALPHA = 0.74f

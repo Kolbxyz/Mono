@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -18,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -36,11 +36,14 @@ import com.wander.mono.ui.home.onWallpaper
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
- * The ranked results for a query, laid out by [SearchLayout]: the top hit large on a tonal container
- * (what the keyboard's Go key opens), the other apps as a row of icons, then shortcuts, contacts,
- * notifications, songs, settings and the web each as a labelled segmented group, what the query
- * matched highlighted in each. Only [settled] results (built for the query typed now) may say there
- * are none. With [onReach], contacts offer their Call, Message and Email actions.
+ * The ranked results for a query, laid out by [SearchLayout] from the bottom up, the best hit
+ * closest to the search field and the thumb: the top hit large on a tonal container right above the
+ * field (what the keyboard's Go key opens), the other apps as a row of icons above it, then
+ * shortcuts, contacts, notifications, songs, settings and the web each as a labelled segmented group
+ * further up, each still read top-down under its label, what the query matched highlighted in each.
+ * A few results rest on the field instead of hanging from the top of the screen. Only [settled]
+ * results (built for the query typed now) may say there are none. With [onReach], contacts offer
+ * their Call, Message and Email actions.
  */
 @Composable
 fun SearchResultList(
@@ -56,16 +59,22 @@ fun SearchResultList(
 ) {
     val layout = remember(results) { SearchLayout.of(results) }
     val listState = rememberLazyListState()
-    // Keyed items would keep an old hit in view as new ones come in above it; at the top, stay there.
+    // Keyed items would keep an old hit in view as new ones come in next to it; resting on the best
+    // hit (item 0, at the bottom), stay there.
     LaunchedEffect(results) {
         if (listState.firstVisibleItemIndex == 0) listState.requestScrollToItem(0)
     }
+    // Reversed: items are emitted from the bottom of the screen up, the best first.
     LazyColumn(
         modifier.fillMaxSize(),
         state = listState,
         contentPadding = contentPadding,
-        verticalArrangement = Arrangement.spacedBy(SegmentGap),
+        reverseLayout = true,
+        verticalArrangement = Arrangement.spacedBy(SegmentGap, Alignment.Bottom),
     ) {
+        if (onUnlockHidden != null && layout.top == null) {
+            item(key = "unlock-hidden") { UnlockHiddenRow(onUnlockHidden, schemeAnimateItem()) }
+        }
         val top = layout.top
         if (top == null) {
             if (settled) {
@@ -95,13 +104,13 @@ fun SearchResultList(
             }
         }
         if (layout.apps.isNotEmpty()) {
-            item(key = "label:apps", contentType = "label") {
-                GroupLabel(R.string.search_section_apps, schemeAnimateItem())
-            }
             if (icons.mode == IconMode.TextOnly) {
-                // No icons to make a row of: the apps are a group like the others.
-                itemsIndexed(layout.apps, key = { _, hit -> hit.key }) { index, hit ->
-                    GroupedRow(index, layout.apps.size) {
+                // No icons to make a row of: the apps are a group like the others, read top-down.
+                val count = layout.apps.size
+                items(count, key = { layout.apps[count - 1 - it].key }) { i ->
+                    val index = count - 1 - i
+                    val hit = layout.apps[index]
+                    GroupedRow(index, count) {
                         ResultRow(hit, icons, { onLaunchHit(hit) }, onLongPress, onReach)
                     }
                 }
@@ -110,16 +119,29 @@ fun SearchResultList(
                     AppIconRow(layout.apps, icons, onLaunchHit, onLongPress, schemeAnimateItem())
                 }
             }
+            item(key = "label:apps", contentType = "label") {
+                GroupLabel(R.string.search_section_apps, schemeAnimateItem())
+            }
         }
         layout.groups.forEach { group ->
+            val hits = group.hits
+            val count = hits.size
+            // Emitted last hit first, so on screen the group reads top-down from its label.
+            items(
+                count,
+                key = { hits[count - 1 - it].key },
+                contentType = { hits[count - 1 - it]::class },
+            ) { i ->
+                val index = count - 1 - i
+                val hit = hits[index]
+                GroupedRow(index, count) { ResultRow(hit, icons, { onLaunchHit(hit) }, onLongPress, onReach) }
+            }
             item(key = "label:${group.kind}", contentType = "label") {
                 GroupLabel(group.kind.label, schemeAnimateItem())
             }
-            itemsIndexed(group.hits, key = { _, hit -> hit.key }, contentType = { _, hit -> hit::class }) { i, hit ->
-                GroupedRow(i, group.hits.size) { ResultRow(hit, icons, { onLaunchHit(hit) }, onLongPress, onReach) }
-            }
         }
-        if (onUnlockHidden != null) {
+        // Furthest from the thumb: a way to more results, never in the way of the ones found.
+        if (onUnlockHidden != null && layout.top != null) {
             item(key = "unlock-hidden") { UnlockHiddenRow(onUnlockHidden, schemeAnimateItem()) }
         }
     }

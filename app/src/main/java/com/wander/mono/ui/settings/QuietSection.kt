@@ -35,7 +35,6 @@ fun QuietSection(quiet: QuietSettingsViewModel = viewModel()) {
                 checked = on,
                 onCheckedChange = quiet::setEnabled,
                 title = R.string.settings_quiet_mode,
-                summary = R.string.settings_quiet_mode_short,
                 icon = R.drawable.sym_quiet,
             )
         }
