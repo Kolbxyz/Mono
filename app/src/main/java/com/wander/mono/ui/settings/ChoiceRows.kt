@@ -84,18 +84,15 @@ fun <E> ChoiceTextSetting(
         }
         return
     }
-    ListItem(
-        colors = settingRowColors(),
-        leadingContent = leadingBadge(icon),
-        supportingContent = {
-            val group = Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp).selectableGroup()
-            ChoiceGroup(values.size, wrap, group) { index, shapes, modifier ->
-                val value = values[index]
-                ChoiceButton(value == selected, label(value), shapes, modifier) { settings.set(setting, value) }
-            }
-        },
-    ) {
-        Text(stringResource(title))
+    // The group sits under the row, not in its supporting slot: the row asks that slot for its
+    // baselines, which lays the buttons out mid-measure, even while a lazy list only prefetches it.
+    Column(Modifier.selectableGroup()) {
+        ListItem(colors = settingRowColors(), leadingContent = leadingBadge(icon)) { Text(stringResource(title)) }
+        val group = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 16.dp)
+        ChoiceGroup(values.size, wrap, group) { index, shapes, modifier ->
+            val value = values[index]
+            ChoiceButton(value == selected, label(value), shapes, modifier) { settings.set(setting, value) }
+        }
     }
 }
 
@@ -116,11 +113,10 @@ private fun ChoiceButton(
     val content: @Composable RowScope.() -> Unit = {
         Text(label, maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
     }
-    if (shapes == null) {
-        ToggleButton(checked, onChecked, radio, colors = choiceColors(), content = content)
-    } else {
-        ToggleButton(checked, onChecked, radio, shapes = shapes, colors = choiceColors(), content = content)
-    }
+    // One call either way: a connected group turning into pills only reshapes its buttons, it never
+    // swaps them for new nodes while they are being laid out.
+    val standalone = ToggleButtonDefaults.shapes()
+    ToggleButton(checked, onChecked, radio, shapes = shapes ?: standalone, colors = choiceColors(), content = content)
 }
 
 /** Unchecked choices sit a step above the group's strip, so they read as buttons on it. */
