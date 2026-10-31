@@ -1,7 +1,6 @@
 package com.wander.mono.ui.drawer
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -39,13 +38,12 @@ import kotlinx.coroutines.launch
  * The listed apps in their groups (new apps, then letters; or by install age), with the letter rail
  * in A–Z order, then a card per work profile and the private space at the end; no private space
  * without [privateActions] (while picking an app for home, where private apps never go).
- * Built for one hand: the list rests low, its first rows just above the search [dock] (its height
- * over the navigation bar), with a lead of empty space above them that scrolls away; a short list
- * sits on the dock. The rail rests low on its edge too ([DrawerRail]); a jump lands its letter at
- * that same thumb height. Category chips unfold just above the dock, and a floating toolbar above
- * them sets the list up, getting out of the way as the list scrolls on; under them, right on the
- * dock, the app most likely wanted now ([PredictedAppRow]). [listState] is the
- * caller's, so the list keeps its place while search results show instead.
+ * The list starts at the top and ends just above the search [dock] (its height over the navigation
+ * bar); the rail runs its full height ([DrawerRail]), and a jump puts its letter at the top. Category
+ * chips unfold just above the dock, and a floating toolbar above them sets the list up, getting out
+ * of the way as the list scrolls on; under them, right on the dock, the app most likely wanted now
+ * ([PredictedAppRow]). [listState] is the caller's, so the list keeps its place while search
+ * results show instead.
  * TalkBack gets a "Jump to" action per letter on the list itself. Rows rise in as the list first
  * shows, and its ends fade out while there is more to scroll to; [railScrub] drives the rail from home.
  */
@@ -91,7 +89,7 @@ internal fun DrawerAppList(
     // Not the keyboard: the list and rail would re-measure, and the letters reflow, every frame it slides.
     val navigationBottom = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Column(modifier.fillMaxSize().padding(bottom = navigationBottom + dock)) {
-        BoxWithConstraints(Modifier.weight(1f)) {
+        Box(Modifier.weight(1f)) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -102,10 +100,8 @@ internal fun DrawerAppList(
                 contentPadding = PaddingValues(
                     start = sideStart,
                     end = sideEnd,
-                    top = maxHeight * THUMB_LEAD,
                     bottom = DrawerToolbarClearance + 8.dp,
                 ),
-                verticalArrangement = Arrangement.Bottom,
             ) {
                 appGroupItems(state.groups, icons, listState, entrance, onLaunchApp, onLongPress)
                 // After the groups, so the rail's indexes still match the list's.
@@ -126,7 +122,7 @@ internal fun DrawerAppList(
                     }
                 }
             }
-            if (showRail) DrawerRail(state, listState, maxHeight, space, privateActions, railScrub)
+            if (showRail) DrawerRail(state, listState, space, privateActions, railScrub)
             DrawerToolbar(
                 visible = toolbarShown,
                 controls = state.controls,
@@ -146,10 +142,3 @@ internal fun DrawerAppList(
         PredictedAppRow(state.predicted, icons, onLaunchApp, onLongPress)
     }
 }
-
-/**
- * Share of the list's height left empty above its first row while it is scrolled to the top: the
- * first letters rest in the lower part of the screen, where the thumb is, instead of under the
- * status bar. Scrolling on takes the space away like any other.
- */
-private const val THUMB_LEAD = 0.4f
