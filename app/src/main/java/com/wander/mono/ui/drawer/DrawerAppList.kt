@@ -43,7 +43,8 @@ import kotlinx.coroutines.launch
  * over the navigation bar), with a lead of empty space above them that scrolls away; a short list
  * sits on the dock. The rail rests low on its edge too ([DrawerRail]); a jump lands its letter at
  * that same thumb height. Category chips unfold just above the dock, and a floating toolbar above
- * them sets the list up, getting out of the way as the list scrolls on. [listState] is the
+ * them sets the list up, getting out of the way as the list scrolls on; under them, right on the
+ * dock, the app most likely wanted now ([PredictedAppRow]). [listState] is the
  * caller's, so the list keeps its place while search results show instead.
  * TalkBack gets a "Jump to" action per letter on the list itself. Rows rise in as the list first
  * shows, and its ends fade out while there is more to scroll to; [railScrub] drives the rail from home.
@@ -141,6 +142,8 @@ internal fun DrawerAppList(
             selected = choices.category,
             onSelect = listActions.onCategory,
         )
+        // Closest to the field and the thumb: the app most likely wanted now.
+        PredictedAppRow(state.predicted, icons, onLaunchApp, onLongPress)
     }
 }
 

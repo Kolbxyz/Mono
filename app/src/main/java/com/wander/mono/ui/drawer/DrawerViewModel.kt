@@ -23,7 +23,9 @@ import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.core.security.HiddenAppsLock
 import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.system.SystemContrast
+import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.system.Wallpaper
+import com.wander.mono.data.LaunchHours
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.MutedApps
 import com.wander.mono.data.OpenedNewApps
@@ -72,6 +74,9 @@ class DrawerViewModel @Inject constructor(
     systemContrast: SystemContrast,
     openedNew: OpenedNewApps,
     muted: MutedApps,
+    launchHours: LaunchHours,
+    time: SystemTime,
+    private val recorder: LaunchRecorder,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
     val query: StateFlow<String> = savedState.getStateFlow(QUERY, "")
@@ -144,6 +149,10 @@ class DrawerViewModel @Inject constructor(
         .combine(listChoices.inputs(catalog.apps.filterNotNull())) { state, (choices, opened, now) ->
             state.shaped(choices, opened, now)
         }
+        .combine(combine(launchHours.counts, hourOfDay(time), ::Pair)) { state, (counts, hour) ->
+            val listed = state.apps + state.work.flatMap { it.apps }
+            state.copy(predicted = AppPrediction.entryFor(listed, counts, hour))
+        }
         .combine(settings[DrawerSettings.RailAtStart]) { state, railAtStart -> state.copy(railAtStart = railAtStart) }
         .combine(conversationUnread(previews, phalanx, settings)) { state, unread ->
             val results = state.results.withUnread(unread.notified, unread.showCounts)
@@ -177,7 +186,10 @@ class DrawerViewModel @Inject constructor(
 
     /** True when the app opened, so the caller can close the drawer. */
     fun launch(app: LaunchableApp): Boolean = messages.report(actions.launch(app.key)).also { opened ->
-        if (opened) listChoices.opened(app, catalog.apps.value.orEmpty())
+        if (opened) {
+            listChoices.opened(app, catalog.apps.value.orEmpty())
+            recorder.opened(app)
+        }
     }
 
     /** The drawer closed: the next opening starts on every app again. */

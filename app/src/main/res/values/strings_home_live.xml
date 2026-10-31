@@ -24,6 +24,5 @@
     <string name="edit_density">Row density: %1$s</string>
 
     <!-- Hiding an app -->
-    <string name="app_hidden">App hidden</string>
     <string name="action_undo">Undo</string>
 </resources>

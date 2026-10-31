@@ -7,10 +7,12 @@ data class AlarmTime(val hour: Int, val minute: Int)
 
 /**
  * Reads a search query as a timer ("timer 10m", "10 min timer", "timer 1h30", "5 minutes") or an
- * alarm ("alarm 7:30", "alarm 7am", "wake 6:45"). English keywords only, like the app itself.
+ * alarm ("alarm 7:30", "alarm 7am", "wake 6:45"), in English or French ("minuteur 10 min",
+ * "réveil 7h30", "alarme à 7h"), whatever the case or accents. Times read on the 24-hour clock, or
+ * the 12-hour one with am/pm.
  *
  * A duration needs the word "timer" unless one of its units is spelled out ("5 min", not "5m"),
- * so a short code like "5s" stays a search. A time always needs "alarm" or "wake".
+ * so a short code like "5s" stays a search. A time always needs "alarm", "wake" or their French.
  */
 internal object ClockQuery {
     /** The longest timer `AlarmClock.EXTRA_LENGTH` accepts: a day. */
@@ -24,30 +26,37 @@ internal object ClockQuery {
 
     private val timerPrefixes = listOf(
         "set a timer for", "set timer for", "set a timer", "set timer", "timer for", "timer",
+        "mets un minuteur de", "mets un minuteur", "lance un minuteur de", "lance un minuteur",
+        "minuteur de", "minuteur", "compte a rebours de", "compte a rebours",
     )
+    private val timerSuffixes = listOf("timer", "minuteur")
     private val alarmPrefixes = listOf(
         "set an alarm for", "set alarm for", "set an alarm at", "set alarm at", "set an alarm", "set alarm",
         "alarm for", "alarm at", "alarm",
         "wake me up at", "wake me at", "wake up at", "wake up", "wake at", "wake",
+        "mets une alarme a", "mets une alarme pour", "mets une alarme", "mets un reveil a", "mets un reveil",
+        "alarme a", "alarme pour", "alarme", "reveille-moi a", "reveille moi a", "reveille-moi", "reveille moi",
+        "reveil a", "reveil pour", "reveil",
     )
+    private val alarmSuffixes = listOf("alarm", "alarme", "reveil")
 
     /** One number and its unit; a bare number takes the next smaller unit ("1h30" is 1 h 30 min). */
-    private val durationPart = Regex("""(\d+(?:[.,]\d+)?)\s*([a-z]+)?\s*(?:and\s+)?""")
+    private val durationPart = Regex("""(\d+(?:[.,]\d+)?)\s*([a-z]+)?\s*(?:(?:and|et)\s+)?""")
 
-    /** `7`, `7:30`, `7.30`, `7h30`, with an optional `am`/`pm`. */
-    private val timeOfDay = Regex("""(\d{1,2})(?:[:.h](\d{2}))?\s*(am|pm|a\.m\.|p\.m\.|a|p)?""")
+    /** `7`, `7:30`, `7.30`, `7h30`, `7 h 30`, `7h`, with an optional `am`/`pm`. */
+    private val timeOfDay = Regex("""(\d{1,2})(?:\s*[:.h]\s*(\d{2})|\s*h)?\s*(am|pm|a\.m\.|p\.m\.|a|p)?""")
 
     /** The timer's length in seconds, or null when [input] is not a timer. */
     fun timerSeconds(input: String): Int? {
         val text = normalized(input)
-        val rest = withoutKeyword(text, timerPrefixes, suffix = "timer")
+        val rest = withoutKeyword(text, timerPrefixes, timerSuffixes)
         val keyword = rest != null
         return duration(rest ?: text, keyword)?.takeIf { it in 1..MAX_TIMER_SECONDS }
     }
 
     /** The alarm's time, or null when [input] is not an alarm. */
     fun alarmTime(input: String): AlarmTime? {
-        val match = withoutKeyword(normalized(input), alarmPrefixes, suffix = "alarm")
+        val match = withoutKeyword(normalized(input), alarmPrefixes, alarmSuffixes)
             ?.let(timeOfDay::matchEntire) ?: return null
         val (hourText, minuteText, meridiem) = match.destructured
         val minute = minuteText.ifEmpty { "0" }.toInt()
@@ -66,12 +75,13 @@ internal object ClockQuery {
         }
     }
 
-    private fun normalized(input: String) = input.trim().lowercase().replace(Regex("""\s+"""), " ")
+    private fun normalized(input: String) = withoutAccents(input.trim().lowercase()).replace(Regex("""\s+"""), " ")
 
-    /** [text] without its leading keyword or trailing [suffix]; null when it has neither. */
-    private fun withoutKeyword(text: String, prefixes: List<String>, suffix: String): String? {
+    /** [text] without its leading keyword or one of its trailing [suffixes]; null when it has neither. */
+    private fun withoutKeyword(text: String, prefixes: List<String>, suffixes: List<String>): String? {
         prefixes.firstOrNull { text.startsWith("$it ") }?.let { return text.removePrefix("$it ").trim() }
-        return text.takeIf { it.endsWith(" $suffix") }?.removeSuffix(" $suffix")?.trim()
+        val suffix = suffixes.firstOrNull { text.endsWith(" $it") } ?: return null
+        return text.removeSuffix(" $suffix").trim()
     }
 
     /**
@@ -110,9 +120,9 @@ internal object ClockQuery {
     }
 
     private fun unitSeconds(unit: String): Int? = when (unit) {
-        "h", "hr", "hrs", "hour", "hours" -> SECONDS_PER_HOUR
+        "h", "hr", "hrs", "hour", "hours", "heure", "heures" -> SECONDS_PER_HOUR
         "m", "min", "mins", "minute", "minutes" -> SECONDS_PER_MINUTE
-        "s", "sec", "secs", "second", "seconds" -> 1
+        "s", "sec", "secs", "second", "seconds", "seconde", "secondes" -> 1
         else -> null
     }
 

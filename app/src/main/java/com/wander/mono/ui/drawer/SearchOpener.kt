@@ -11,7 +11,8 @@ import kotlinx.coroutines.launch
 
 /**
  * What tapping a search result (or the keyboard's Go on the top one) does, each kind to whatever
- * opens it, and remembering in [SearchMemory] what the query opened.
+ * opens it, and remembering in [SearchMemory] what the query opened (and in [LaunchRecorder] the
+ * app it opened).
  */
 class SearchOpener @Inject constructor(
     private val actions: AppActions,
@@ -19,17 +20,22 @@ class SearchOpener @Inject constructor(
     private val sources: SourceOpener,
     private val handOffs: SearchHandOffs,
     private val memory: SearchMemory,
+    private val recorder: LaunchRecorder,
     private val messages: UserMessages,
     @AppScope private val scope: CoroutineScope,
 ) {
     /** Opens [hit], found for [query]. */
     fun open(hit: SearchHit, query: String): HitOutcome {
         val outcome = when (hit) {
-            is SearchHit.App -> opened(messages.report(actions.launch(hit.entry.app.key)))
+            is SearchHit.App -> opened(messages.report(actions.launch(hit.entry.app.key))).also { outcome ->
+                if (outcome == HitOutcome.Opened) recorder.opened(hit.entry.app)
+            }
             is SearchHit.Shortcut -> opened(messages.report(actions.launchShortcut(hit.shortcut)))
             is SearchHit.Calculation -> sources.copy(hit)
             is SearchHit.Timer -> opened(messages.report(clock.setTimer(hit.seconds)))
             is SearchHit.Alarm -> opened(messages.report(clock.setAlarm(hit.time.hour, hit.time.minute)))
+            is SearchHit.Note -> handOffs.note(hit)
+            is SearchHit.Dial -> handOffs.dial(hit)
             is SearchHit.Link -> handOffs.open(hit)
             is SearchHit.ShareText -> handOffs.share(hit)
             is SearchHit.Person -> sources.open(hit)

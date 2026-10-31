@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -25,7 +26,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wander.mono.core.apps.AppIconImage
 import com.wander.mono.core.apps.AppKey
@@ -41,8 +44,10 @@ import com.wander.mono.ui.components.instantPress
 typealias SheetShortcutIcon = suspend (AppShortcut, Int) -> AppIconImage?
 
 /**
- * The app's shortcuts under "Open", as a row of tonal chips that scrolls sideways: each its own
- * icon (its app's when it has none, nothing in text-only mode) and label. A tap launches it.
+ * The app's shortcuts, as a row of tonal chips that scrolls sideways: each its own icon (its app's
+ * when it has none, nothing in text-only mode) and label. A tap launches it. The sheet shows them
+ * under "Open"; home unfolds them [small] under a favourite, which takes [contentPadding] to line
+ * them up with its name.
  */
 @Composable
 internal fun ShortcutRow(
@@ -52,14 +57,17 @@ internal fun ShortcutRow(
     loadIcon: SheetShortcutIcon,
     onShortcut: (AppShortcut) -> Unit,
     modifier: Modifier = Modifier,
+    small: Boolean = false,
+    contentPadding: PaddingValues = PaddingValues(horizontal = 16.dp),
 ) {
+    val size = if (small) SmallChip else RegularChip
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(horizontal = 16.dp),
+        contentPadding = contentPadding,
         modifier = modifier.fillMaxWidth(),
     ) {
         items(shortcuts) { shortcut ->
-            ShortcutChip(shortcut, app, icons, loadIcon) { onShortcut(shortcut) }
+            ShortcutChip(shortcut, app, icons, loadIcon, size) { onShortcut(shortcut) }
         }
     }
 }
@@ -70,18 +78,20 @@ private fun ShortcutChip(
     app: AppKey,
     icons: AppIcons,
     loadIcon: SheetShortcutIcon,
+    size: ChipSize,
     onClick: () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
+    // Below 48 dp tall, the Surface still keeps a 48 dp touch target around the small chip.
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(ChipCorner),
+        shape = RoundedCornerShape(size.corner),
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
         interactionSource = interaction,
         modifier = Modifier
-            .height(ChipHeight)
-            .expressivePress(interaction, PressMorph.squarer(ChipCorner))
+            .height(size.height)
+            .expressivePress(interaction, PressMorph.squarer(size.corner))
             .instantPress(interaction),
     ) {
         Row(
@@ -89,10 +99,10 @@ private fun ShortcutChip(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 12.dp),
         ) {
-            ShortcutGlyph(shortcut, app, icons, loadIcon)
+            ShortcutGlyph(shortcut, app, icons, loadIcon, size.glyph)
             Text(
                 shortcut.label,
-                style = MaterialTheme.typography.labelLarge,
+                style = size.label(MaterialTheme.typography),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.widthIn(max = LabelMaxWidth),
@@ -103,19 +113,27 @@ private fun ShortcutChip(
 
 /** Decorative: the chip's label names the shortcut. */
 @Composable
-private fun ShortcutGlyph(shortcut: AppShortcut, app: AppKey, icons: AppIcons, loadIcon: SheetShortcutIcon) {
+private fun ShortcutGlyph(
+    shortcut: AppShortcut,
+    app: AppKey,
+    icons: AppIcons,
+    loadIcon: SheetShortcutIcon,
+    glyphSize: Dp,
+) {
     if (icons.mode == IconMode.TextOnly) return
-    val sizePx = with(LocalDensity.current) { GlyphSize.roundToPx() }
+    val sizePx = with(LocalDensity.current) { glyphSize.roundToPx() }
     val own by produceState<AppIconImage?>(null, shortcut, sizePx) { value = loadIcon(shortcut, sizePx) }
     val image = own
     if (image == null) {
-        AppIcon(app, icons, size = GlyphSize)
+        AppIcon(app, icons, size = glyphSize)
     } else {
-        Image(image.bitmap, contentDescription = null, modifier = Modifier.size(GlyphSize).clip(CircleShape))
+        Image(image.bitmap, contentDescription = null, modifier = Modifier.size(glyphSize).clip(CircleShape))
     }
 }
 
-private val ChipHeight = 48.dp
-private val ChipCorner = 16.dp
-private val GlyphSize = 24.dp
+/** A chip's measures: the sheet's regular one, or home's small one under a favourite. */
+private class ChipSize(val height: Dp, val corner: Dp, val glyph: Dp, val label: (Typography) -> TextStyle)
+
+private val RegularChip = ChipSize(height = 48.dp, corner = 16.dp, glyph = 24.dp, label = { it.labelLarge })
+private val SmallChip = ChipSize(height = 36.dp, corner = 12.dp, glyph = 20.dp, label = { it.labelMedium })
 private val LabelMaxWidth = 160.dp

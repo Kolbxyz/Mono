@@ -20,12 +20,16 @@ import com.wander.mono.core.notifications.ListenerAccess
 import com.wander.mono.core.notifications.LiveActivities
 import com.wander.mono.core.notifications.LiveActivity
 import com.wander.mono.core.notifications.NotificationCounts
+import com.wander.mono.core.notifications.NotificationPreview
 import com.wander.mono.core.notifications.NotificationPreviews
+import com.wander.mono.core.notifications.PackageUser
+import com.wander.mono.core.notifications.QuietDigest
 import com.wander.mono.core.quiet.QuietMode
 import com.wander.mono.core.siblings.WandaUpNext
 import com.wander.mono.core.system.Battery
 import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.widgets.Widgets
+import com.wander.mono.data.FocusedFavorite
 import com.wander.mono.data.HeadphoneApps
 import com.wander.mono.data.HomeFolders
 import com.wander.mono.data.LauncherPrefs
@@ -83,6 +87,8 @@ class HomeViewModel @Inject constructor(
     private val media: MediaSessions,
     private val playerApp: PlayerApp,
     wandaUpNext: WandaUpNext,
+    digest: QuietDigest,
+    focus: FocusedFavorite,
     private val listenerAccess: ListenerAccess,
     private val actions: AppActions,
     private val messages: UserMessages,
@@ -119,9 +125,22 @@ class HomeViewModel @Inject constructor(
         List<LiveActivity>::unmuted,
     )
 
+    /** The latest notification per app, while previews are on, minus rows switched off and muted apps. */
+    private val shownPreviews: Flow<Map<PackageUser, NotificationPreview>> = combine(
+        previews.previews,
+        settings[PreviewSettings.ShowPreviews],
+        liveRows.hidden,
+        muted.apps,
+    ) { all, on, hidden, off -> if (on) all.unlessHidden(hidden).unmuted(off) else emptyMap() }
+
+    /** What came in during the quiet session that just ended, until home has shown it. */
+    private val shownDigest: Flow<DigestRow?> =
+        combine(digest.away, catalog.apps.filterNotNull(), muted.apps, shownPreviews, ::digestRow)
+
     /**
      * Null until the catalog is loaded, so an empty home is never shown by mistake. Apps muted on
-     * home lose their badge and live rows here; folders group the result last.
+     * home lose their badge and live rows here; a focus and the quiet digest come after quiet mode,
+     * and folders group the result last.
      */
     val rows: StateFlow<List<HomeRow>?> = combine(
         prefs.favorites,
@@ -130,15 +149,7 @@ class HomeViewModel @Inject constructor(
         media.state.map { it == MediaState.NoAccess }.distinctUntilChanged(),
         settings[BadgeSettings.ShowCounts],
         ::assembleHomeRows,
-    ).combine(
-        combine(
-            previews.previews,
-            settings[PreviewSettings.ShowPreviews],
-            liveRows.hidden,
-            muted.apps,
-        ) { all, on, hidden, off -> if (on) all.unlessHidden(hidden).unmuted(off) else emptyMap() },
-        ::withPreviews,
-    ).combine(
+    ).combine(shownPreviews, ::withPreviews).combine(
         combine(calendar.agenda, liveRows.hidden, muted.apps) { agenda, hidden, off ->
             agenda.unlessHidden(hidden).unlessMuted(off)
         },
@@ -146,6 +157,8 @@ class HomeViewModel @Inject constructor(
     ).combine(shownLive, ::withLiveActivities)
         .combine(widgets.placed, ::withWidgetRows)
         .combine(quiet.state, ::quietHomeRows)
+        .combine(activeFocus(focus.stored, focus::end), ::withFocus)
+        .combine(shownDigest, ::withDigest)
         .combine(folders.folders, ::withFolders)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 

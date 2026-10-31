@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Search commands: a note or a call typed into search, handed to another app -->
+    <string name="command_note">Note “%1$s”</string>
+    <string name="command_note_action">Save note</string>
+    <string name="command_note_chooser">Save note with</string>
+    <string name="command_error_no_note_app">No app can save a note</string>
+    <string name="command_call">Call %1$s</string>
+    <!-- The drawer's suggestion: the app most often opened around this hour -->
+    <string name="drawer_predicted">Suggested now</string>
+</resources>

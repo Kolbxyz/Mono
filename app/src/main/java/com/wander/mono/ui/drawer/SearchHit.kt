@@ -12,7 +12,8 @@ import java.util.Locale
 
 /**
  * One search result: an app (hidden ones included), a shortcut, a sum or conversion, a timer or
- * alarm, a link or text to hand off, a contact, a notification, a song, a settings page or the web.
+ * alarm, a note or a call, a link or text to hand off, a contact, a notification, a song, a settings
+ * page or the web.
  */
 sealed interface SearchHit {
     val key: String
@@ -56,6 +57,21 @@ sealed interface SearchHit {
     data class Alarm(val time: AlarmTime) : SearchHit {
         override val key: String get() = "alarm"
         override val label: String get() = "%02d:%02d".format(Locale.ROOT, time.hour, time.minute)
+    }
+
+    /** A note typed after "note" ([CommandQuery]); tapping hands [text] to the app the user picks. */
+    data class Note(val text: String) : SearchHit {
+        override val key: String get() = "note"
+        override val label: String get() = text
+    }
+
+    /**
+     * A call typed after "call" ([CommandQuery]): [number] in the dialer, ready for the user to press
+     * call. [contact] is the one it was found as, null when the number itself was typed.
+     */
+    data class Dial(val number: String, val contact: Contact? = null) : SearchHit {
+        override val key: String get() = contact?.let { "dial:${it.id}" } ?: "dial"
+        override val label: String get() = contact?.name ?: number
     }
 
     /** The query read as a web address; tapping opens it in the app that takes it. */

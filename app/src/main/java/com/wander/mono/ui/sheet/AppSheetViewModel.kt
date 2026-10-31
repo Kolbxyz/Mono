@@ -3,7 +3,6 @@ package com.wander.mono.ui.sheet
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.wander.mono.R
 import com.wander.mono.core.apps.AppActions
 import com.wander.mono.core.apps.AppCatalog
 import com.wander.mono.core.apps.AppKey
@@ -18,7 +17,6 @@ import com.wander.mono.data.HeadphoneApps
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.ScreenTimeSettings
-import com.wander.mono.ui.MessageAction
 import com.wander.mono.ui.UserMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -45,6 +43,7 @@ class AppSheetViewModel @Inject constructor(
     private val headphoneApps: HeadphoneApps,
     private val lock: AppLock,
     private val shortcutIcons: ShortcutIcons,
+    private val removals: AppRemovals,
 ) : ViewModel() {
     private val target: StateFlow<String?> = savedState.getStateFlow(TARGET, null)
 
@@ -91,7 +90,8 @@ class AppSheetViewModel @Inject constructor(
 
     fun addToHome(key: AppKey) = edit { prefs.addFavorite(key) }
 
-    fun removeFromHome(key: AppKey) = edit { prefs.removeFavorite(key) }
+    /** Offers Undo, which puts the favourite back where it was. */
+    fun removeFromHome(key: AppKey) = removals.removeFromHome(key)
 
     /** Keeps the sheet open, so the switch is seen to change. */
     fun setLiftsWithHeadphones(key: AppKey, lifts: Boolean) {
@@ -99,11 +99,8 @@ class AppSheetViewModel @Inject constructor(
     }
 
     /** Hiding offers Undo (spec 7.8): the app is gone from the drawer before the user sees where it went. */
-    fun setHidden(key: AppKey, hidden: Boolean): Unit = edit {
-        prefs.setHidden(key, hidden)
-        if (hidden) {
-            messages.show(R.string.app_hidden, MessageAction(R.string.action_undo) { setHidden(key, hidden = false) })
-        }
+    fun setHidden(key: AppKey, hidden: Boolean) {
+        if (hidden) removals.hide(key) else edit { prefs.setHidden(key, hidden = false) }
     }
 
     /** Keeps the sheet open, so the lock is seen to change. The sheet asks for the screen lock before removing it. */

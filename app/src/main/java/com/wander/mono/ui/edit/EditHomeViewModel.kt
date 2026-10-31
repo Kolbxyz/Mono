@@ -22,6 +22,7 @@ import com.wander.mono.data.settings.PreviewSettings
 import com.wander.mono.data.settings.RowDensity
 import com.wander.mono.data.settings.SettingsStore
 import com.wander.mono.data.settings.liveActivityKinds
+import com.wander.mono.ui.sheet.AppRemovals
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
@@ -48,6 +49,7 @@ class EditHomeViewModel @Inject constructor(
     private val liveRows: LiveRowPrefs,
     private val widgets: Widgets,
     private val widgetPrefs: WidgetPrefs,
+    private val removals: AppRemovals,
 ) : ViewModel() {
     /** The live row switches under each installed favourite. */
     val toggles: StateFlow<Map<AppKey, List<LiveRowToggle>>> = combine(
@@ -85,7 +87,8 @@ class EditHomeViewModel @Inject constructor(
 
     fun move(key: AppKey, by: Int) = launch { prefs.moveFavorite(key, by) }
 
-    fun remove(key: AppKey) = launch { prefs.removeFavorite(key) }
+    /** Offers Undo, which puts the favourite back where it was. */
+    fun remove(key: AppKey) = removals.removeFromHome(key)
 
     fun add(key: AppKey) = launch { prefs.addFavorite(key) }
 

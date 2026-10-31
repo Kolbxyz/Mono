@@ -24,8 +24,8 @@ class SearchMemory @Inject constructor(
     }
 
     /**
-     * Remembers that [query] opened [hit]. Not a notification, which is gone once read, nor a link
-     * or shared text, whose query is the pasted text itself.
+     * Remembers that [query] opened [hit]. Not a notification, which is gone once read, nor a link,
+     * shared text or a note, whose query is the text itself.
      */
     suspend fun remember(query: String, hit: SearchHit) {
         if (!rememberable(hit) || !settings[SearchSettings.RememberRecent].first()) return
@@ -35,7 +35,7 @@ class SearchMemory @Inject constructor(
     suspend fun forget(search: RecentSearch) = history.forget(search)
 
     private fun rememberable(hit: SearchHit): Boolean = when (hit) {
-        is SearchHit.Notice, is SearchHit.Link, is SearchHit.ShareText -> false
+        is SearchHit.Notice, is SearchHit.Link, is SearchHit.ShareText, is SearchHit.Note -> false
         else -> true
     }
 }
