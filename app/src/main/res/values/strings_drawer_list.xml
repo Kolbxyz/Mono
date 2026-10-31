@@ -35,9 +35,5 @@
     <string name="drawer_rail_private">Private space</string>
 
     <!-- Drawer settings -->
-    <string name="drawer_sort">Order</string>
-    <string name="drawer_sort_alphabetical">A–Z</string>
-    <string name="drawer_sort_recent">Newest</string>
-    <string name="drawer_new_apps">New apps at the top</string>
-    <string name="drawer_new_apps_summary">Apps installed in the last 3 days, until you open them</string>
+    <string name="drawer_new_apps">New apps first</string>
 </resources>

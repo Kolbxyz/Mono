@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -43,7 +44,7 @@ fun CalendarCard(row: CalendarRow, onOpen: (CalendarEvent) -> Unit, modifier: Mo
         // Lines pad themselves, so their touch targets reach the card's edges and the text sits at its inset.
         Column(Modifier.padding(vertical = HomeCardInset - LINE_PADDING)) {
             row.events.forEachIndexed { index, event ->
-                EventLine(event, row.at, onOpen)
+                EventLine(event, row.at, next = index == 0, onOpen)
                 // Only the next event offers Join and Map, so the card stays calm.
                 if (index == 0) CalendarEventActions(event, row.canOpenMaps)
             }
@@ -51,8 +52,9 @@ fun CalendarCard(row: CalendarRow, onOpen: (CalendarEvent) -> Unit, modifier: Mo
     }
 }
 
+/** The [next] event leads: its time in the accent and its title larger; the rest step back. */
 @Composable
-private fun EventLine(event: CalendarEvent, at: Long, onOpen: (CalendarEvent) -> Unit) {
+private fun EventLine(event: CalendarEvent, at: Long, next: Boolean, onOpen: (CalendarEvent) -> Unit) {
     val title = event.title.ifBlank { stringResource(R.string.calendar_untitled) }
     val line = Modifier
         .fillMaxWidth()
@@ -61,23 +63,23 @@ private fun EventLine(event: CalendarEvent, at: Long, onOpen: (CalendarEvent) ->
         .padding(horizontal = HomeCardInset, vertical = LINE_PADDING)
     if (isLargeFontScale()) {
         Column(line) {
-            WhenText(event, at)
-            TitleText(title)
+            WhenText(event, at, next)
+            TitleText(title, next)
         }
     } else {
-        Row(line, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            WhenText(event, at, Modifier.widthIn(min = WHEN_WIDTH))
-            TitleText(title)
+        Row(line, horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            WhenText(event, at, next, Modifier.widthIn(min = WHEN_WIDTH))
+            TitleText(title, next)
         }
     }
 }
 
 @Composable
-private fun WhenText(event: CalendarEvent, at: Long, modifier: Modifier = Modifier) {
+private fun WhenText(event: CalendarEvent, at: Long, next: Boolean, modifier: Modifier = Modifier) {
     Text(
         whenLabel(event, at),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary,
+        style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = "tnum"),
+        color = if (next) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = modifier,
@@ -85,8 +87,14 @@ private fun WhenText(event: CalendarEvent, at: Long, modifier: Modifier = Modifi
 }
 
 @Composable
-private fun TitleText(title: String) {
-    Text(title, style = MaterialTheme.typography.bodyLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+private fun TitleText(title: String, next: Boolean) {
+    Text(
+        title,
+        style = if (next) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyLarge,
+        color = if (next) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 /** "All day", "Now", "14:00", or with the weekday ("Tue 09:00") when it is not today. */

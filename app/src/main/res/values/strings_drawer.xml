@@ -24,7 +24,6 @@
     <!-- Drawer settings -->
     <string name="drawer_settings_title">Drawer</string>
     <string name="drawer_background">Background</string>
-    <string name="drawer_background_scrim">Tinted</string>
-    <string name="drawer_background_blur">Blurred</string>
+    <string name="drawer_background_scrim">Tint</string>
     <string name="drawer_background_solid">Solid</string>
 </resources>

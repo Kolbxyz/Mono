@@ -2,9 +2,11 @@ package com.wander.mono.ui.settings
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +19,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.wander.mono.data.settings.IntSetting
 import com.wander.mono.ui.components.rememberMonoHaptics
 import kotlin.math.roundToInt
@@ -46,7 +49,6 @@ fun SliderSetting(
     ListItem(
         colors = settingRowColors(),
         leadingContent = leadingBadge(icon, enabled),
-        trailingContent = { ValueLabel(valueLabel(shown.roundToInt()), labels) },
         supportingContent = {
             Slider(
                 value = shown,
@@ -68,23 +70,39 @@ fun SliderSetting(
             )
         },
     ) {
-        Text(stringResource(title))
+        // The value sits on the title's line, not in a trailing slot: the slider below keeps the
+        // row's full width and a long title wraps beside the value instead of being cut.
+        Row {
+            Text(stringResource(title), Modifier.weight(1f).alignByBaseline().padding(end = 12.dp))
+            ValueLabel(valueLabel(shown.roundToInt()), labels, enabled, Modifier.alignByBaseline())
+        }
     }
 }
 
 /**
- * [text] in tabular digits, as wide as the widest of [all]: the label changing during a drag
- * must not resize the slider beside it.
+ * [text] in tabular digits and the accent colour, as wide as the widest of [all]: the label
+ * changing during a drag must not reflow the title beside it.
  */
 @Composable
-private fun ValueLabel(text: String, all: List<String>) {
-    val style = LocalTextStyle.current.copy(fontFeatureSettings = TABULAR_DIGITS)
+private fun ValueLabel(text: String, all: List<String>, enabled: Boolean, modifier: Modifier) {
+    val style = MaterialTheme.typography.labelLarge.copy(fontFeatureSettings = TABULAR_DIGITS)
     val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val width = remember(all, style, measurer, density) {
         with(density) { all.maxOf { measurer.measure(it, style).size.width }.toDp() }
     }
-    Text(text, style = style, textAlign = TextAlign.End, maxLines = 1, modifier = Modifier.widthIn(min = width))
+    Text(
+        text,
+        style = style,
+        color = if (enabled) {
+            MaterialTheme.colorScheme.primary
+        } else {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = DISABLED_ALPHA)
+        },
+        textAlign = TextAlign.End,
+        maxLines = 1,
+        modifier = modifier.widthIn(min = width),
+    )
 }
 
 /** Every value the slider can stop at: [range]'s first, each [step] on, and its last. */

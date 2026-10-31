@@ -1,17 +1,17 @@
 package com.wander.mono.ui.settings
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.wander.mono.R
 import com.wander.mono.data.settings.DrawerBackground
 import com.wander.mono.data.settings.DrawerSettings
-import com.wander.mono.data.settings.DrawerSort
 
 /**
- * What the app drawer is drawn on (bare or blurred wallpaper, scrim or solid), how its list is ordered and
- * whether new apps gather at the top, then whether opening it brings up the keyboard and which
- * edge its letter rail is on.
+ * What the app drawer is drawn on (bare or blurred wallpaper, tint or solid), whether new apps
+ * gather at the top and which edge its letter rail is on. Its order is switched from the drawer's
+ * own toolbar, where its effect shows.
  */
 @Composable
 fun DrawerSection(settings: SettingsViewModel) {
@@ -26,35 +26,34 @@ fun DrawerSection(settings: SettingsViewModel) {
             DrawerSettings.Background,
             R.string.drawer_background,
             R.drawable.sym_palette,
+            preview = { BackgroundPreview(it) },
         ) { background ->
             when (background) {
                 DrawerBackground.None -> R.string.drawer_background_none
                 DrawerBackground.SoftBlur -> R.string.drawer_background_soft_blur
                 DrawerBackground.Scrim -> R.string.drawer_background_scrim
-                DrawerBackground.Blur -> R.string.drawer_background_blur
                 DrawerBackground.Solid -> R.string.drawer_background_solid
             }
         }
-        ChoiceSetting(settings, DrawerSettings.Sort, R.string.drawer_sort, R.drawable.sym_view_agenda) { sort ->
-            when (sort) {
-                DrawerSort.Alphabetical -> R.string.drawer_sort_alphabetical
-                DrawerSort.Recent -> R.string.drawer_sort_recent
-            }
-        }
-        SwitchSetting(
-            settings,
-            DrawerSettings.NewApps,
-            title = R.string.drawer_new_apps,
-            summary = R.string.drawer_new_apps_summary,
-            icon = R.drawable.sym_add,
-        )
-        SwitchSetting(
-            settings,
-            DrawerSettings.KeyboardOnOpen,
-            title = R.string.drawer_keyboard_on_open,
-            summary = R.string.drawer_keyboard_on_open_summary,
-            icon = R.drawable.sym_search,
-        )
+        SwitchSetting(settings, DrawerSettings.NewApps, title = R.string.drawer_new_apps, icon = R.drawable.sym_add)
         SwitchSetting(settings, DrawerSettings.RailAtStart, title = railTitle, icon = R.drawable.sym_font_download)
     }
 }
+
+/**
+ * Each background as a swatch of how much of the surface it lays over the wallpaper: none, a light
+ * tint (the blur), the home scrim, all of it.
+ */
+@Composable
+private fun BackgroundPreview(background: DrawerBackground) {
+    val alpha = when (background) {
+        DrawerBackground.None -> 0f
+        DrawerBackground.SoftBlur -> BLUR_SWATCH_ALPHA
+        DrawerBackground.Scrim -> SCRIM_SWATCH_ALPHA
+        DrawerBackground.Solid -> 1f
+    }
+    ChoiceSwatchPreview(MaterialTheme.colorScheme.surface.copy(alpha = alpha))
+}
+
+private const val BLUR_SWATCH_ALPHA = 0.3f
+private const val SCRIM_SWATCH_ALPHA = 0.65f

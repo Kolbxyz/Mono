@@ -209,4 +209,26 @@ class SearchResultsTest {
         assertTrue(search("weather", web = null).isEmpty())
         assertTrue(search("   ").isEmpty())
     }
+
+    @Test
+    fun `a note or a typed number comes first and keeps the web out`() {
+        assertEquals(listOf(SearchHit.Note("buy milk")), search("note buy milk"))
+        assertEquals(listOf(SearchHit.Dial("0612345678")), search("appeler 0612345678"))
+    }
+
+    @Test
+    fun `call finds the best contact with a number, the others as contacts`() {
+        val anna = Contact(1, "a", "Anna", phone = "0611")
+        val annabel = Contact(2, "b", "Annabel", phone = "0622")
+        val noPhone = Contact(3, "c", "Ann", email = "ann@example.org")
+        val hits = search("call ann", contacts = listOf(annabel, noPhone, anna))
+        assertEquals(SearchHit.Dial("0611", anna), hits.first())
+        assertEquals(listOf(noPhone, annabel), hits.filterIsInstance<SearchHit.Person>().map { it.contact })
+    }
+
+    @Test
+    fun `an app named like the command comes before it`() {
+        val hits = search("note pad", apps = listOf(entry("Note Pad")))
+        assertEquals(listOf("app", "note"), hits.map { it.key.substringBefore(':') })
+    }
 }

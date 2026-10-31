@@ -2,6 +2,7 @@ package com.wander.mono.ui.drawer
 
 import android.os.Build
 import android.view.Window
+import android.view.WindowManager
 import androidx.activity.compose.LocalActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.material3.MaterialTheme
@@ -24,17 +25,19 @@ import com.wander.mono.data.settings.DrawerBackground
 import com.wander.mono.ui.home.homeScrimAlpha
 import com.wander.mono.ui.home.scrimAlpha
 import com.wander.mono.ui.home.wallpaperTextShadow
+import com.wander.mono.ui.theme.LocalPowerSave
 import java.util.function.Consumer
 
 /**
  * The colour the drawer is drawn on, per the user's [DrawerLook.background]: the opaque surface;
- * nothing at all, the wallpaper bare under shadowed text; the home scrim (the same legibility alpha
- * home computes from the wallpaper's colours); or, while composed, the wallpaper blurred behind the
- * window, the blur growing as the drawer is [revealed] (0 to 1): softly under a light tint, or
- * strongly under a lighter share of the home scrim. Blur needs Android 12 and the device's
- * cross-window blur, which battery saver or the device can turn off at any time: then the strong
- * blur's full scrim is drawn instead, and the blur comes back when Android allows it again. High
- * contrast always keeps a scrim, as on home.
+ * nothing at all, the wallpaper bare under shadowed text; or an even tonal veil of the surface
+ * colour at a measured alpha (the legibility alpha home computes from the wallpaper's colours), never
+ * a gradient or a vignette. The soft blur also blurs the wallpaper behind the window while composed,
+ * the blur growing as the drawer is [revealed] (0 to 1); the blur evens the wallpaper out, so its veil
+ * can be lighter and the wallpaper still reads as itself. Blur needs Android 12, the device's
+ * cross-window blur (battery saver or the device can turn it off at any time: the full veil is drawn
+ * meanwhile) and the wallpaper behind the window: under "solid black wallpaper" there is nothing to
+ * blur and no blur pass runs. High contrast always raises the veil, as on home.
  */
 @Composable
 internal fun drawerBackdrop(look: DrawerLook, revealed: () -> Float): Color {
@@ -48,45 +51,52 @@ internal fun drawerBackdrop(look: DrawerLook, revealed: () -> Float): Color {
         // As home with a text shadow: no scrim, the shadow carries the text.
         DrawerBackground.None -> homeScrimAlpha(legible, textShadow = true, highContrast = highContrast)
         DrawerBackground.SoftBlur -> {
-            blurredBehind(SOFT_BLUR_RADIUS, revealed)
-            homeScrimAlpha(SOFT_SCRIM, textShadow = false, highContrast = highContrast)
-        }
-        DrawerBackground.Scrim -> homeScrimAlpha(legible, textShadow = false, highContrast = highContrast)
-        DrawerBackground.Blur -> {
-            val base = if (blurredBehind(BLUR_RADIUS, revealed)) legible * BLUR_SCRIM else legible
+            val base = if (blurredBehind(SOFT_BLUR_RADIUS, revealed)) legible * SOFT_BLUR_VEIL else legible
             homeScrimAlpha(base, textShadow = false, highContrast = highContrast)
         }
+        DrawerBackground.Scrim -> homeScrimAlpha(legible, textShadow = false, highContrast = highContrast)
     }
     return scheme.surface.copy(alpha = alpha)
 }
 
 /**
- * The shadow drawer text drawn on the wallpaper gets ([com.wander.mono.ui.home.onWallpaper]): none on
- * the opaque surface; home's text shadow where little or no tint is drawn; home's soft halo under a
- * scrim.
+ * The shadow drawer text gets ([com.wander.mono.ui.home.onWallpaper]): only on the bare wallpaper,
+ * where nothing else carries it. Over a veil the text is legible on its own, and a shadow or halo
+ * under every row and letter would only smudge the even tone.
  */
 @Composable
 @ReadOnlyComposable
 internal fun drawerTextShadow(background: DrawerBackground): Shadow? = when (background) {
-    DrawerBackground.Solid -> null
-    DrawerBackground.None, DrawerBackground.SoftBlur -> wallpaperTextShadow(textShadow = true, halo = 1f)
-    DrawerBackground.Scrim, DrawerBackground.Blur -> wallpaperTextShadow(textShadow = false, halo = 1f)
+    DrawerBackground.None -> wallpaperTextShadow(textShadow = true, halo = 1f)
+    DrawerBackground.SoftBlur, DrawerBackground.Scrim, DrawerBackground.Solid -> null
 }
 
-/** Blurs the wallpaper behind the window by up to [radius]; true while Android allows it. */
+/**
+ * Blurs the wallpaper behind the window by up to [radius]; true while Android allows it. Never under
+ * battery saver ([LocalPowerSave]): leaving composition clears the blur.
+ */
 @Composable
 private fun blurredBehind(radius: Dp, revealed: () -> Float): Boolean =
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && windowBlur(radius, revealed)
+    !LocalPowerSave.current && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && windowBlur(radius, revealed)
 
 /**
  * Blurs what is behind the activity's window (the wallpaper) while composed, up to [fullBlur] as far
  * as the drawer is [revealed] (0 to 1); true while Android allows cross-window blur, false when it
- * does not (battery saver, a device that cannot).
+ * does not (battery saver, a device that cannot) or when the window shows no wallpaper to blur.
  */
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 private fun windowBlur(fullBlur: Dp, revealed: () -> Float): Boolean {
-    val window: Window = LocalActivity.current?.window ?: return false
+    // An opaque window ("solid black wallpaper") has nothing behind it worth a blur pass.
+    val window = LocalActivity.current?.window
+        ?.takeIf { it.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0 }
+    return window != null && wallpaperBlur(window, fullBlur, revealed)
+}
+
+/** [windowBlur] on a [window] that shows the wallpaper. */
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+private fun wallpaperBlur(window: Window, fullBlur: Dp, revealed: () -> Float): Boolean {
     val fullRadius = with(LocalDensity.current) { fullBlur.roundToPx() }
     var enabled by remember { mutableStateOf(window.windowManager.isCrossWindowBlurEnabled) }
     // Changes only at each step, fine enough to read as a smooth ramp without a window update on
@@ -106,17 +116,14 @@ private fun windowBlur(fullBlur: Dp, revealed: () -> Float): Boolean {
     return enabled
 }
 
-/** How strongly the wallpaper is blurred behind the fully open drawer. */
-private val BLUR_RADIUS = 48.dp
-
 /** The soft blur: the wallpaper still reads as itself, only its detail goes. */
-private val SOFT_BLUR_RADIUS = 12.dp
+private val SOFT_BLUR_RADIUS = 20.dp
 
 /** How many steps the blur takes from none to its full radius as the drawer opens: a few px each. */
 private const val BLUR_STEPS = 16
 
-/** The blur evens the wallpaper out, so text needs this share of the home scrim on top of it. */
-private const val BLUR_SCRIM = 0.6f
-
-/** The light tint over the soft blur; the text shadow does the rest. */
-private const val SOFT_SCRIM = 0.15f
+/**
+ * The blur evens the wallpaper out, so the veil over it needs only this share of home's measured
+ * scrim to keep text legible without any shadow.
+ */
+private const val SOFT_BLUR_VEIL = 0.7f

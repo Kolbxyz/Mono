@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Snackbar after hiding an app from its sheet, with Undo: "Maps hidden". -->
+    <string name="app_hidden_named">%1$s hidden</string>
+    <!-- Snackbar after taking a favourite off home, with Undo: "Removed Maps". -->
+    <string name="favorite_removed">Removed %1$s</string>
+    <!-- TalkBack action for swiping right on a favourite: its shortcuts unfold under it. -->
+    <string name="favorite_show_shortcuts">Show shortcuts</string>
+    <string name="favorite_hide_shortcuts">Hide shortcuts</string>
+    <!-- TalkBack name of the row of shortcuts under a favourite: "Maps shortcuts". -->
+    <string name="inline_shortcuts_label">%1$s shortcuts</string>
+</resources>

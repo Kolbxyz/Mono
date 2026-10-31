@@ -9,12 +9,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ripple
+import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
@@ -100,11 +101,14 @@ private fun liveTone(accent: Color?): LiveTone {
     }
 }
 
-/** The row's kind as a symbol on a [tone] disc, the one accent a calm row carries. */
+/**
+ * The row's kind as a symbol on a [tone] cookie, the one accent a calm row carries: Material's
+ * expressive shape marks what is live apart from the round icons and pills around it.
+ */
 @Composable
 internal fun LiveBadge(@DrawableRes icon: Int, tone: LiveTone, modifier: Modifier = Modifier) {
     Box(
-        modifier.size(BADGE_SIZE).background(tone.container, CircleShape),
+        modifier.size(BADGE_SIZE).background(tone.container, MaterialShapes.Cookie9Sided.toShape()),
         contentAlignment = Alignment.Center,
     ) {
         Icon(

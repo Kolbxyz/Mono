@@ -8,32 +8,15 @@ import com.wander.mono.data.settings.ClockSettings
 @Composable
 fun GlanceLinesSection(settings: SettingsViewModel) {
     SettingsGroup(R.string.settings_glance_lines) {
-        SwitchSetting(
+        ToggleChipsSetting(
             settings,
-            ClockSettings.ShowDate,
-            title = R.string.settings_glance_date,
-            icon = R.drawable.sym_today,
-        )
-        SwitchSetting(
-            settings,
-            ClockSettings.ShowAlarm,
-            title = R.string.settings_glance_alarm,
-            summary = R.string.settings_glance_alarm_short,
-            icon = R.drawable.sym_alarm,
-        )
-        SwitchSetting(
-            settings,
-            ClockSettings.ShowEvent,
-            title = R.string.settings_glance_event,
-            summary = R.string.settings_glance_event_short,
-            icon = R.drawable.sym_event,
-        )
-        SwitchSetting(
-            settings,
-            ClockSettings.ShowBattery,
-            title = R.string.settings_glance_battery,
-            summary = R.string.settings_glance_battery_short,
-            icon = R.drawable.sym_battery_full,
+            title = R.string.settings_glance_shows,
+            chips = listOf(
+                ToggleChip(ClockSettings.ShowDate, R.string.settings_glance_date, R.drawable.sym_today),
+                ToggleChip(ClockSettings.ShowAlarm, R.string.settings_glance_alarm, R.drawable.sym_alarm),
+                ToggleChip(ClockSettings.ShowEvent, R.string.settings_glance_event, R.drawable.sym_event),
+                ToggleChip(ClockSettings.ShowBattery, R.string.settings_glance_battery, R.drawable.sym_battery_full),
+            ),
         )
     }
 }

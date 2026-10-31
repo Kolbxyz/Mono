@@ -32,8 +32,8 @@ import com.wander.mono.ui.home.onWallpaper
 import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
- * The categories with apps in the list, as one scrolling row of filter chips, unfolding under the
- * search field while [visible]: plain words, the chosen one on a tonal pill. Tapping the [selected]
+ * The categories with apps in the list, as one scrolling row of filter chips, unfolding just above
+ * the search field while [visible]: plain words, the chosen one on a tonal pill. Tapping the [selected]
  * chip again shows every category.
  */
 @Composable

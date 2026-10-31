@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 
 /**
- * The live clock preview at the top of "Home & clock": the real time, alarm, next event, battery
+ * The live clock preview at the top of the Home page: the real time, alarm, next event, battery
  * and quiet state, in the clock settings as they are being changed. Null until first read.
  */
 @HiltViewModel

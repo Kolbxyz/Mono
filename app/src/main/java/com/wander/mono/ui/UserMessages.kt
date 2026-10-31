@@ -8,8 +8,16 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-/** One snackbar: its text, whether it reports a failure (felt as well as read), and what it offers to do. */
-data class UserMessage(@StringRes val text: Int, val isError: Boolean, val action: MessageAction? = null)
+/**
+ * One snackbar: its text and the [args] it is formatted with (an app's name), whether it reports a
+ * failure (felt as well as read), and what it offers to do.
+ */
+data class UserMessage(
+    @StringRes val text: Int,
+    val isError: Boolean,
+    val action: MessageAction? = null,
+    val args: List<String> = emptyList(),
+)
 
 /** A snackbar's button, such as Undo, and what it does. */
 class MessageAction(@StringRes val label: Int, val onAction: () -> Unit)
@@ -29,9 +37,9 @@ class UserMessages @Inject constructor() {
         }
     }
 
-    /** Shows [message] once, for confirmations, with [action] as its button when given. */
-    fun show(@StringRes message: Int, action: MessageAction? = null) {
-        mutableMessages.tryEmit(UserMessage(message, isError = false, action = action))
+    /** Shows [message] once, for confirmations, formatted with [args], with [action] as its button when given. */
+    fun show(@StringRes message: Int, action: MessageAction? = null, args: List<String> = emptyList()) {
+        mutableMessages.tryEmit(UserMessage(message, isError = false, action = action, args = args))
     }
 
     private companion object {

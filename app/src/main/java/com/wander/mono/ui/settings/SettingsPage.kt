@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.ui.components.readableColumn
 
@@ -64,9 +65,11 @@ internal fun SettingsPage(
                 .padding(top = padding.calculateTopPadding())
                 .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
                 .readableColumn(),
-            contentPadding = PaddingValues(bottom = padding.calculateBottomPadding()),
+            contentPadding = PaddingValues(bottom = padding.calculateBottomPadding() + PageEndSpace),
             content = content,
         )
     }
 }
 
+/** Room under a page's last group, so it ends on a margin rather than at the window's edge. */
+internal val PageEndSpace = 32.dp

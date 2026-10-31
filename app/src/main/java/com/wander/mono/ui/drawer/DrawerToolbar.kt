@@ -30,8 +30,9 @@ import com.wander.mono.R
 import com.wander.mono.data.settings.DrawerSort
 
 /**
- * The drawer list's floating toolbar, in the thumb zone [bottom] above the screen's edge: whose apps
- * (all, personal, work; only with a work profile), the category chips, and newest-first order.
+ * The drawer list's floating toolbar, in the thumb zone at the foot of the list, above the search
+ * field: whose apps (all, personal, work; only with a work profile), the category chips, and
+ * newest-first order.
  * Slides away while not [visible], as the list scrolls on.
  */
 @Composable
@@ -39,7 +40,6 @@ internal fun DrawerToolbar(
     visible: Boolean,
     controls: ListControls,
     actions: DrawerListActions,
-    bottom: Dp,
     modifier: Modifier = Modifier,
 ) {
     val motion = MaterialTheme.motionScheme
@@ -54,7 +54,7 @@ internal fun DrawerToolbar(
         HorizontalFloatingToolbar(
             expanded = true,
             colors = FloatingToolbarDefaults.standardFloatingToolbarColors(),
-            modifier = Modifier.padding(bottom = bottom + TOOLBAR_MARGIN).semantics { paneTitle = title },
+            modifier = Modifier.padding(bottom = TOOLBAR_MARGIN).semantics { paneTitle = title },
         ) {
             if (controls.hasWork) {
                 Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -113,8 +113,8 @@ private fun profileLabel(filter: ProfileFilter): Int = when (filter) {
     ProfileFilter.Work -> R.string.drawer_profile_work
 }
 
-/** The toolbar's gap above the navigation bar. */
+/** The toolbar's gap above the foot of the list. */
 private val TOOLBAR_MARGIN = 16.dp
 
-/** How much of the list's bottom the toolbar covers above the navigation bar, so the last row scrolls clear. */
+/** How much of the list's bottom the toolbar covers, so the last row scrolls clear. */
 internal val DrawerToolbarClearance: Dp = FloatingToolbarDefaults.ContainerSize + TOOLBAR_MARGIN + 8.dp

@@ -28,6 +28,7 @@ import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.IconActionRows
 import com.wander.mono.ui.components.MonoSheet
 import com.wander.mono.ui.components.rememberCredentialPrompt
+import com.wander.mono.ui.home.FocusViewModel
 import com.wander.mono.ui.home.folders.FolderViewModel
 
 /**
@@ -56,6 +57,7 @@ fun AppSheet(
     onSetLocked: (AppKey, Boolean) -> Unit,
     structure: AppSheetStructureViewModel = viewModel(),
     folders: FolderViewModel = viewModel(),
+    focus: FocusViewModel = viewModel(),
 ) {
     val key = state.app.key
     // Anyone holding the phone could otherwise lift the lock from here: removing it asks first.
@@ -69,13 +71,14 @@ fun AppSheet(
         if (lock) onSetLocked(app, true) else unlockForGood()
     }
     val shape by remember(key) { structure.of(key) }.collectAsStateWithLifecycle(null)
+    val focused by focus.focused.collectAsStateWithLifecycle()
     var page by rememberSaveable(key) { mutableStateOf<AppSheetPage?>(null) }
     val motion = MaterialTheme.motionScheme
     MonoSheet(onDismissRequest = onDismiss) { animatedDismiss ->
         Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 24.dp)) {
             SheetHeader(
                 title = state.app.label,
-                leading = { AppIcon(key, icons, size = 48.dp) },
+                leading = { AppIcon(key, icons, size = 56.dp) },
                 supporting = if (usageToday != SheetUsage.Hidden) {
                     { UsageSlot(usageToday) }
                 } else {
@@ -149,7 +152,9 @@ fun AppSheet(
                                     onTakeOutOfFolder = folders::takeOut,
                                     onSetMuted = structure::setMuted,
                                 )
-                            }.orEmpty(),
+                            }.orEmpty() + listOfNotNull(
+                                focusAction(state, focused == key, animatedDismiss, focus::focusForAnHour, focus::end),
+                            ),
                         ),
                         Modifier.padding(top = 20.dp),
                     )

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,11 +22,12 @@ import com.wander.mono.data.settings.IconSettings
 import com.wander.mono.data.settings.IconShape
 import com.wander.mono.data.settings.SYSTEM_ICON_PACK
 import com.wander.mono.data.settings.ThemedIconTint
+import com.wander.mono.ui.theme.toMask
 
 /**
  * Full-colour, themed monochrome, or no app icons at all, and the shape they are cut to; in full
- * colour, the icon pack they come from. Apps a pack does not cover keep their own icon. Themed
- * icons pick their colour; rows can take their app's colour in any mode.
+ * colour, the icon pack they come from. Apps a pack does not cover keep their own icon. Shapes and
+ * themed colours show as what they are, not their names; rows can take their app's colour in any mode.
  */
 @Composable
 fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = viewModel()) {
@@ -44,6 +46,8 @@ fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = view
                 IconSettings.Shape,
                 R.string.settings_icon_shape,
                 R.drawable.sym_interests,
+                preview = { ChoiceShapePreview(it.toMask()) },
+                captions = false,
             ) { shape ->
                 when (shape) {
                     IconShape.System -> R.string.settings_icon_shape_system
@@ -55,7 +59,13 @@ fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = view
             }
         }
         if (mode == IconMode.Themed) {
-            ChoiceSetting(settings, IconSettings.ThemedTint, R.string.settings_icon_tint, R.drawable.sym_palette) {
+            ChoiceSetting(
+                settings,
+                IconSettings.ThemedTint,
+                R.string.settings_icon_tint,
+                R.drawable.sym_palette,
+                preview = { TintPreview(it) },
+            ) {
                 when (it) {
                     ThemedIconTint.Neutral -> R.string.settings_icon_tint_neutral
                     ThemedIconTint.App -> R.string.settings_icon_tint_app
@@ -73,6 +83,19 @@ fun IconSection(settings: SettingsViewModel, iconPacks: IconPackViewModel = view
         )
     }
     if (mode == IconMode.Colour) IconPackGroup(settings, iconPacks)
+}
+
+/** A themed tint as the colour it draws in; the app's own colour, which differs per app, as a glyph. */
+@Composable
+private fun TintPreview(tint: ThemedIconTint) {
+    val scheme = MaterialTheme.colorScheme
+    when (tint) {
+        ThemedIconTint.Neutral -> ChoiceSwatchPreview(scheme.onSurfaceVariant)
+        ThemedIconTint.App -> ChoiceIconPreview(R.drawable.sym_apps)
+        ThemedIconTint.Primary -> ChoiceSwatchPreview(scheme.primary)
+        ThemedIconTint.Secondary -> ChoiceSwatchPreview(scheme.secondary)
+        ThemedIconTint.Tertiary -> ChoiceSwatchPreview(scheme.tertiary)
+    }
 }
 
 /** The icon pack picker: the apps' own icons first, then each installed pack. */

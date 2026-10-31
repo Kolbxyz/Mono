@@ -5,8 +5,8 @@ import com.wander.mono.core.apps.LaunchableApp
 
 /**
  * What the long-press sheet offers for [app]. [isFavorite]: it is on the home list.
- * [liftsWithHeadphones] is null when the choice is not offered: the app is not a favourite, or
- * the headphones setting is off. [isLocked]: it opens only after the screen lock.
+ * [liftsWithHeadphones] is null when the choice is not offered: the app is not a favourite.
+ * [isLocked]: it opens only after the screen lock.
  */
 data class AppSheetState(
     val app: LaunchableApp,

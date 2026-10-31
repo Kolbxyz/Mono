@@ -31,8 +31,9 @@ import com.wander.mono.data.RecentSearch
 
 /**
  * The drawer's search box, with Mono's settings at its end. The keyboard's action key opens the top
- * result. [focusRequester] lets the drawer focus it when opened from home's search bar. While it is
- * focused and empty, the [recent] searches show under it as chips ([RecentSearchChips]).
+ * result. [focusRequester] lets the drawer focus it when opened from home's search bar; otherwise only
+ * a tap on it brings up the keyboard. It sits at the bottom of the drawer, in the thumb's reach: while
+ * it is focused and empty, the [recent] searches show above it as chips ([RecentSearchChips]).
  */
 @Composable
 fun SearchField(
@@ -47,8 +48,8 @@ fun SearchField(
 ) {
     var focused by remember { mutableStateOf(false) }
     Column(modifier) {
-        Field(query, onQueryChange, onSubmit, onOpenSettings, focusRequester) { focused = it }
         RecentSearchChips(focused && query.isEmpty(), recent, onUse = onQueryChange, onForget = onForgetRecent)
+        Field(query, onQueryChange, onSubmit, onOpenSettings, focusRequester) { focused = it }
     }
 }
 

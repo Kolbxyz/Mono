@@ -4,6 +4,8 @@ import android.icu.text.DateFormat
 import android.icu.text.SimpleDateFormat
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -15,11 +17,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
@@ -30,8 +35,14 @@ import com.wander.mono.data.settings.ClockAlignment
 import com.wander.mono.data.settings.ClockLook
 import com.wander.mono.data.settings.ClockStyle
 import com.wander.mono.ui.theme.CLOCK_MAX_FONT_SCALE
+import com.wander.mono.ui.theme.DayPhase
 import com.wander.mono.ui.theme.capFontScale
 import com.wander.mono.ui.theme.clockStyle
+import com.wander.mono.ui.theme.dayPhaseAt
+import com.wander.mono.ui.theme.dayWeight
+import com.wander.mono.ui.theme.decorativeMotion
+import com.wander.mono.ui.theme.steppedWeight
+import com.wander.mono.ui.theme.textAlpha
 import java.util.Date
 import java.util.Locale
 
@@ -39,7 +50,9 @@ import java.util.Locale
  * The time in the user's [look]: one line, hours over minutes, or one small line. Each character
  * rolls up on its own when it changes, on the theme's motion (instant with reduced motion); glyphs
  * keep their place by field, so a new hour digit does not roll every glyph after it.
- * [compact] (a phone in landscape) shrinks it so the list keeps room.
+ * [compact] (a phone in landscape) shrinks it so the list keeps room. It follows the day ([DayPhase]):
+ * a little bolder at midday, lighter and a touch dimmer at night, easing over at each boundary on the
+ * effects motion (none while motion is reduced; never dimmed with high contrast).
  */
 @Composable
 fun ClockText(
@@ -51,21 +64,41 @@ fun ClockText(
     modifier: Modifier = Modifier,
 ) {
     val size = clockSize(look, compact)
-    val style = clockStyle(look.font, look.weight, size.sp).capFontScale(CLOCK_MAX_FONT_SCALE).onWallpaper()
+    val phase = remember(now) { dayPhaseAt(now) }
+    val weight = look.weight + dayClockShift(dayWeight(look.weight, phase, look.font.weights) - look.weight)
+    val brightness = dayClockBrightness(phase)
+    val style = clockStyle(look.font, weight, size.sp).capFontScale(CLOCK_MAX_FONT_SCALE).onWallpaper()
     val horizontal = if (look.alignment == ClockAlignment.Center) Alignment.CenterHorizontally else Alignment.Start
+    val dimmed = modifier.graphicsLayer { alpha = brightness.value }
     if (look.style == ClockStyle.Stacked) {
         val hours = remember(now, is24Hour, locale) { pattern(now, if (is24Hour) "HH" else "hh", locale) }
         val minutes = remember(now, locale) { pattern(now, "mm", locale) }
-        Column(modifier, horizontalAlignment = horizontal) {
+        Column(dimmed, horizontalAlignment = horizontal) {
             RollingGlyphs(remember(hours) { fieldGlyphs(hours, "hour") }, style)
             RollingGlyphs(remember(minutes) { fieldGlyphs(minutes, "minute") }, style)
         }
     } else {
         val skeleton = if (is24Hour) "Hm" else "hm"
         val glyphs = remember(now, skeleton, locale) { clockGlyphs(now, skeleton, locale) }
-        Column(modifier, horizontalAlignment = horizontal) { RollingGlyphs(glyphs, style) }
+        Column(dimmed, horizontalAlignment = horizontal) { RollingGlyphs(glyphs, style) }
     }
 }
+
+/**
+ * The day's shift of the clock's weight easing to [target] when the day crosses a boundary, in steps
+ * (see [steppedWeight]) and landing on [target] itself. Only the shift eases: the user's own weight
+ * follows the slider at once. Frames only run while home is shown.
+ */
+@Composable
+private fun dayClockShift(target: Int): Int {
+    val animated by animateIntAsState(target, decorativeMotion().slowEffectsSpec(), label = "clock-weight")
+    return if (animated == target) target else steppedWeight(animated)
+}
+
+/** The clock's opacity for [phase], read at draw time; always full with high contrast. */
+@Composable
+private fun dayClockBrightness(phase: DayPhase): State<Float> =
+    animateFloatAsState(textAlpha(phase.brightness), decorativeMotion().slowEffectsSpec(), label = "clock-dim")
 
 /** The clock's size in sp for its style; landscape caps it so the list keeps room. */
 internal fun clockSize(look: ClockLook, compact: Boolean): Int {

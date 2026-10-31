@@ -9,8 +9,9 @@ import com.wander.mono.ui.UserMessages
 import javax.inject.Inject
 
 /**
- * What tapping a hand-off result does: a link opens, text goes to the share sheet, a contact is
- * called, texted or mailed by the app that does so, and a notification fires its own tap intent.
+ * What tapping a hand-off result does: a link opens, text goes to the share sheet, a note to the app
+ * the user picks, a number to the dialer, a contact is called, texted or mailed by the app that does
+ * so, and a notification fires its own tap intent.
  * Failures are reported here; the [HitOutcome] says whether the drawer may close.
  */
 class SearchHandOffs @Inject constructor(
@@ -20,12 +21,28 @@ class SearchHandOffs @Inject constructor(
     private val apps: AppActions,
     private val messages: UserMessages,
 ) {
+    /** Opens [hit] with whatever takes its kind. */
+    fun open(hit: SearchHit.HandOff): HitOutcome = when (hit) {
+        is SearchHit.Note -> note(hit)
+        is SearchHit.Dial -> dial(hit)
+        is SearchHit.Link -> open(hit)
+        is SearchHit.ShareText -> share(hit)
+        is SearchHit.Notice -> open(hit)
+    }
+
     /** Whether an app opens the link; resolves an intent, so not on the main thread. */
     fun canOpen(hit: SearchHit.Link): Boolean = text.canOpen(hit.url)
 
     fun open(hit: SearchHit.Link): HitOutcome = opened(messages.report(text.open(hit.url)))
 
     fun share(hit: SearchHit.ShareText): HitOutcome = opened(messages.report(text.share(hit.text)))
+
+    fun note(hit: SearchHit.Note): HitOutcome = opened(messages.report(text.note(hit.text)))
+
+    /** Whether an app dials numbers; resolves an intent, so not on the main thread. */
+    fun canDial(): Boolean = text.canDial()
+
+    fun dial(hit: SearchHit.Dial): HitOutcome = opened(messages.report(text.dial(hit.number)))
 
     fun reach(hit: SearchHit.Person, how: ContactReach): HitOutcome =
         opened(messages.report(reacher.reach(hit.contact, how)))
