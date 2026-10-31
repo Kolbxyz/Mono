@@ -24,8 +24,8 @@ android {
         applicationId = "com.wander.mono"
         minSdk = 26
         targetSdk = 37
-        versionCode = 8
-        versionName = "0.6.1"
+        versionCode = 9
+        versionName = "0.6.2"
 
         vectorDrawables { useSupportLibrary = true }
     }
