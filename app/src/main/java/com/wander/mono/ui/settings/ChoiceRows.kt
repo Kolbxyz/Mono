@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -115,7 +116,7 @@ private fun ChoiceButton(
     }
     // One call either way: a connected group turning into pills only reshapes its buttons, it never
     // swaps them for new nodes while they are being laid out.
-    val standalone = ToggleButtonDefaults.shapes()
+    val standalone = ToggleButtonDefaults.shapesFor(ButtonDefaults.MinHeight)
     ToggleButton(checked, onChecked, radio, shapes = shapes ?: standalone, colors = choiceColors(), content = content)
 }
 
