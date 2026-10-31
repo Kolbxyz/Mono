@@ -12,6 +12,7 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
+import androidx.compose.ui.layout.onPlaced
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 
@@ -22,7 +23,9 @@ import androidx.compose.ui.unit.dp
  * `index` with the connected [ToggleButtonShapes] of its place, or null for a standalone pill.
  *
  * The measure decides; the shapes follow it on the next frame, so a group that stops fitting
- * (a larger font, a narrower window) is laid out right at once and reshaped a frame later.
+ * (a larger font, a narrower window) is laid out right at once and reshaped a frame later. The
+ * decision reaches composition only once placed: state written during measure would recompose the
+ * buttons mid-layout, and inside a lazy list that places nodes the layout no longer tracks.
  */
 @Composable
 internal fun ChoiceGroup(
@@ -32,6 +35,8 @@ internal fun ChoiceGroup(
     button: @Composable (index: Int, shapes: ToggleButtonShapes?, modifier: Modifier) -> Unit,
 ) {
     var wrapped by remember { mutableStateOf(wrap) }
+    // Plain, not snapshot state: measure may write it, composition only sees it through [wrapped].
+    val decided = remember { booleanArrayOf(wrap) }
     val connected = !wrap && !wrapped
     val leading = ButtonGroupDefaults.connectedLeadingButtonShapes()
     val middle = ButtonGroupDefaults.connectedMiddleButtonShapes()
@@ -48,13 +53,13 @@ internal fun ChoiceGroup(
                 button(index, shapes, Modifier)
             }
         },
-        modifier = modifier,
+        modifier = modifier.onPlaced { if (wrapped != decided[0]) wrapped = decided[0] },
     ) { measurables, constraints ->
         val tight = ButtonGroupDefaults.ConnectedSpaceBetween.roundToPx()
         val natural = measurables.map { it.maxIntrinsicWidth(Constraints.Infinity) }
         val width = if (constraints.hasBoundedWidth) constraints.maxWidth else natural.sum() + tight * (count - 1)
         val widths = if (wrap) null else rowWidths(natural, width, tight)
-        if (wrapped != (widths == null)) wrapped = widths == null
+        decided[0] = widths == null
         if (widths != null) connectedRow(measurables, widths, width, tight, constraints) else pills(measurables, width)
     }
 }
