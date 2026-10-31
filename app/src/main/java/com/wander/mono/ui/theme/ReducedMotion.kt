@@ -18,7 +18,8 @@ import androidx.compose.ui.platform.LocalContext
 
 /**
  * Whether motion is suppressed, for the few animations that do not read `MaterialTheme.motionScheme`
- * and so are not covered by [NoMotionScheme].
+ * and so are not covered by [NoMotionScheme]. Raised by the system's "Remove animations" and by battery
+ * saver ([LocalPowerSave]).
  */
 val LocalReducedMotion = staticCompositionLocalOf { false }
 

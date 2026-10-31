@@ -25,6 +25,7 @@ import com.wander.mono.data.settings.DrawerBackground
 import com.wander.mono.ui.home.homeScrimAlpha
 import com.wander.mono.ui.home.scrimAlpha
 import com.wander.mono.ui.home.wallpaperTextShadow
+import com.wander.mono.ui.theme.LocalPowerSave
 import java.util.function.Consumer
 
 /**
@@ -70,10 +71,13 @@ internal fun drawerTextShadow(background: DrawerBackground): Shadow? = when (bac
     DrawerBackground.SoftBlur, DrawerBackground.Scrim, DrawerBackground.Solid -> null
 }
 
-/** Blurs the wallpaper behind the window by up to [radius]; true while Android allows it. */
+/**
+ * Blurs the wallpaper behind the window by up to [radius]; true while Android allows it. Never under
+ * battery saver ([LocalPowerSave]): leaving composition clears the blur.
+ */
 @Composable
 private fun blurredBehind(radius: Dp, revealed: () -> Float): Boolean =
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && windowBlur(radius, revealed)
+    !LocalPowerSave.current && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && windowBlur(radius, revealed)
 
 /**
  * Blurs what is behind the activity's window (the wallpaper) while composed, up to [fullBlur] as far

@@ -47,7 +47,8 @@ import com.wander.mono.ui.theme.schemeAnimateItem
  * [lifted] favourites go first while headphones are connected or a routine is on, outside edit
  * mode only. The [pulse] favourite, just added, pulses once. Open folders show their favourites
  * under them, indented; edit mode shows every favourite on its own, in the saved order, folders
- * and all.
+ * and all. The quiet digest leads once quiet mode ends; a focus dims every row but the focused
+ * favourite's, and otherwise the favourite likely wanted at this hour wears a soft pill.
  */
 @Composable
 internal fun HomeList(
@@ -72,6 +73,8 @@ internal fun HomeList(
     modifier: Modifier = Modifier,
     folders: FolderViewModel = viewModel(),
     extras: FavoriteExtrasViewModel = viewModel(),
+    contextual: HomeContextViewModel = viewModel(),
+    focus: FocusViewModel = viewModel(),
 ) {
     val motion = MaterialTheme.motionScheme
     val open by folders.open.collectAsStateWithLifecycle()
@@ -82,6 +85,10 @@ internal fun HomeList(
     )
     val swipes by extras.swipes.collectAsStateWithLifecycle()
     val overLimit by extras.overLimit.collectAsStateWithLifecycle()
+    // A focus sets the other rows back and quiets the hint of the likely favourite; edit mode shows neither.
+    val focused = focusedApp(rows).takeUnless { editing.active }
+    val likely = contextual.likely.collectAsStateWithLifecycle().value.takeUnless { editing.active || focused != null }
+    val inline = rememberInlineShortcuts(listState, editing.active)
     // A preview lines up with its favourite's name, so it reads as that app's.
     val previewStart = favoriteRowMetrics(LocalRowDensity.current).labelStart(icons.mode != IconMode.TextOnly)
     // Usage has no event: today's time is read again each time home comes back.
@@ -94,7 +101,7 @@ internal fun HomeList(
     val flat = rows?.let(::flattenFolders)
     LazyColumn(
         state = listState,
-        modifier = modifier,
+        modifier = modifier.then(inline.outsideTouch),
         verticalArrangement = ListPlacement(placement),
         contentPadding = contentPadding,
     ) {
@@ -111,7 +118,7 @@ internal fun HomeList(
         val inFolder = if (editing.showsSavedOrder) emptySet<String>() else folderMemberKeys(ordered, open)
         items(shown, key = { it.key }, contentType = { it::class }) { row ->
             // The dragged row follows the finger, not a placement animation towards its new slot.
-            val animated = if (editing.reorder.dragging == row.key) {
+            val placed = if (editing.reorder.dragging == row.key) {
                 Modifier.animateItem(
                     fadeInSpec = motion.defaultEffectsSpec(),
                     placementSpec = null,
@@ -120,6 +127,7 @@ internal fun HomeList(
             } else {
                 schemeAnimateItem()
             }
+            val animated = placed.focusDim(dimmedByFocus(row, focused))
             when (row) {
                 is HomeRow.App -> ReorderableFavorite(
                     row = row,
@@ -129,19 +137,22 @@ internal fun HomeList(
                     editing = editing,
                     onLaunch = { source ->
                         if (row.key in inFolder) folders.closeAround(row.app.key)
+                        contextual.launched(row.app.key)
                         onLaunch(row.app, source)
                     },
                     onLongPress = { onLongPress(row.app) },
                     onAppInfo = { onAppInfo(row.app) },
-                    // Swiping right on a favourite with notifications expands its preview (spec 8).
+                    // Swiping right unfolds its shortcuts; with none, it expands its preview (spec 8).
                     onShowPreview = previewOf(rows, row)?.let { preview -> { previews.setExpanded(preview, true) } },
                     modifier = animated
+                        .likelyPill(likely == row.app.key)
                         .addedPulse(pulse == row.app.key) { onPulsed(row.app.key) }
                         .then(if (row.key in inFolder) Modifier.padding(start = FolderIndent) else Modifier),
                     swipeLeft = swipes[row.app.key]?.let { action ->
                         SwipeLeft(swipeLabel(action, row)) { extras.runSwipe(row.app.key, action) }
                     },
                     overLimit = row.app.key in overLimit,
+                    inline = inline,
                 )
                 is HomeRow.Folder -> FolderRow(
                     row = row,
@@ -152,6 +163,8 @@ internal fun HomeList(
                     modifier = animated,
                 )
                 HomeRow.ListenerPrompt -> ListenerPromptRow(onGrantAccess, animated)
+                is DigestRow -> DigestCard(row, icons, previews, contextual::digestSeen, animated)
+                is FocusRow -> FocusBar(row, focus::end, animated.padding(start = previewStart))
                 is NotificationRow -> NotificationPreviewRow(row, animated.padding(start = previewStart), previews)
                 is CalendarRow -> CalendarCard(row, onOpenEvent, animated)
                 is LiveActivityRow -> LiveActivityCard(row, icons, animated)

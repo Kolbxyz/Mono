@@ -113,19 +113,21 @@ private fun PillContent(@DrawableRes icon: Int, label: String, content: Color) {
 }
 
 /**
- * Battery level, shown only when low or charging; it opens nothing, so it is not a button. Low and
- * not charging, it takes the error colours: the one glance fact that asks for something.
+ * Battery level, shown only when low, charging or saving; it opens nothing, so it is not a button.
+ * Low and not charging, it takes the error colours: the one glance fact that asks for something.
+ * Under battery saver the leaf stands in for the battery, unless a charger is feeding it.
  */
 @Composable
 internal fun BatteryChip(battery: BatteryState, modifier: Modifier = Modifier) {
-    val icon = if (battery.charging) R.drawable.sym_battery_charging_full else R.drawable.sym_battery_full
+    val (icon, description) = when {
+        battery.charging -> R.drawable.sym_battery_charging_full to R.string.glance_battery_charging
+        battery.saver -> R.drawable.sym_eco to R.string.glance_battery_saver
+        else -> R.drawable.sym_battery_full to R.string.glance_battery_low
+    }
     GlancePill(
         icon = icon,
         label = stringResource(R.string.glance_battery_percent, battery.percent),
-        description = stringResource(
-            if (battery.charging) R.string.glance_battery_charging else R.string.glance_battery_low,
-            battery.percent,
-        ),
+        description = stringResource(description, battery.percent),
         alert = !battery.charging && battery.percent <= LOW_BATTERY_PERCENT,
         modifier = modifier,
     )

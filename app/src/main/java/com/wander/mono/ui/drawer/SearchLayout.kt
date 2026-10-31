@@ -34,8 +34,8 @@ internal data class SearchLayout(val top: SearchHit?, val apps: List<SearchHit.A
 
         private fun kindOf(hit: SearchHit): ResultKind = when (hit) {
             is SearchHit.Shortcut -> ResultKind.Shortcuts
-            is SearchHit.Link, is SearchHit.ShareText -> ResultKind.HandOff
-            is SearchHit.Person -> ResultKind.Contacts
+            is SearchHit.Link, is SearchHit.ShareText, is SearchHit.Note -> ResultKind.HandOff
+            is SearchHit.Person, is SearchHit.Dial -> ResultKind.Contacts
             is SearchHit.Notice -> ResultKind.Notifications
             is SearchHit.Track -> ResultKind.Music
             is SearchHit.Setting -> ResultKind.Settings

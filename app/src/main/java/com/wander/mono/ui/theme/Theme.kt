@@ -29,6 +29,8 @@ import com.wander.mono.data.settings.ThemePalette
  *   `large`, sheets `extraLarge`. A press tightens corners (`expressivePress`), never rounds them.
  * - Motion: `MaterialTheme.motionScheme` only; fast spatial for presses, default spatial for
  *   layout, effects specs for fades. Indicators that loop read [LocalReducedMotion] themselves.
+ *   Battery saver ([LocalPowerSave]) raises [LocalReducedMotion] too, so those loops, blurs and
+ *   decorative fades ([decorativeMotion]) stop, while the scheme's springs still show where things go.
  */
 @Composable
 fun MonoTheme(
@@ -40,6 +42,7 @@ fun MonoTheme(
     content: @Composable () -> Unit,
 ) {
     val reduceMotion = rememberSystemAnimationsDisabled()
+    val powerSave = rememberPowerSaveMode()
     val scheme = palette.colorScheme(darkTheme)
     MaterialExpressiveTheme(
         colorScheme = if (darkTheme && amoledBlack) scheme.withBlackSurfaces() else scheme,
@@ -48,7 +51,8 @@ fun MonoTheme(
         typography = MonoTypography,
     ) {
         CompositionLocalProvider(
-            LocalReducedMotion provides reduceMotion,
+            LocalReducedMotion provides (reduceMotion || powerSave),
+            LocalPowerSave provides powerSave,
             LocalIconMask provides iconShape.toMask(),
             LocalIconTheming provides iconTheming,
             content = content,

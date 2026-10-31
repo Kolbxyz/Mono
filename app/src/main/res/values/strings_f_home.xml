@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home row shown once quiet mode ends, over the icons of the apps that posted meanwhile. -->
+    <string name="digest_title">While you were away</string>
+    <!-- Under the digest's title: how many notifications came in during quiet mode. -->
+    <plurals name="digest_count">
+        <item quantity="one">%d notification</item>
+        <item quantity="other">%d notifications</item>
+    </plurals>
+    <!-- TalkBack: tapping the digest shows the notifications that came in. -->
+    <string name="digest_expand">Show notifications</string>
+    <!-- The digest's close button, and TalkBack for tapping it when there is nothing to show. -->
+    <string name="digest_dismiss">Dismiss</string>
+    <!-- Under the focused favourite: when its focus ends ("until 15:30"). -->
+    <string name="focus_until">Focused until %1$s</string>
+    <!-- Under the focused favourite, and in its sheet: ends the focus now. -->
+    <string name="focus_end">End focus</string>
+    <!-- App sheet: dims every other row on home and hides their badges for an hour. -->
+    <string name="sheet_focus_hour">Focus for 1 hour</string>
+    <!-- App sheet, short label of the focus button. -->
+    <string name="sheet_short_focus">Focus</string>
+</resources>

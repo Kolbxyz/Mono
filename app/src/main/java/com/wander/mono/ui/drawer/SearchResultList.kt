@@ -194,6 +194,8 @@ private fun ResultRow(
         is SearchHit.Calculation -> CalculationRow(hit, icons, onCopy = onLaunch)
         is SearchHit.Timer -> TimerRow(hit, icons, onSet = onLaunch)
         is SearchHit.Alarm -> AlarmRow(hit, icons, onSet = onLaunch)
+        is SearchHit.Note -> NoteRow(hit, icons, onNote = onLaunch)
+        is SearchHit.Dial -> DialRow(hit, icons, onDial = onLaunch)
         is SearchHit.Link -> LinkRow(hit, icons, onOpen = onLaunch)
         is SearchHit.ShareText -> ShareRow(hit, icons, onShare = onLaunch)
         is SearchHit.Person -> PersonRow(

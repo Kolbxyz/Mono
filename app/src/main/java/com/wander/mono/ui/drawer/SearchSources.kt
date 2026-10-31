@@ -28,9 +28,9 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 
 /**
- * Search results beyond apps (shortcuts, sums, conversions, timers and alarms, links, contacts,
- * notifications, settings pages, the web); tapping most of them goes to [SourceOpener], timers and
- * alarms to [ClockActions], hand-offs to [SearchHandOffs]. A source the user switched off in
+ * Search results beyond apps (shortcuts, sums, conversions, timers and alarms, notes and calls,
+ * links, contacts, notifications, settings pages, the web); tapping most of them goes to
+ * [SourceOpener], timers and alarms to [ClockActions], hand-offs to [SearchHandOffs]. A source the user switched off in
  * [SearchSettings] is not asked at all.
  */
 class SearchSources @Inject constructor(
@@ -52,7 +52,9 @@ class SearchSources @Inject constructor(
         combine(query.map { it.trim() }, settings[SearchSettings.Contacts], ::Pair)
             .distinctUntilChanged()
             .mapLatest { (text, enabled) ->
-                val found = if (enabled && text.isNotEmpty()) contactSearch.find(text, PROVIDER_LIMIT) else emptyList()
+                // "call Anna" looks for Anna: the contact to call ([CommandQuery]).
+                val name = CommandQuery.callee(text) ?: text
+                val found = if (enabled && text.isNotEmpty()) contactSearch.find(name, PROVIDER_LIMIT) else emptyList()
                 QueryResults(text, found)
             }
 
@@ -70,7 +72,8 @@ class SearchSources @Inject constructor(
 
     /**
      * What [query] asks for ([SearchActions]) when quick answers are [enabled]; a timer or an alarm
-     * only when a clock app takes it. Resolves intents for those, so not on the main thread.
+     * only when a clock app takes it, a number to call only when a dialer does. Resolves intents for
+     * those, so not on the main thread.
      */
     fun actions(query: String, enabled: Boolean): List<SearchHit> {
         if (!enabled) return emptyList()
@@ -78,6 +81,7 @@ class SearchSources @Inject constructor(
             when (hit) {
                 is SearchHit.Timer -> clock.canSetTimer()
                 is SearchHit.Alarm -> clock.canSetAlarm()
+                is SearchHit.Dial -> handOffApps.canDial()
                 else -> true
             }
         }

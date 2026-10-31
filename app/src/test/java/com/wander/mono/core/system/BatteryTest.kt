@@ -33,6 +33,7 @@ class BatteryTest {
         assertTrue(BatteryState(3, charging = false).isWorthShowing())
         assertFalse(BatteryState(16, charging = false).isWorthShowing())
         assertTrue(BatteryState(80, charging = true).isWorthShowing())
+        assertTrue(BatteryState(80, charging = false, saver = true).isWorthShowing())
     }
 
     private companion object {

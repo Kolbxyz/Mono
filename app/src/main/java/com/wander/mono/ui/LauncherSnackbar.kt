@@ -47,7 +47,11 @@ fun LauncherSnackbar(
             if (message.isError) view.rejectHaptic()
             val action = message.action
             val result = snackbar.showSnackbar(
-                message = resources.getString(message.text),
+                message = if (message.args.isEmpty()) {
+                    resources.getString(message.text)
+                } else {
+                    resources.getString(message.text, *message.args.toTypedArray())
+                },
                 actionLabel = action?.let { resources.getString(it.label) },
                 duration = if (action == null) SnackbarDuration.Short else SnackbarDuration.Long,
             )
