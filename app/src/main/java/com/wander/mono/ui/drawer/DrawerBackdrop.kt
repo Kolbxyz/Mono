@@ -87,9 +87,16 @@ private fun blurredBehind(radius: Dp, revealed: () -> Float): Boolean =
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 private fun windowBlur(fullBlur: Dp, revealed: () -> Float): Boolean {
-    val window: Window = LocalActivity.current?.window ?: return false
     // An opaque window ("solid black wallpaper") has nothing behind it worth a blur pass.
-    if (window.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER == 0) return false
+    val window = LocalActivity.current?.window
+        ?.takeIf { it.attributes.flags and WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER != 0 }
+    return window != null && wallpaperBlur(window, fullBlur, revealed)
+}
+
+/** [windowBlur] on a [window] that shows the wallpaper. */
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+private fun wallpaperBlur(window: Window, fullBlur: Dp, revealed: () -> Float): Boolean {
     val fullRadius = with(LocalDensity.current) { fullBlur.roundToPx() }
     var enabled by remember { mutableStateOf(window.windowManager.isCrossWindowBlurEnabled) }
     // Changes only at each step, fine enough to read as a smooth ramp without a window update on

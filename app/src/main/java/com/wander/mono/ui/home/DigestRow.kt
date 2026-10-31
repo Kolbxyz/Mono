@@ -24,19 +24,21 @@ internal fun digestRow(
     muted: Set<AppKey>,
     previews: Map<PackageUser, NotificationPreview>,
 ): DigestRow? {
-    if (away.isEmpty()) return null
     val silenced = muted.mapTo(HashSet()) { PackageUser(it.packageName, it.userSerial) }
     val byOwner = catalog.groupBy { PackageUser(it.key.packageName, it.key.userSerial) }
     val shown = away.entries
         .filter { (owner, _) -> owner !in silenced }
         .sortedByDescending { it.value }
         .mapNotNull { (owner, count) -> byOwner[owner]?.firstOrNull()?.let { app -> Triple(owner, app, count) } }
-    if (shown.isEmpty()) return null
-    return DigestRow(
-        apps = shown.map { it.second },
-        count = shown.sumOf { it.third },
-        previews = shown.mapNotNull { (owner, app, _) -> previews[owner]?.let { NotificationRow(app, it) } },
-    )
+    return if (shown.isEmpty()) {
+        null
+    } else {
+        DigestRow(
+            apps = shown.map { it.second },
+            count = shown.sumOf { it.third },
+            previews = shown.mapNotNull { (owner, app, _) -> previews[owner]?.let { NotificationRow(app, it) } },
+        )
+    }
 }
 
 /**

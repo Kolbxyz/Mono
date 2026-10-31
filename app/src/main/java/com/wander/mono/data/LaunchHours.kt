@@ -18,8 +18,8 @@ private val Context.launchHoursStore by preferencesDataStore(name = "launch_hour
 
 /**
  * How often each app was opened (from home, the drawer's list or search) in each hour of the day,
- * so the drawer can offer the one most likely wanted now and home can point out the likely favourite. A habit, not a choice: its own small file,
- * on this phone only and left out of backups. Apps no longer installed are dropped at the next
+ * so the drawer can offer the one most likely wanted now and home can point out the likely
+ * favourite. A habit, not a choice: its own small file, on this phone only and left out of backups. Apps no longer installed are dropped at the next
  * launch, and an hour's counts halve once one of them reaches [CAP], so old habits fade.
  */
 @Singleton
@@ -68,9 +68,9 @@ class LaunchHours @Inject constructor(@ApplicationContext context: Context) {
 
         /** The hour and app a key [name] counts; neither package nor class names hold a colon. */
         fun slotOf(name: String): Pair<Int, AppKey>? {
-            val hour = name.substringBefore(SEPARATOR).toIntOrNull() ?: return null
-            val app = AppKey.decode(name.substringAfter(SEPARATOR)) ?: return null
-            return hour to app
+            val hour = name.substringBefore(SEPARATOR).toIntOrNull()
+            val app = AppKey.decode(name.substringAfter(SEPARATOR))
+            return if (hour != null && app != null) hour to app else null
         }
     }
 }

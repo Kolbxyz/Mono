@@ -65,14 +65,14 @@ internal fun ChoiceGroup(
  * null when they do not fit at all.
  */
 internal fun rowWidths(natural: List<Int>, width: Int, gap: Int): List<Int>? {
-    if (natural.isEmpty()) return emptyList()
     val room = width - gap * (natural.size - 1)
-    val widest = natural.max()
-    if (widest * natural.size <= room) return evenSplit(room, natural.size)
     val left = room - natural.sum()
-    if (left < 0) return null
-    val shares = evenSplit(left, natural.size)
-    return natural.mapIndexed { i, w -> w + shares[i] }
+    return when {
+        natural.isEmpty() -> emptyList()
+        natural.max() * natural.size <= room -> evenSplit(room, natural.size)
+        left < 0 -> null
+        else -> evenSplit(left, natural.size).let { shares -> natural.mapIndexed { i, w -> w + shares[i] } }
+    }
 }
 
 /** [total] cut into [parts] that differ by at most one, the remainder going to the first ones. */

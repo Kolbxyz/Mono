@@ -34,8 +34,8 @@ data class QuietGlance(val until: Long)
 internal fun glanceEvent(agenda: CalendarAgenda?, now: Long, rows: List<HomeRow>?): CalendarEvent? {
     if (agenda == null || rows == null || rows.any { it is CalendarRow }) return null
     val next = headerEvent(agenda.events, now)
-    if (next != null && next.begin - now <= IMMINENT_MS) return next
-    return currentEvent(agenda.events, now) ?: next
+    val imminent = next != null && next.begin - now <= IMMINENT_MS
+    return if (imminent) next else currentEvent(agenda.events, now) ?: next
 }
 
 /** The timed event under way that ends first: the one the user is most likely in. */

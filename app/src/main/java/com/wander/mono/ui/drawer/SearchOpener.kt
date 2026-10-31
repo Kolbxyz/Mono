@@ -26,26 +26,25 @@ class SearchOpener @Inject constructor(
 ) {
     /** Opens [hit], found for [query]. */
     fun open(hit: SearchHit, query: String): HitOutcome {
-        val outcome = when (hit) {
-            is SearchHit.App -> opened(messages.report(actions.launch(hit.entry.app.key))).also { outcome ->
-                if (outcome == HitOutcome.Opened) recorder.opened(hit.entry.app)
-            }
-            is SearchHit.Shortcut -> opened(messages.report(actions.launchShortcut(hit.shortcut)))
-            is SearchHit.Calculation -> sources.copy(hit)
-            is SearchHit.Timer -> opened(messages.report(clock.setTimer(hit.seconds)))
-            is SearchHit.Alarm -> opened(messages.report(clock.setAlarm(hit.time.hour, hit.time.minute)))
-            is SearchHit.Note -> handOffs.note(hit)
-            is SearchHit.Dial -> handOffs.dial(hit)
-            is SearchHit.Link -> handOffs.open(hit)
-            is SearchHit.ShareText -> handOffs.share(hit)
-            is SearchHit.Person -> sources.open(hit)
-            is SearchHit.Notice -> handOffs.open(hit)
-            is SearchHit.Track -> sources.open(hit)
-            is SearchHit.Setting -> sources.open(hit)
-            is SearchHit.Web -> sources.open(hit)
+        val outcome = outcomeOf(hit)
+        if (outcome == HitOutcome.Opened) {
+            if (hit is SearchHit.App) recorder.opened(hit.entry.app)
+            scope.launch { memory.remember(query, hit) }
         }
-        if (outcome == HitOutcome.Opened) scope.launch { memory.remember(query, hit) }
         return outcome
+    }
+
+    private fun outcomeOf(hit: SearchHit): HitOutcome = when (hit) {
+        is SearchHit.App -> opened(messages.report(actions.launch(hit.entry.app.key)))
+        is SearchHit.Shortcut -> opened(messages.report(actions.launchShortcut(hit.shortcut)))
+        is SearchHit.Calculation -> sources.copy(hit)
+        is SearchHit.Timer -> opened(messages.report(clock.setTimer(hit.seconds)))
+        is SearchHit.Alarm -> opened(messages.report(clock.setAlarm(hit.time.hour, hit.time.minute)))
+        is SearchHit.HandOff -> handOffs.open(hit)
+        is SearchHit.Person -> sources.open(hit)
+        is SearchHit.Track -> sources.open(hit)
+        is SearchHit.Setting -> sources.open(hit)
+        is SearchHit.Web -> sources.open(hit)
     }
 
     /** One of a contact's Call, Message and Email actions, remembered like opening the contact. */
