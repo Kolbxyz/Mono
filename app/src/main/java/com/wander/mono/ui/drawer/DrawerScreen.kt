@@ -52,9 +52,9 @@ import com.wander.mono.ui.theme.LocalHighContrast
 /**
  * All apps, alphabetical (or newest first), with the letter rail, the list's floating toolbar and
  * category chips, and the work profile and private space at the end; or, while a query is typed, the
- * ranked results, the two cross-fading. Laid out for one hand: the search field docks at the bottom,
- * over the navigation bar and riding up with the keyboard, the list rests low above it and the best
- * result sits right on it. While the empty field has focus, [recentSearches] show above it as chips;
+ * ranked results, the two cross-fading. The search field docks at the bottom, over the navigation
+ * bar and riding up with the keyboard; the list runs from the top down to it and the best result
+ * sits right on it. While the empty field has focus, [recentSearches] show above it as chips;
  * contacts in the results offer [onReach]'s actions. Drawn on the background the user chose, an even
  * veil that stays put and fades in with the drawer while only the content rises, its blur following
  * how far the drawer is [revealed]. With [focusSearch] (opened from home's search bar, the search
