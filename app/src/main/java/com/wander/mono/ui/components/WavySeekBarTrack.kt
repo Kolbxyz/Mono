@@ -44,7 +44,9 @@ internal fun waveSpeed(): Dp =
 
 /**
  * A display-only wavy progress line, for places too small for a seek bar. [fraction] is read at
- * draw time, so a ticking position redraws without recomposing.
+ * draw time, so a ticking position redraws without recomposing. Its wave stands still: these lines
+ * sit on home for as long as something plays or downloads, and a travelling wave redraws every
+ * frame. Only the expanded seek bar's wave travels.
  */
 @Composable
 fun WavyProgressLine(fraction: () -> Float, isPlaying: Boolean, color: Color, modifier: Modifier = Modifier) {
@@ -55,7 +57,7 @@ fun WavyProgressLine(fraction: () -> Float, isPlaying: Boolean, color: Color, mo
         color = color,
         trackColor = color.copy(alpha = UNPLAYED_ALPHA),
         amplitude = { amplitude.value },
-        waveSpeed = waveSpeed(),
+        waveSpeed = 0.dp,
     )
 }
 

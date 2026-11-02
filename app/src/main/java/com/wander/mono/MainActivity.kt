@@ -17,6 +17,7 @@ import com.wander.mono.core.apps.PrivateSpace
 import com.wander.mono.core.apps.ShortcutRepository
 import com.wander.mono.core.calendar.CalendarAccess
 import com.wander.mono.core.notifications.ListenerAccess
+import com.wander.mono.core.notifications.ListenerDemand
 import com.wander.mono.core.tiles.TileRequest
 import com.wander.mono.core.widgets.WidgetHost
 import com.wander.mono.ui.LauncherApp
@@ -38,6 +39,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var listenerAccess: ListenerAccess
+
+    @Inject
+    lateinit var listenerDemand: ListenerDemand
 
     @Inject
     lateinit var widgetHost: WidgetHost
@@ -109,6 +113,7 @@ class MainActivity : ComponentActivity() {
         calendarAccess.recheck()
         // The private space can finish unlocking after its last broadcast, leaving it listed empty.
         privateSpace.recheck()
+        listenerDemand.setHomeShown(true)
     }
 
     override fun onResume() {
@@ -134,6 +139,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
+        listenerDemand.setHomeShown(false)
         // A recreation (locale, font scale) keeps the drawer; really leaving resets to home.
         if (!isChangingConfigurations) launcher.leaveToHome()
     }
