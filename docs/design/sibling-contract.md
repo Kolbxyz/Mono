@@ -36,10 +36,16 @@ with `ContentResolver.query` and listens with `ContentObserver`; the siblings ca
 `signature` means the system grants it only to apps signed with the **same key**, silently, with
 no prompt. All three release builds must therefore share the release signing key.
 
+Debug builds declare and use `com.wander.permission.SIBLING_READ_DEBUG` instead (a manifest
+placeholder set per build type). Android refuses to install an app that redeclares a permission
+already owned by an app signed with another key (`INSTALL_FAILED_DUPLICATE_PERMISSION`), so a
+debug build sharing the release name could not be installed next to a release sibling.
+
 Debug builds: Wanda pins a project-local `debug.keystore`; Phalanx and Mono use AGP's per-machine
 default. For the contract to work in debug, Mono and Phalanx must pin the same `debug.keystore` as
-Wanda (same `signingConfigs.debug` block Wanda has). Mismatched debug keys simply mean "contract
-absent", which Mono already handles.
+Wanda (same `signingConfigs.debug` block Wanda has). With the separate debug permission name, mismatched
+debug keys between debug builds still block the install of the second one, so pinning the same
+key is required, not optional.
 
 ### 2.2 Authorities
 
@@ -188,8 +194,8 @@ Opening a room: Mono launches Phalanx's launcher activity with
 - All flows are collected only while home or the drawer is watched (`WhileSubscribed`), and the
   provider is re-resolved each time collection starts, so installing a sibling is picked up the next
   time home is shown.
-- Debug signing is unchanged: Mono debug uses AGP's per-machine key, so the contract is absent in
-  debug unless that key matches the sibling's.
+- Debug builds use the separate `SIBLING_READ_DEBUG` permission (§2.1), so a debug Mono installs
+  next to release siblings and simply sees the contract absent.
 
 ## 6. Security notes
 

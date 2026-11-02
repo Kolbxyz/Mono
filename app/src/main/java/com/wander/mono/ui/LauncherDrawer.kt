@@ -53,6 +53,9 @@ fun LauncherDrawer(
             HitOutcome.Stayed -> Unit
         }
     }
+    val onLaunchHit: (SearchHit) -> Unit = { hit ->
+        if (pickingApp && hit is SearchHit.App) pick(hit.entry.app) else afterHit(drawer.launch(hit))
+    }
     QuietDrawerGate(quiet = quiet, revealed = revealed, onClose = launcher::closeDrawer) {
         DrawerScreen(
             open = open,
@@ -63,11 +66,9 @@ fun LauncherDrawer(
             loadIcon = drawer::icon,
             loadShortcutIcon = drawer::shortcutIcon,
             onQueryChange = drawer::setQuery,
-            onSubmit = { drawer.launchTopResult(afterHit) },
+            onSubmit = { drawer.withTopResult(pickingApp, onLaunchHit) },
             onLaunchApp = { if (pickingApp) pick(it) else if (drawer.launch(it)) launcher.closeDrawer() },
-            onLaunchHit = { hit ->
-                if (pickingApp && hit is SearchHit.App) pick(hit.entry.app) else afterHit(drawer.launch(hit))
-            },
+            onLaunchHit = onLaunchHit,
             onLongPress = { sheet.show(it.key) },
             onOpenSettings = launcher::openSettings,
             onUnlockHidden = unlockHidden,

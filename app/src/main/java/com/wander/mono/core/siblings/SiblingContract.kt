@@ -1,11 +1,23 @@
 package com.wander.mono.core.siblings
 
+import android.content.Context
+import android.content.pm.ApplicationInfo
+
 /**
  * Names fixed by docs/design/sibling-contract.md, mirrored from the siblings' own contract files.
  * Columns are read by name, so a sibling adding columns never breaks Mono.
  */
 internal object SiblingContract {
-    const val PERMISSION = "com.wander.permission.SIBLING_READ"
+    /**
+     * The signature permission guarding the providers. Debug builds use their own name, so a debug
+     * build (signed with a debug key) never redeclares the release one: Android refuses to install
+     * an app that does. Must match `siblingPermission` in app/build.gradle.kts.
+     */
+    fun permission(context: Context): String =
+        if (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0) DEBUG_PERMISSION else PERMISSION
+
+    private const val PERMISSION = "com.wander.permission.SIBLING_READ"
+    private const val DEBUG_PERMISSION = "com.wander.permission.SIBLING_READ_DEBUG"
 
     /** Every sibling publishes its provider as `${applicationId}.mono`. */
     fun authorityOf(packageName: String) = "$packageName$AUTHORITY_SUFFIX"

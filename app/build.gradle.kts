@@ -27,6 +27,8 @@ android {
         versionCode = 9
         versionName = "0.6.2"
 
+        // Mirrors SiblingContract.permission(); see the sibling contract, section 2.1.
+        manifestPlaceholders["siblingPermission"] = "com.wander.permission.SIBLING_READ"
         vectorDrawables { useSupportLibrary = true }
     }
 
@@ -53,6 +55,7 @@ android {
         }
         debug {
             applicationIdSuffix = ".debug"
+            manifestPlaceholders["siblingPermission"] = "com.wander.permission.SIBLING_READ_DEBUG"
             isDebuggable = true
         }
     }

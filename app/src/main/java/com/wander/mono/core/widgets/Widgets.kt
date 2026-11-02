@@ -6,8 +6,10 @@ import com.wander.mono.data.WidgetPrefs
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 
 /** A placed widget whose provider is still installed, with the provider's label for TalkBack and the sheet. */
@@ -31,6 +33,8 @@ class Widgets @Inject constructor(
             }
         }
     }
+        // A binder read and a label load per widget: never on the main thread.
+        .flowOn(Dispatchers.IO)
 
     suspend fun add(placement: WidgetPlacement) = prefs.edit { it + placement }
 
