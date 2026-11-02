@@ -74,7 +74,9 @@ internal object BackupFormat {
             labels = tree.field<Map<*, *>>("labels").entries.associate { (key, label) -> appKey(key) to string(label) },
             liveRowsOff = tree.strings("liveRowsOff").filterNot(LiveRowRef::isRetired).mapTo(mutableSetOf(), ::liveRow),
             quietApps = tree.strings("quietApps").mapTo(mutableSetOf(), ::appKey),
-            headphoneApps = tree.strings("headphoneApps").mapTo(mutableSetOf(), ::appKey),
+            // Added after the first version 1 files were written: absent reads as none chosen.
+            headphoneApps = tree.optionalField<List<*>>("headphoneApps", emptyList<Any?>())
+                .mapTo(mutableSetOf(), ::appKey),
             settings = settings.map { setting -> settingValue(setting, stored[setting.name]) },
             lockedApps = tree.optionalField<List<*>>("lockedApps", emptyList<Any?>()).mapTo(mutableSetOf(), ::appKey),
             structure = StructureFormat.read(tree),

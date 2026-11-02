@@ -4,7 +4,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,7 +34,6 @@ fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
         },
         onNoScreenLock = hidden::reportNoScreenLock,
     )
-    DisposableEffect(hidden) { onDispose(hidden::relock) }
     SettingsGroup(R.string.settings_hidden) {
         locks?.let { on ->
             SwitchRow(
@@ -55,6 +53,8 @@ fun HiddenAppsSection(hidden: HiddenAppsViewModel = viewModel()) {
         }
         val list = apps
         when {
+            // Not read yet: show nothing rather than the list a lock may hide.
+            revealed == null -> Unit
             revealed == false -> ActionRow(R.string.settings_hidden_show, icon = R.drawable.sym_visibility) {
                 turnOffAfterUnlock = false
                 prompt()

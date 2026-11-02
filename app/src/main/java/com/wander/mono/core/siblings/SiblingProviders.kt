@@ -27,7 +27,8 @@ import kotlinx.coroutines.withContext
 class SiblingProviders @Inject constructor(@ApplicationContext private val context: Context) {
     /** The provider authority of the first of [packages] that serves one Mono may read, or null. */
     fun authority(packages: List<String>): String? {
-        if (context.checkSelfPermission(SiblingContract.PERMISSION) != PackageManager.PERMISSION_GRANTED) return null
+        val permission = SiblingContract.permission(context)
+        if (context.checkSelfPermission(permission) != PackageManager.PERMISSION_GRANTED) return null
         return packages.map(::authorityOf).firstOrNull { context.packageManager.resolveContentProvider(it, 0) != null }
     }
 
@@ -37,6 +38,9 @@ class SiblingProviders @Inject constructor(@ApplicationContext private val conte
             context.contentResolver.query(uri, null, null, null, null)?.use(read)
         } catch (_: SecurityException) {
             // Signed with another key, or the permission was redefined: the sibling is absent.
+            null
+        } catch (_: IllegalArgumentException) {
+            // An older sibling that does not serve this path yet ("Unknown URI"): absent too.
             null
         }
     }

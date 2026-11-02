@@ -43,13 +43,15 @@
     <!--
       Sibling apps (Wanda, Phalanx): read-only providers guarded by a signature permission, so only
       apps signed with Mono's key can serve or read them. Declared identically by all three, since any
-      may be installed first. See docs/design/sibling-contract.md.
+      may be installed first. Debug builds use their own name (app/build.gradle.kts): Android refuses
+      to install an app redeclaring a permission owned by an app signed with another key.
+      See docs/design/sibling-contract.md.
     -->
     <permission
-        android:name="com.wander.permission.SIBLING_READ"
+        android:name="${siblingPermission}"
         android:label="@string/sibling_permission_label"
         android:protectionLevel="signature" />
-    <uses-permission android:name="com.wander.permission.SIBLING_READ" />
+    <uses-permission android:name="${siblingPermission}" />
 
     <!-- Package visibility: every app with a launcher entry, which is exactly what the drawer lists. -->
     <queries>

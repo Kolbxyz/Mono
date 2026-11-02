@@ -60,7 +60,7 @@ fun WidgetPickerSheet(
             )
             else -> LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
                 apps.forEach { app ->
-                    item(key = "app:${app.packageName}:${app.isMainProfile}", contentType = "header") {
+                    item(key = "app:${app.packageName}:${app.profile.hashCode()}", contentType = "header") {
                         AppHeader(app)
                     }
                     items(
