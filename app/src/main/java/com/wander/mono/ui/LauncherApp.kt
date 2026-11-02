@@ -231,6 +231,8 @@ fun LauncherApp(
         // Receding under a sheet as the layers under it do, in step.
         Box(Modifier.fillMaxSize().recede(sheetDepth, OverlayLevel.Sheet)) {
             SettingsLayer(settings, settingsOpen, animateExit = overlaysAnimate, onBack = launcher::closeSettings) {
+                // Hidden apps unlocked in settings (its list, a backup) stay open only until it closes.
+                DisposableEffect(Unit) { onDispose(drawer::relockHidden) }
                 if (wide) {
                     SettingsTwoPane(onBack = launcher::closeSettings)
                 } else {

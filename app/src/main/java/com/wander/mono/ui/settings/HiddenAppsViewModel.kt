@@ -49,8 +49,6 @@ class HiddenAppsViewModel @Inject constructor(
 
     fun unlock() = lock.unlock()
 
-    fun relock() = lock.relock()
-
     fun reportNoScreenLock() {
         messages.report(ActionResult.Failed(R.string.error_no_screen_lock))
     }

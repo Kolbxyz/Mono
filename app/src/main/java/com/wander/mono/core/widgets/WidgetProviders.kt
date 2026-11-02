@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetProviderInfo
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
+import android.os.UserHandle
 import com.wander.mono.core.apps.Profiles
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.text.Collator
@@ -16,6 +17,8 @@ data class WidgetApp(
     val packageName: String,
     val label: String,
     val isMainProfile: Boolean,
+    /** Its profile: one app may offer widgets from several (work, clone). */
+    val profile: UserHandle,
     val widgets: List<WidgetChoice>,
 )
 
@@ -52,6 +55,7 @@ class WidgetProviders @Inject constructor(
                     packageName = packageName,
                     label = app.loadLabel(pm).toString(),
                     isMainProfile = user == profiles.main,
+                    profile = user,
                     widgets = infos
                         .map { WidgetChoice(it, it.loadLabel(pm)) }
                         .sortedWith(compareBy(collator) { it.label }),

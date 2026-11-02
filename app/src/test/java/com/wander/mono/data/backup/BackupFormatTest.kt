@@ -145,6 +145,16 @@ class BackupFormatTest {
     }
 
     @Test
+    fun `a version 1 file written before headphone apps reads them as none`() {
+        val read = decode(BackupFormat.encode(backup) - "headphoneApps") as BackupRead.Read
+        assertEquals(emptySet<AppKey>(), read.backup.headphoneApps)
+        assertEquals(
+            BackupRead.Failed(BackupError.Malformed),
+            decode(BackupFormat.encode(backup) + ("headphoneApps" to listOf("not a key"))),
+        )
+    }
+
+    @Test
     fun `an unknown theme name reads as the default, as a downgrade would`() {
         val tree = BackupFormat.encode(backup) + ("settings" to mapOf("theme_mode" to "sepia"))
         val read = decode(tree) as BackupRead.Read

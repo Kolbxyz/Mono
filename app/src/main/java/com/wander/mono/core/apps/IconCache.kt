@@ -7,6 +7,7 @@ import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.graphics.drawable.Drawable
 import android.util.LruCache
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.wander.mono.data.settings.IconSettings
@@ -28,8 +29,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 
 /**
- * In-memory icon cache, keyed by app, by whether the themed (monochrome) icon was asked for, and by
- * the icon pack in use. Full-colour icons come from the chosen pack when it has one for the app,
+ * In-memory icon cache, keyed by app, by whether the themed (monochrome) icon was asked for, by
+ * the icon pack in use and by size (a large icon is never a small one scaled up), bounded by bytes
+ * since sizes differ. Full-colour icons come from the chosen pack when it has one for the app,
  * else the app's own; they are profile-badged. Themed ones are not, the row's label carries the
  * work badge. Entries are evicted per package when `LauncherApps` reports a change, and all of
  * them when the chosen pack itself changes. With an icon shape chosen, adaptive icons of Mono's
@@ -46,11 +48,19 @@ class IconCache @Inject constructor(
     settings: SettingsStore,
     @AppScope scope: CoroutineScope,
 ) {
-    private data class Entry(val key: AppKey, val themed: Boolean, val pack: String, val unmasked: Boolean)
+    private data class Entry(
+        val key: AppKey,
+        val themed: Boolean,
+        val pack: String,
+        val unmasked: Boolean,
+        val sizePx: Int,
+    )
 
     private val launcherApps = context.getSystemService(LauncherApps::class.java)
     private val packageManager = context.packageManager
-    private val cache = LruCache<Entry, AppIconImage>(MAX_ICONS)
+    private val cache = object : LruCache<Entry, AppIconImage>(MAX_BYTES) {
+        override fun sizeOf(key: Entry, value: AppIconImage) = value.bitmap.asAndroidBitmap().allocationByteCount
+    }
 
     /** Whether a shape other than the system's is chosen; null until the setting is read. */
     private val unmasked: StateFlow<Boolean?> = settings[IconSettings.Shape]
@@ -64,7 +74,7 @@ class IconCache @Inject constructor(
     suspend fun icon(key: AppKey, themed: Boolean, sizePx: Int): AppIconImage? {
         // Packs apply to full-colour icons only; themed icons are the apps' own glyphs.
         val unmask = unmasked.value ?: unmasked.filterNotNull().first()
-        val entry = Entry(key, themed, if (themed) SYSTEM_ICON_PACK else packs.current(), unmask)
+        val entry = Entry(key, themed, if (themed) SYSTEM_ICON_PACK else packs.current(), unmask, sizePx)
         cache.get(entry)?.let { return it }
         return withContext(Dispatchers.IO) { load(entry, sizePx) }?.also { cache.put(entry, it) }
     }
@@ -114,7 +124,7 @@ class IconCache @Inject constructor(
     }
 
     private companion object {
-        // Roughly a full drawer's worth; a 48dp icon at xxxhdpi is ~150 KB.
-        const val MAX_ICONS = 300
+        // A full drawer and home at a couple of sizes: a 48dp icon at xxxhdpi is ~150 KB.
+        const val MAX_BYTES = 24 * 1024 * 1024
     }
 }

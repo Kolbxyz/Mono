@@ -72,7 +72,6 @@ class HomeViewModel @Inject constructor(
     settings: SettingsStore,
     time: SystemTime,
     battery: Battery,
-    quietTimer: QuietTimer,
     liveRows: LiveRowPrefs,
     quiet: QuietMode,
     calendar: CalendarEvents,
@@ -172,7 +171,7 @@ class HomeViewModel @Inject constructor(
     ) { headphones, routine -> headphones + routine }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptySet())
 
-    /** The clock lines; also where a timed quiet mode ends, on the tick this already receives. */
+    /** The clock lines. */
     val glance: StateFlow<Glance> = combine(
         combine(time.now, time.nextAlarm, calendar.agenda, rows) { now, alarm, agenda, home ->
             Glance(now, alarmWithinDay(alarm, now), glanceEvent(agenda, now, home))
@@ -182,7 +181,6 @@ class HomeViewModel @Inject constructor(
         combine(quiet.enabled, settings[QuietSettings.Until], ::Pair),
         settings.clockLook(),
     ) { base, power, (quietOn, until), look ->
-        quietTimer.settle(base.now, quietOn, until)
         base.copy(
             battery = glanceBattery(power),
             quiet = if (quietOn) QuietGlance(until) else null,

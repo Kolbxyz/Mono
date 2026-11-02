@@ -209,15 +209,16 @@ class DrawerViewModel @Inject constructor(
     }
 
     /**
-     * The keyboard's action key does what tapping the top (highlighted) result does, once the results
-     * for what is typed are in, never the previous query's; typing on before then cancels it.
+     * The keyboard's action key hands [onTop] the top (highlighted) result, to act on as a tap would,
+     * once the results for what is typed are in, never the previous query's; typing on before then
+     * cancels it. While [picking] an app for home it is the top of the list shown then.
      */
-    fun launchTopResult(onOutcome: (HitOutcome) -> Unit) {
+    fun withTopResult(picking: Boolean, onTop: (SearchHit) -> Unit) {
         val typed = query.value
         viewModelScope.launch {
             val built = state.first { it.resultsQuery == typed || query.value != typed }
-            val top = built.results.firstOrNull().takeIf { built.resultsQuery == typed && query.value == typed }
-            onOutcome(top?.let(::launch) ?: HitOutcome.Stayed)
+            val shown = if (picking) pickable(built.results) else built.results
+            shown.firstOrNull().takeIf { built.resultsQuery == typed && query.value == typed }?.let(onTop)
         }
     }
 
