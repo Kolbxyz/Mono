@@ -29,6 +29,19 @@ class PlaybackProgressTest {
         assertEquals(1f, progress.fractionAt(500_000L), DELTA)
     }
 
+    @Test
+    fun `the next tick lands on the position's next whole second`() {
+        val progress = playbackProgress(10_250L, 100_000L, 1f, updatedAtMs = 0L, isPlaying = true)!!
+        assertEquals(750L, progress.msToNextSecondAt(0L))
+        assertEquals(1_000L, progress.msToNextSecondAt(750L))
+    }
+
+    @Test
+    fun `a faster speed reaches the next second sooner`() {
+        val progress = playbackProgress(10_000L, 100_000L, 2f, updatedAtMs = 0L, isPlaying = true)!!
+        assertEquals(500L, progress.msToNextSecondAt(0L))
+    }
+
     private companion object {
         const val DELTA = 0.0001f
     }

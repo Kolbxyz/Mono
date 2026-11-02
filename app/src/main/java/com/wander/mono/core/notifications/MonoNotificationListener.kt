@@ -21,6 +21,9 @@ import kotlinx.coroutines.launch
  *
  * The callbacks arrive on the main thread; the work (a binder read of every notification, and the
  * full read of the ones shown) runs off it on one worker, in order, with a burst folded into one.
+ * While nothing needs the readings ([ListenerDemand]) a change is only marked [stale] and read
+ * once demand returns: a busy notification (navigation, downloads) would otherwise cost a full
+ * re-read every second with the screen off.
  */
 @AndroidEntryPoint
 class MonoNotificationListener : NotificationListenerService() {
@@ -42,6 +45,9 @@ class MonoNotificationListener : NotificationListenerService() {
     @Inject
     lateinit var live: LivePublisher
 
+    @Inject
+    lateinit var demand: ListenerDemand
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     /** One pending update at most: a later request while one runs is folded into the next. */
@@ -56,9 +62,14 @@ class MonoNotificationListener : NotificationListenerService() {
     @Volatile
     private var freshlyConnected = false
 
+    /** A change came in that no reading has covered yet. */
+    @Volatile
+    private var stale = false
+
     override fun onCreate() {
         super.onCreate()
         scope.launch { updates.collect { update() } }
+        scope.launch { demand.wanted.collect { wanted -> if (wanted && stale) updates.tryEmit(Unit) } }
     }
 
     override fun onListenerConnected() {
@@ -83,19 +94,20 @@ class MonoNotificationListener : NotificationListenerService() {
         super.onDestroy()
     }
 
-    override fun onNotificationPosted(sbn: StatusBarNotification, rankingMap: RankingMap) {
-        updates.tryEmit(Unit)
-    }
+    override fun onNotificationPosted(sbn: StatusBarNotification, rankingMap: RankingMap) = changed()
 
-    override fun onNotificationRemoved(sbn: StatusBarNotification, rankingMap: RankingMap) {
-        updates.tryEmit(Unit)
-    }
+    override fun onNotificationRemoved(sbn: StatusBarNotification, rankingMap: RankingMap) = changed()
 
-    override fun onNotificationRankingUpdate(rankingMap: RankingMap) {
-        updates.tryEmit(Unit)
+    override fun onNotificationRankingUpdate(rankingMap: RankingMap) = changed()
+
+    /** Marked before demand is checked, so a change racing demand's return is still read. */
+    private fun changed() {
+        stale = true
+        if (demand.wanted.value) updates.tryEmit(Unit)
     }
 
     private fun update() {
+        stale = false
         if (freshlyConnected) {
             freshlyConnected = false
             live.connect()
