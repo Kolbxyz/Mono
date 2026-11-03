@@ -4,6 +4,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,12 +24,13 @@ import androidx.compose.ui.semantics.setProgress
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.media.PlaybackProgress
-import com.wander.mono.ui.components.WavyProgressLine
+import com.wander.mono.ui.components.UNPLAYED_ALPHA
 import com.wander.mono.ui.components.rememberMonoHaptics
 
 /**
- * The strip's thin wavy progress line. When the session can seek ([onSeek]), dragging along it
- * scrubs: the line follows the finger (the wave stills) and the release seeks there. The drag is
+ * The strip's thin flat progress line. Flat, not wavy: the position ticks once a second, and a
+ * still wave between ticks reads as stuck. When the session can seek ([onSeek]), dragging along it
+ * scrubs: the line follows the finger and the release seeks there. The drag is
  * caught before the card's swipe to skip, and TalkBack can set the position directly.
  */
 @Composable
@@ -80,10 +82,11 @@ internal fun ScrubLine(
             },
         contentAlignment = Alignment.Center,
     ) {
-        WavyProgressLine(
-            fraction = { scrub ?: (position().toFloat() / duration).coerceIn(0f, 1f) },
-            isPlaying = progress.isAdvancing && scrub == null,
+        LinearProgressIndicator(
+            progress = { scrub ?: (position().toFloat() / duration).coerceIn(0f, 1f) },
+            modifier = Modifier.fillMaxWidth(),
             color = color,
+            trackColor = color.copy(alpha = UNPLAYED_ALPHA),
         )
     }
 }
