@@ -45,7 +45,7 @@ internal fun waveSpeed(): Dp =
 /**
  * A display-only wavy progress line, for places too small for a seek bar. [fraction] is read at
  * draw time, so a ticking position redraws without recomposing. Its wave stands still: these lines
- * sit on home for as long as something plays or downloads, and a travelling wave redraws every
+ * sit on home for as long as something downloads, and a travelling wave redraws every
  * frame. Only the expanded seek bar's wave travels.
  */
 @Composable
@@ -113,7 +113,7 @@ private val THUMB_GAP = 4.dp
 private val UNPLAYED_HEIGHT = 4.dp
 
 /** The unplayed part, in the content colour so it reads on any tinted container. */
-private const val UNPLAYED_ALPHA = 0.24f
+internal const val UNPLAYED_ALPHA = 0.24f
 
 /** `Modifier.weight` rejects exactly 0: the floor keeps a segment from vanishing at either end. */
 private const val MIN_WEIGHT = 0.001f
