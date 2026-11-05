@@ -98,19 +98,12 @@ class IconCache @Inject constructor(
         AppIconImage(it.asImageBitmap(), isMonochrome = true, accent = own.accentColour())
     }
 
-    /** The app's monochrome glyph on a frame, for an app the chosen pack has no icon for. */
-    private fun framedGlyph(own: Drawable, sizePx: Int): AppIconImage? = monochromeBitmap(own, sizePx)?.let {
-        AppIconImage(it.asImageBitmap(), isMonochrome = true, accent = own.accentColour(), isFramed = true)
-    }
-
     /**
-     * The pack's icon for the activity when it has one, else the app's framed glyph (or own icon
-     * when it has no monochrome layer); badged for its profile,
+     * The pack's icon for the activity when it has one, else the app's own; badged for its profile,
      * or unmasked when a shape is chosen and the icon is adaptive.
      */
     private fun colourIcon(entry: Entry, info: LauncherActivityInfo, sizePx: Int): AppIconImage {
         val packIcon = packs.icon(entry.pack, entry.key.packageName, entry.key.className)
-        if (packIcon == null && packs.isAvailable(entry.pack)) framedGlyph(info.getIcon(0), sizePx)?.let { return it }
         if (entry.unmasked && info.user == profiles.main) {
             fullBleedBitmap(packIcon ?: info.getIcon(0), sizePx)?.let { bitmap ->
                 val accent = bitmap.accentColour()
