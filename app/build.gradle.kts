@@ -24,8 +24,8 @@ android {
         applicationId = "com.wander.mono"
         minSdk = 26
         targetSdk = 37
-        versionCode = 9
-        versionName = "0.6.2"
+        versionCode = 10
+        versionName = "0.7.0"
 
         // Mirrors SiblingContract.permission(); see the sibling contract, section 2.1.
         manifestPlaceholders["siblingPermission"] = "com.wander.permission.SIBLING_READ"
