@@ -8,9 +8,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -22,13 +20,13 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.components.AppIcons
-import com.wander.mono.ui.components.SegmentOuter
 import com.wander.mono.ui.home.onWallpaper
 
 /**
  * The app most likely wanted now ([AppPrediction]), right above the search field where the thumb
- * rests, on the same tonal card as search's top hit. Unfolds when there is one and folds away when
- * there is none, keeping the last app on screen while it leaves.
+ * rests, straight on the drawer's background like every other row, under its heading. Unfolds
+ * when there is one and folds away when there is none, keeping the last app on screen while it
+ * leaves.
  */
 @Composable
 internal fun PredictedAppRow(
@@ -56,13 +54,7 @@ internal fun PredictedAppRow(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 16.dp, bottom = 4.dp).semantics { heading() },
             )
-            Surface(
-                color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = RoundedCornerShape(SegmentOuter),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                DrawerAppRow(app, icons, onLaunch = { onLaunch(app.app) }, onLongPress = { onLongPress(app.app) })
-            }
+            DrawerAppRow(app, icons, onLaunch = { onLaunch(app.app) }, onLongPress = { onLongPress(app.app) })
         }
     }
 }

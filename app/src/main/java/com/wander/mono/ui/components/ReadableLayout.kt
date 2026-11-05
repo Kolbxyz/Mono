@@ -21,8 +21,8 @@ object ReadableLayout {
     /** End of the M3 compact height class: below it, a phone is on its side. */
     val CompactHeight = 480.dp
 
-    /** 24 dp on compact widths, 32 dp from medium on. */
-    fun gutter(width: Dp): Dp = if (width >= MediumWidth) 32.dp else 24.dp
+    /** 36 dp on compact widths, 48 dp from medium on: home's clock and rows sit well in from the edge. */
+    fun gutter(width: Dp): Dp = if (width >= MediumWidth) 48.dp else 36.dp
 
     fun isCompactHeight(height: Dp): Boolean = height < CompactHeight
 

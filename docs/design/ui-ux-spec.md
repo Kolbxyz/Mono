@@ -105,7 +105,7 @@ Home (list)  ── swipe up / tap search ──▶  Drawer + Search (one surfac
 
 | Property | Value |
 | --- | --- |
-| Height | 56 dp min (default density), 48 dp (compact), 64 dp (comfortable) |
+| Height | 60 dp min (default density), 52 dp (compact), 68 dp (comfortable) |
 | Label | `headlineSmall` (24 sp) default; `titleLarge` compact; `headlineMedium` comfortable |
 | Icon | 32 dp, themed monochrome if available (`AdaptiveIconDrawable.getMonochrome()`), else full icon; or none in text-only mode |
 | Badge | Count pill (`Badge`) aligned to label baseline, right edge 24 dp; dot only if count unknown |
@@ -188,9 +188,9 @@ Clock styles (setting): Default (above), Stacked (hours over minutes, like `ref:
 ### 5.2 Spacing grid
 
 - Base unit **4 dp**; layout steps 8 / 12 / 16 / 24 / 32.
-- Screen side gutter **24 dp** (compact width), **32 dp** (medium); rows never span tablets wider than 560 dp — centre the column (`ref:niagara/09` foldable).
-- Icon ↔ label gap 16 dp. Row vertical padding 8 dp. Live card inner padding 16 dp, outer inset start = label start.
-- Header → list gap ≥ 32 dp; list → search affordance 16 dp.
+- Screen side gutter **36 dp** (compact width), **48 dp** (medium); rows never span tablets wider than 560 dp — centre the column (`ref:niagara/09` foldable).
+- Icon ↔ label gap 24 dp. Row vertical padding 8 dp. Live card inner padding 16 dp, outer inset start = label start.
+- Header → list gap ≥ 44 dp; list → search affordance 16 dp.
 
 ### 5.3 Shapes (M3 Expressive)
 

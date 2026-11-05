@@ -16,21 +16,21 @@ internal class FavoriteRowMetrics(
 
 internal fun favoriteRowMetrics(density: RowDensity): FavoriteRowMetrics = when (density) {
     RowDensity.Compact -> FavoriteRowMetrics(
-        minHeight = 48.dp,
-        verticalPadding = 2.dp,
-        iconSize = 32.dp,
+        minHeight = 52.dp,
+        verticalPadding = 4.dp,
+        iconSize = 34.dp,
         label = { it.titleLarge },
     )
     RowDensity.Default -> FavoriteRowMetrics(
-        minHeight = 56.dp,
-        verticalPadding = 6.dp,
-        iconSize = 36.dp,
+        minHeight = 60.dp,
+        verticalPadding = 8.dp,
+        iconSize = 40.dp,
         label = { it.headlineSmall },
     )
     RowDensity.Comfortable -> FavoriteRowMetrics(
-        minHeight = 64.dp,
-        verticalPadding = 10.dp,
-        iconSize = 40.dp,
+        minHeight = 68.dp,
+        verticalPadding = 12.dp,
+        iconSize = 44.dp,
         label = { it.headlineMedium },
     )
 }
@@ -38,8 +38,8 @@ internal fun favoriteRowMetrics(density: RowDensity): FavoriteRowMetrics = when 
 /** A favourite row's inset on both sides, inside the list's gutter. */
 internal val FavoriteRowInset = 4.dp
 
-/** The space between a favourite's icon and its name. */
-internal val FavoriteIconGap = 16.dp
+/** The space between a favourite's icon and its name: wide, so names read as a column of their own. */
+internal val FavoriteIconGap = 24.dp
 
 /**
  * Where a favourite's name starts, so what shows under it (its notification preview) lines up with
