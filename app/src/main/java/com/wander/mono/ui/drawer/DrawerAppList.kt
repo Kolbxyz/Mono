@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
  * results show instead.
  * TalkBack gets a "Jump to" action per letter on the list itself. Rows rise in as the list first
  * shows, and its ends fade out while there is more to scroll to; [railScrub] drives the rail from home.
+ * While a finger holds a letter on the rail, only that letter's apps stay; the rest fade out.
  */
 @Composable
 internal fun DrawerAppList(
@@ -78,6 +79,8 @@ internal fun DrawerAppList(
         }
     }
     val entrance = rememberListEntrance()
+    val hold = remember { RailHold() }
+    val letters = state.sections.size
     val toolbarScroll = rememberToolbarScroll()
     // Always there while the list cannot scroll back, so it is never lost on a short list.
     val toolbarShown by remember(listState, toolbarScroll) {
@@ -103,10 +106,20 @@ internal fun DrawerAppList(
                     bottom = DrawerToolbarClearance + 8.dp,
                 ),
             ) {
-                appGroupItems(state.groups, icons, listState, entrance, onLaunchApp, onLongPress)
+                appGroupItems(state.groups, icons, listState, entrance, onLaunchApp, onLongPress) { index ->
+                    hold.shows(index, lead, letters)
+                }
                 // After the groups, so the rail's indexes still match the list's.
                 items(state.work, key = { "work:${it.profile.serial}" }) { section ->
-                    WorkSectionCard(section, icons, onSetWorkPaused, onLaunchApp, onLongPress, schemeAnimateItem())
+                    val shown = hold.heldGroup(lead, letters) < 0
+                    WorkSectionCard(
+                        section,
+                        icons,
+                        onSetWorkPaused,
+                        onLaunchApp,
+                        onLongPress,
+                        schemeAnimateItem().heldFade(shown),
+                    )
                 }
                 if (space != null && privateActions != null) {
                     item(key = "private") {
@@ -117,12 +130,12 @@ internal fun DrawerAppList(
                             privateActions,
                             onLaunchApp,
                             onLongPress,
-                            schemeAnimateItem(),
+                            schemeAnimateItem().heldFade(hold.heldGroup(lead, letters) < 0),
                         )
                     }
                 }
             }
-            if (showRail) DrawerRail(state, listState, space, privateActions, railScrub)
+            if (showRail) DrawerRail(state, listState, space, privateActions, railScrub, hold)
             DrawerToolbar(
                 visible = toolbarShown,
                 controls = state.controls,

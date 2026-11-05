@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
  * The drawer list's letter rail, down the full height of the list on its edge, its entries spread
  * evenly from ★ at the top to the last letter just above the search dock. Jumps put their entry at
  * the top of [listState]; with the private space ([space] and [privateActions]) a lock ends the rail.
+ * The entry held under the finger goes to [hold], for the list to keep only that letter in view.
  */
 @Composable
 internal fun BoxScope.DrawerRail(
@@ -26,6 +27,7 @@ internal fun BoxScope.DrawerRail(
     space: PrivateSpaceState.Present?,
     privateActions: PrivateSpaceActions?,
     railScrub: RailScrub?,
+    hold: RailHold,
 ) {
     val scope = rememberCoroutineScope()
     val lead = state.railLead
@@ -62,7 +64,7 @@ internal fun BoxScope.DrawerRail(
         atStart = atStart,
         lock = lock,
         scrub = railScrub,
-        scrolling = listState.isScrollInProgress,
+        onHold = { hold.entry = it },
     )
 }
 

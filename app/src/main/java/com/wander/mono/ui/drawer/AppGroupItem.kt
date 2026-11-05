@@ -33,7 +33,8 @@ import com.wander.mono.ui.theme.schemeAnimateItem
 
 /**
  * The list's [groups], one item each so the rail's indexes match the list's, every row making its
- * [entrance] in order from the top of the screen as the drawer opens.
+ * [entrance] in order from the top of the screen as the drawer opens. A group [shows] is false for
+ * fades out, while a finger holds another letter on the rail.
  */
 internal fun LazyListScope.appGroupItems(
     groups: List<AppGroup>,
@@ -42,6 +43,7 @@ internal fun LazyListScope.appGroupItems(
     entrance: ListEntrance,
     onLaunchApp: (LaunchableApp) -> Unit,
     onLongPress: (LaunchableApp) -> Unit,
+    shows: (Int) -> Boolean = { true },
 ) {
     // Where each group's heading falls in a count of headings and rows from the top of the list.
     val starts = groups.runningFold(0) { at, group -> at + 1 + group.entries.size }
@@ -57,7 +59,7 @@ internal fun LazyListScope.appGroupItems(
             onLaunchApp,
             onLongPress,
             rowEntrance = { row -> entranceMotion(entrance, starts[index] + row - firstShown) },
-            modifier = schemeAnimateItem(),
+            modifier = schemeAnimateItem().heldFade(shows(index)),
         )
     }
 }
