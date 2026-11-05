@@ -24,8 +24,9 @@ import com.wander.mono.ui.home.onWallpaper
 
 /**
  * The app most likely wanted now ([AppPrediction]), right above the search field where the thumb
- * rests, straight on the drawer's background like every other row, under its heading. Unfolds when there is one and folds away when
- * there is none, keeping the last app on screen while it leaves.
+ * rests, straight on the drawer's background like every other row, under its heading. Unfolds
+ * when there is one and folds away when there is none, keeping the last app on screen while it
+ * leaves.
  */
 @Composable
 internal fun PredictedAppRow(
