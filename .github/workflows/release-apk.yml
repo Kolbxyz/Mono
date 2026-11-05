@@ -3,6 +3,12 @@ name: Build and attach release APK
 on:
   release:
     types: [published]
+  # Run by hand to cut a release: creates it on main with generated notes, then attaches the APK.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release, vX.Y.Z"
+        required: true
 
 permissions:
   contents: write
@@ -11,6 +17,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       - uses: actions/checkout@v5
 
@@ -50,15 +58,18 @@ jobs:
 
       # The R8 mapping is the only way to read a stack trace from this exact build.
       - name: Compress R8 mapping
-        run: gzip -c app/build/outputs/mapping/release/mapping.txt > "mapping-${{ github.event.release.tag_name }}.txt.gz"
+        run: gzip -c app/build/outputs/mapping/release/mapping.txt > "mapping-$TAG.txt.gz"
 
       # Tags are "vX.Y.Z", so the asset reads "Mono-vX.Y.Z.apk".
       - name: Rename APK
-        run: mv app/build/outputs/apk/release/app-release.apk "Mono-${{ github.event.release.tag_name }}.apk"
+        run: mv app/build/outputs/apk/release/app-release.apk "Mono-$TAG.apk"
 
       - name: Upload APK and mapping to release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: ${{ github.event_name == 'workflow_dispatch' }}
           files: |
             Mono-*.apk
             mapping-*.txt.gz
