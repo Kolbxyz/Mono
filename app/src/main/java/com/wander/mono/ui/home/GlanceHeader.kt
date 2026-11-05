@@ -70,7 +70,7 @@ fun GlanceContent(
     val (top, bottom) = when {
         compact -> 8.dp to 16.dp
         reachable -> 24.dp to 16.dp
-        else -> 48.dp to 32.dp
+        else -> 56.dp to 44.dp
     }
     Column(
         modifier.padding(top = top, bottom = bottom),

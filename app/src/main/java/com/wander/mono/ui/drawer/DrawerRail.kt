@@ -62,6 +62,7 @@ internal fun BoxScope.DrawerRail(
         atStart = atStart,
         lock = lock,
         scrub = railScrub,
+        scrolling = listState.isScrollInProgress,
     )
 }
 

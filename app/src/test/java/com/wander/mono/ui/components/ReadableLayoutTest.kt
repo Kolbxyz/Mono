@@ -8,11 +8,11 @@ import org.junit.Test
 
 class ReadableLayoutTest {
     @Test
-    fun `gutter is 24 dp on compact widths and 32 dp from medium on`() {
-        assertEquals(24.dp, ReadableLayout.gutter(360.dp))
-        assertEquals(24.dp, ReadableLayout.gutter(599.9.dp))
-        assertEquals(32.dp, ReadableLayout.gutter(600.dp))
-        assertEquals(32.dp, ReadableLayout.gutter(1280.dp))
+    fun `gutter is 36 dp on compact widths and 48 dp from medium on`() {
+        assertEquals(36.dp, ReadableLayout.gutter(360.dp))
+        assertEquals(36.dp, ReadableLayout.gutter(599.9.dp))
+        assertEquals(48.dp, ReadableLayout.gutter(600.dp))
+        assertEquals(48.dp, ReadableLayout.gutter(1280.dp))
     }
 
     @Test

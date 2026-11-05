@@ -81,6 +81,9 @@ class IconPacks @Inject constructor(
         return if (id == 0) null else drawable(entry.resources, id)
     }
 
+    /** Whether [pack] is a pack that is installed, not the system's icons or one since removed. Blocking. */
+    fun isAvailable(pack: String): Boolean = load(pack) != null
+
     /** Null when the pack names a drawable it does not ship. */
     private fun drawable(resources: Resources, id: Int): Drawable? = try {
         ResourcesCompat.getDrawable(resources, id, null)

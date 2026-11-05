@@ -46,7 +46,9 @@ import com.wander.mono.ui.theme.LocalReducedMotion
  * whichever edge the rail is on. While scrubbing, the letter nearest the finger grows and its
  * neighbours less so. The letters sit straight on the drawer's background, shadowed like other text
  * on the wallpaper. With reduced motion the wave stays flat, nothing grows and only the letter under
- * the finger lights up. With a private space ([lock]) a lock ends the rail: scrubbing onto it
+ * the finger lights up. While the list scrolls ([scrolling]) or a finger scrubs, the other letters
+ * fade out and only the current one stays, lit; the alphabet fades back once the list rests.
+ * With a private space ([lock]) a lock ends the rail: scrubbing onto it
  * jumps to the space like a letter, tapping it alone locks or unlocks it. Letters tick lightly, ★
  * and the lock with a long buzz.
  * TalkBack sees one adjustable control: swiping up or down moves to the next or previous entry,
@@ -62,6 +64,7 @@ fun LetterRail(
     atStart: Boolean = false,
     lock: RailLock? = null,
     scrub: RailScrub? = null,
+    scrolling: Boolean = false,
 ) {
     val view = LocalView.current
     val haptics = rememberMonoHaptics()
@@ -98,6 +101,9 @@ fun LetterRail(
     if (scrub != null) FollowRailScrub(scrub, finger) { placed.coordinates }
     // A small bow on touch, eased in, so the press shows before the finger moves.
     val pressed by animateFloatAsState(if (finger.scrubbing && !reducedMotion) 1f else 0f, motion.fastSpatialSpec())
+    // While the list moves or the rail is scrubbed, only the current letter stays.
+    val focused by rememberRailFocus(scrolling, finger.scrubbing)
+    val focus = if (finger.scrubbing && finger.active >= 0) finger.active else current
 
     val railLabel = stringResource(R.string.drawer_rail)
     val privateSpoken = stringResource(R.string.drawer_rail_private)
@@ -145,8 +151,10 @@ fun LetterRail(
         ) {
             val letterStyle = MaterialTheme.typography.labelMedium.onWallpaper()
             letters.forEachIndexed { index, letter ->
-                val lit = finger.scrubbing && index == finger.active
+                val lit = focused && index == focus
+                val shown = railLetterAlpha(index, focus, focused)
                 val wave = Modifier.graphicsLayer {
+                    alpha = shown
                     val column = finger.lettersHeight.toFloat()
                     val slot = RailMath.fingerSlot(finger.fingerY, lettersTop, column, letters.size)
                     val bow = pressBow * pressed + finger.dragBow

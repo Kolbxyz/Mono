@@ -9,10 +9,13 @@ import androidx.compose.ui.graphics.ImageBitmap
  * user's icon shape. [accent] is the app's colour as its full-colour icon shows it
  * ([dominantAccent], raw: make it readable against its background with [readableAccent]); null
  * when that icon has too little colour to have one, and for shortcut icons, which are not read.
+ * A [isFramed] glyph stands in for an icon the chosen pack lacks: the UI sets it on a translucent
+ * frame, so it sits among the pack's icons instead of showing the app's own coloured plate.
  */
 class AppIconImage(
     val bitmap: ImageBitmap,
     val isMonochrome: Boolean,
     val isFullBleed: Boolean = false,
     val accent: Int? = null,
+    val isFramed: Boolean = false,
 )
