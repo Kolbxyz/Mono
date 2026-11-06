@@ -12,14 +12,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.layout.LayoutCoordinates
 
 /**
- * A scrub of the letter rail begun on home's edge, before the drawer and its rail exist: the finger
- * lands on home's invisible strip ([RailScrubStrip]), the drawer rises, and the same finger goes on
- * driving the drawer's [LetterRail] until it lifts, leaving the drawer at that letter. Positions are
- * window pixels. [drawerLift] is how far below its resting place the rising drawer is drawn right
- * now, so the rail maps the finger against where its letters come to rest, not where they pass.
+ * A scrub of the letter rail begun on home's edge: the finger lands on home's invisible strip
+ * ([RailScrubStrip]), home's own rail appears under it, and the same finger drives that rail
+ * ([FollowRailScrub]) until it lifts. Positions are window pixels.
  */
 @Stable
-class RailScrub(internal val drawerLift: () -> Float) {
+class RailScrub {
     /** A finger from home's edge is down. */
     var active by mutableStateOf(false)
         private set
@@ -30,17 +28,9 @@ class RailScrub(internal val drawerLift: () -> Float) {
     var fingerY by mutableFloatStateOf(0f)
         private set
 
-    /**
-     * This opening of the drawer came from a scrub: it opens on the list, never on the keyboard,
-     * even after the finger lifts. Cleared once the drawer has closed ([drawerClosed]).
-     */
-    var openedDrawer by mutableStateOf(false)
-        private set
-
     fun start(x: Float, y: Float) {
         fingerX = x
         fingerY = y
-        openedDrawer = true
         active = true
     }
 
@@ -51,10 +41,6 @@ class RailScrub(internal val drawerLift: () -> Float) {
 
     fun end() {
         active = false
-    }
-
-    fun drawerClosed() {
-        openedDrawer = false
     }
 }
 
@@ -74,9 +60,8 @@ internal fun FollowRailScrub(scrub: RailScrub, finger: RailFinger, railCoordinat
         snapshotFlow {
             ScrubFrame(scrub.active, scrub.fingerX, scrub.fingerY, laidOut = finger.lettersHeight > 0)
         }.collect { frame ->
-            val local = railCoordinates()?.takeIf { it.isAttached && frame.laidOut }?.let {
-                restingLocal(it, Offset(frame.x, frame.y), scrub.drawerLift())
-            }
+            val rail = railCoordinates()?.takeIf { it.isAttached && frame.laidOut }
+            val local = rail?.windowToLocal(Offset(frame.x, frame.y))
             when {
                 frame.active && local != null && !pressed -> {
                     pressed = true
@@ -91,13 +76,4 @@ internal fun FollowRailScrub(scrub: RailScrub, finger: RailFinger, railCoordinat
             }
         }
     }
-}
-
-/**
- * The window point [window] in [rail]'s own pixels as they will be once the drawer has risen: the
- * rail is drawn [lift] px below that now, so the point is that much further down its letters.
- */
-private fun restingLocal(rail: LayoutCoordinates, window: Offset, lift: Float): Offset {
-    val drawn = rail.windowToLocal(window)
-    return Offset(drawn.x, drawn.y + lift)
 }

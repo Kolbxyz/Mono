@@ -169,6 +169,10 @@ class DrawerViewModel @Inject constructor(
     suspend fun icon(key: AppKey, mode: IconMode, sizePx: Int): AppIconImage? =
         icons.icon(key, themed = mode == IconMode.Themed, sizePx)
 
+    /** [icon], if it is in memory already: for a row's first frame. */
+    fun cachedIcon(key: AppKey, mode: IconMode, sizePx: Int): AppIconImage? =
+        icons.cached(key, themed = mode == IconMode.Themed, sizePx)
+
     /** The shortcut's own icon (a face, an avatar); null when it has none, so the row shows its app's. */
     suspend fun shortcutIcon(shortcut: AppShortcut, sizePx: Int): AppIconImage? = shortcutIcons.icon(shortcut, sizePx)
 

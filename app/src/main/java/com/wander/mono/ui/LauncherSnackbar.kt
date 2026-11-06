@@ -25,11 +25,12 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wander.mono.ui.edit.EditToolbarClearance
+import com.wander.mono.ui.home.HomeButtonRoom
 
 /**
  * Mono's error and confirmation messages from [launcher], with their Undo where one is offered and
  * a reject haptic for failures, as a snackbar above the bottom inset and clear of what home keeps
- * at its foot: the search dock, or the floating toolbar while [editing].
+ * at its foot: its round button, or the floating toolbar while [editing].
  * Over the drawer or settings ([overlayOpen]) nothing is there, so it sits on the inset itself.
  */
 @Composable
@@ -80,8 +81,5 @@ private fun View.rejectHaptic() {
 private fun snackbarClearance(overlayOpen: Boolean, editing: Boolean): Dp = when {
     overlayOpen -> 0.dp
     editing -> EditToolbarClearance
-    else -> DOCK_CLEARANCE
+    else -> HomeButtonRoom
 }
-
-/** Home's search dock: its 56 dp pill and the 8 dp above and below it. */
-private val DOCK_CLEARANCE = 56.dp + 16.dp

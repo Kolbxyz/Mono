@@ -24,8 +24,8 @@ android {
         applicationId = "com.wander.mono"
         minSdk = 26
         targetSdk = 37
-        versionCode = 11
-        versionName = "0.7.1"
+        versionCode = 12
+        versionName = "0.8.0"
 
         // Mirrors SiblingContract.permission(); see the sibling contract, section 2.1.
         manifestPlaceholders["siblingPermission"] = "com.wander.permission.SIBLING_READ"
@@ -109,6 +109,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.datastore.preferences)
+    // Compiles the scrolling, scrubbing and drawer code ahead of time on install, so the first
+    // scrubs after an install or update are as smooth as the hundredth.
+    implementation(libs.androidx.profileinstaller)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

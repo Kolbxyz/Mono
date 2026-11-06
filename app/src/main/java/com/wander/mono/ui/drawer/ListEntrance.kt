@@ -24,10 +24,13 @@ internal class ListEntrance {
         internal set
 }
 
-/** The entrance of a list shown now, its opening window closing a moment after it first composes. */
+/**
+ * The entrance of a list shown now, its opening window closing a moment after it first composes;
+ * without [opening], rows are simply there from the start.
+ */
 @Composable
-internal fun rememberListEntrance(): ListEntrance {
-    val entrance = remember { ListEntrance() }
+internal fun rememberListEntrance(opening: Boolean = true): ListEntrance {
+    val entrance = remember { ListEntrance().apply { this.opening = opening } }
     LaunchedEffect(entrance) {
         delay(OPENING_WINDOW_MS)
         entrance.opening = false

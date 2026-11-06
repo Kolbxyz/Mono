@@ -66,10 +66,11 @@ internal fun LazyListScope.appGroupItems(
 
 /**
  * One group of the drawer's list: its heading, then its apps straight on the drawer's background,
- * each making its [rowEntrance] (0 the heading, then the rows).
+ * each making its [rowEntrance] (0 the heading, then the rows). Home draws the letter a finger holds
+ * on its rail with it too, so the drawer it lands in shows the very same group in the same place.
  */
 @Composable
-private fun AppGroupItem(
+internal fun AppGroupItem(
     group: AppGroup,
     icons: AppIcons,
     onLaunchApp: (LaunchableApp) -> Unit,

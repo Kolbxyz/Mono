@@ -204,6 +204,12 @@
     <string name="edit_remove">Remove from home</string>
     <string name="edit_move_to_top">Move to top</string>
     <string name="edit_pick_hint">Pick an app to add to home</string>
+    <string name="edit_pick_button_hint">Pick an app for home\'s button</string>
+    <string name="home_button_use_search">Use search</string>
+    <string name="home_button_search">Search apps</string>
+    <string name="home_button_app">Open %1$s</string>
+    <string name="home_button_choose">Choose what this button opens</string>
+    <string name="drawer_search_open">Search</string>
     <string name="state_editing">Editing home</string>
     <string name="live_row_notification_preview">Notification preview</string>
     <string name="live_row_calendar">Calendar</string>

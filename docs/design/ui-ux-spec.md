@@ -79,13 +79,14 @@ Home (list)  ── swipe up / tap search ──▶  Drawer + Search (one surfac
 │  ◐  Firefox                          │
 │  ◐  Signal                      ● 1  │
 │                                      │
-│ ( ⌕  Search apps, settings…     ⠿ ) │  search dock (thumb zone)
-└──────────────────────────────────────┘   letter rail hidden on home
+│                                 (⌕) │  round button (thumb zone)
+└──────────────────────────────────────┘   letter rail appears on edge touch
 ```
 
 - **Bottom-anchored list.** Favourites stack upward from the search affordance, so the most-used rows are in the thumb zone (Niagara and Olauncher both centre/bottom their lists: `ref:niagara/09`, `ref:olauncher/01`). Header stays top-left.
 - **Row order is user order.** Live rows never reorder favourites; they only expand under their owner.
-- **Search dock** is a 56 dp `surfaceContainerHigh` pill with the search hint, opening the drawer; plus the swipe-up gesture. Opaque and tonal, no logo or brand (what `ref:lawnchair/01` got wrong was the Google bar, not the pill).
+- **Round button** is a 56 dp `surfaceContainerHighest` circle at the bottom end (`ref:niagara`): search by default, opening the drawer with its keyboard, or an app chosen with a long press (the drawer opens to pick it, with "Use search" to go back). Opaque and tonal, no logo or brand. The swipe-up gesture still opens the drawer.
+- **Rail on home.** A finger on home's end edge, anywhere from under the status bar to the button, brings out the letter rail (§7.5). Holding a letter fades and sinks home's content (to 96 %) and shows that letter's apps where the drawer's list would; ★ brings home back. Lifting on a letter fades the drawer in at that letter without rising; lifting on ★ stays home.
 
 ### 4.2 Glance header
 
@@ -181,7 +182,7 @@ Font: **Google Sans Flex** bundled as a variable font (`res/font/google_sans_fle
 | Live row body | `bodyMedium` | 14/20 sp | Artist, preview |
 | Drawer item | `titleLarge` | 22/28 sp | All apps |
 | Rail letter | `labelMedium` | 12/16 sp | Alphabet |
-| Rail bubble | `displaySmall` | 36/44 sp | Scrub indicator |
+| Rail bubble | `headlineSmall` | 24/32 sp | Scrub indicator |
 
 Clock styles (setting): Default (above), Stacked (hours over minutes, like `ref:kvaesitso/01` / `ref:android16-system-ui/01`), Small (one line). No novelty fonts.
 
@@ -200,7 +201,7 @@ Clock styles (setting): Default (above), Stacked (hours over minutes, like `ref:
 | Grouped lists (drawer letters, search results, settings, sheets) | Segmented: 26 dp outer corners, 8 dp at the seams, 2 dp gaps (`SegmentedColumn`) |
 | Live row card | `shapes.large` (26 dp) → `extraLarge` (36 dp) when expanded (morph) |
 | Play/pause | Round → squircle on press (`ToggleButton`/`IconButton` shape morph) |
-| Rail bubble | `MaterialShapes.Cookie12Sided`, scaling up from 60 % on scrub start and turning with the finger |
+| Rail bubble | A circle (`CircleShape`) in `inverseSurface`, 56 dp, scaling up from 60 % on scrub start; its letter rolls up or down as it changes |
 | Sheets | `extraLarge` top corners on `surfaceContainerLow`; main actions as tall tonal tiles whose corners tighten on press |
 | Edit toolbar | `FloatingToolbar` (fully rounded) |
 | Icon mask (full-colour adaptive icons) | System mask by default; setting: Circle, Squircle, Cookie (`Cookie9Sided`), Clover (`Clover4Leaf`). Work icons keep the system mask under their badge |
@@ -247,7 +248,7 @@ All specs from `MaterialTheme.motionScheme` (Expressive scheme via `MaterialExpr
 | Widget row appear (media starts) | `slowSpatialSpec()` height from 0 + `defaultEffectsSpec()` alpha | Row below slides down; never jumps |
 | Widget row disappear | `fastSpatialSpec()` | Leave quickly |
 | Badge count change | `fastSpatialSpec()` scale 0.8→1 | No bounce for decrements |
-| Letter rail scrub | Wave offset per letter driven by finger y, `fastSpatialSpec()` to follow; bubble scale `defaultSpatialSpec()` and rotation following the finger | Wave amplitude 72 dp, raised-cosine falloff over ±4 letters (`ref:niagara/03`) |
+| Letter rail scrub | Wave centre and bubble glide after the finger on `fastSpatialSpec()`; the bend comes in on `fastSpatialSpec()` and settles back on `defaultSpatialSpec()` (a little overshoot); bubble scale `fastSpatialSpec()`; on home the letters fade in from the finger outward | Bend 40 dp on touch plus up to 48 dp more as the finger slides toward the list, raised-cosine falloff over ±9 letters, no letter zoom (`ref:niagara/03`) |
 | Press feedback | `fastSpatialSpec()` shape/scale | |
 | Edit mode enter | `defaultEffectsSpec()` scrim + `defaultSpatialSpec()` handles slide in | |
 | Sheets | M3 `ModalBottomSheet` defaults | |
@@ -297,19 +298,20 @@ Until it is known whether setup was done (a few ms on a cold start) nothing is d
 
 ### 7.4 Searching & launching
 
-1. Swipe up anywhere on home (or tap ⌕) → drawer; tapping ⌕ or swiping up a second time from drawer top focuses search and opens IME.
+1. Swipe up anywhere on home (or tap ⌕) → drawer; the drawer's field rests folded into a round ⌕ button at the bottom end, and tapping it grows the field out of it (the button widening into the pill on `defaultSpatialSpec()`), focuses search and opens IME. Left empty, the field folds back.
 2. Typing filters instantly (case/accent-insensitive, initials match — existing ranking). Results order: calculator result → apps (best first) → shortcuts (e.g. Phalanx rooms) → contacts (opt-in) → settings → "Search in <browser>" (only when nothing else matched; the browser does the searching).
 3. *Go* on keyboard launches the top result; the top result has a tonal highlight so users know what Go does.
 4. Launch: app opens with the system launch animation from the row's bounds (`ActivityOptions.makeClipRevealAnimation` / `makeScaleUpAnimation`).
 5. Back/home returns to a cleared search.
 
-### 7.5 Scrubbing the alphabet rail (drawer)
+### 7.5 Scrubbing the alphabet rail (drawer and home)
 
 1. Rail sits right edge, 24 dp wide touch target 48 dp, letters only for those present; ★ at top for favourites (`ref:niagara/01`).
-2. Touch-down: bubble appears left of finger with current letter; letters around the finger bow out in a wave.
+2. Touch-down: bubble appears left of finger with current letter; the rail bends toward the list at once, one long curve centred on the finger.
 3. Move: list jumps to section start (`scrollToItem`, not animated, during scrub); haptic tick per letter.
-4. Release: bubble morphs back and fades; list stays. Lift outside rail cancels nothing — position is kept.
-5. TalkBack: rail is replaced by a "Jump to letter" action on the list and an adjustable rail node (swipe up/down = next/prev letter).
+4. Release: bubble shrinks back and fades; list stays. Lift outside rail cancels nothing — position is kept.
+5. From home: the same rail, over home; the held letter's apps take home's place (§4.1) and a lift on a letter opens the drawer there.
+6. TalkBack: rail is replaced by a "Jump to letter" action on the list and an adjustable rail node (swipe up/down = next/prev letter).
 
 ### 7.6 Interacting with now-playing
 
@@ -358,6 +360,8 @@ Until it is known whether setup was done (a few ms on a cold start) nothing is d
 | Home | Double-tap empty | Nothing by default; optional "Lock screen" needs an opt-in accessibility service (`GLOBAL_ACTION_LOCK_SCREEN`), explained before enabling | Yes, off by default |
 | Home | Long-press empty | Edit mode | No |
 | Home | Long-press clock | Quiet mode / clock settings sheet | No |
+| Home | Touch end edge | Letter rail over home: hold a letter to see its apps, lift on it to open the drawer there | No |
+| Home | Tap / long-press round button | Search (or the chosen app) / choose what it opens | Yes (search or an app) |
 | Row | Tap | Launch app | No |
 | Row | Long-press | Row sheet | No |
 | Row | Swipe right on row with notifications | Expand preview | No |

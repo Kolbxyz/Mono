@@ -79,6 +79,16 @@ class IconCache @Inject constructor(
         return withContext(Dispatchers.IO) { load(entry, sizePx) }?.also { cache.put(entry, it) }
     }
 
+    /**
+     * The icon [icon] would give, if it is in memory already; null otherwise, or while the settings
+     * it depends on are still being read. Never loads: cheap enough for the first frame of a row.
+     */
+    fun cached(key: AppKey, themed: Boolean, sizePx: Int): AppIconImage? {
+        val unmask = unmasked.value
+        val pack = if (themed) SYSTEM_ICON_PACK else packs.selected.value
+        return if (unmask == null || pack == null) null else cache.get(Entry(key, themed, pack, unmask, sizePx))
+    }
+
     fun evict(packageNames: Set<String>) {
         packs.invalidate(packageNames)
         cache.snapshot().keys

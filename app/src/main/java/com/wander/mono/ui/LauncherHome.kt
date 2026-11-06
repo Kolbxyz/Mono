@@ -10,9 +10,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.home.HeroPull
+import com.wander.mono.ui.home.HomeButtonViewModel
 import com.wander.mono.ui.home.HomeLookViewModel
 import com.wander.mono.ui.home.HomePlayerSlot
 import com.wander.mono.ui.home.HomeScreen
@@ -48,8 +50,10 @@ fun LauncherHome(
     scrimEdges: ScrimEdges,
     modifier: Modifier = Modifier,
     contentModifier: Modifier = Modifier,
+    homeButton: HomeButtonViewModel = viewModel(),
 ) {
     val rows by home.rows.collectAsStateWithLifecycle()
+    val buttonApp by homeButton.app.collectAsStateWithLifecycle()
     val lifted by home.lifted.collectAsStateWithLifecycle()
     val justAdded by home.justAdded.collectAsStateWithLifecycle()
     val glance by home.glance.collectAsStateWithLifecycle()
@@ -92,6 +96,8 @@ fun LauncherHome(
         nowPlaying = { compact ->
             HomePlayerSlot(player, expansion, home, icons, compact, onOptions = { launcher.showMediaSheet(true) })
         },
+        buttonApp = buttonApp,
+        onChooseButton = { launcher.pickApp(PickTarget.HomeButton) },
     )
 }
 

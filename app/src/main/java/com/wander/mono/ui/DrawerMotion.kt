@@ -8,6 +8,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -34,6 +35,7 @@ class DrawerMotion internal constructor(
     private val scope: CoroutineScope,
     internal var openSpec: FiniteAnimationSpec<Float>,
     internal var closeSpec: FiniteAnimationSpec<Float>,
+    internal var fadeSpec: FiniteAnimationSpec<Float>,
 ) : FollowDrag {
     /** Overshoots 0..1 briefly while springing; draw with [shown]. */
     var progress by mutableFloatStateOf(if (open) 1f else 0f)
@@ -41,6 +43,13 @@ class DrawerMotion internal constructor(
 
     /** [progress] clamped, for drawing. */
     val shown: Float get() = progress.coerceIn(0f, 1f)
+
+    /**
+     * This opening fades the drawer in where it rests instead of raising it ([openInPlace]): drawn
+     * with no lift. Ends with the first drag, back gesture or closing, which move it as usual.
+     */
+    var inPlace by mutableStateOf(false)
+        private set
 
     /** Pixels of finger travel from closed to open; set from the window's height. */
     var travel = 1f
@@ -63,6 +72,7 @@ class DrawerMotion internal constructor(
         if (!dragging) {
             animation?.cancel()
             dragging = true
+            inPlace = false
         }
         val wasArmed = armed(progress)
         progress = (progress - deltaY / travel).coerceIn(0f, 1f)
@@ -92,6 +102,7 @@ class DrawerMotion internal constructor(
         if (open == target && !dragging) return
         dragging = false
         target = open
+        if (!open) inPlace = false
         if (animated) {
             animateTo(open, 0f)
         } else {
@@ -101,19 +112,21 @@ class DrawerMotion internal constructor(
     }
 
     /**
-     * Opens on the fast spring instead of the default one, for a scrub from home's edge: the list has
-     * to be there under the finger as soon as it can. The view model's opening that follows ([follow])
-     * finds it already on its way.
+     * Opens by fading in where the drawer rests, with no rise, for a scrub from home's edge let go on
+     * a letter: home already shows that letter's apps where the drawer will, so nothing should move.
+     * The view model's opening that follows ([follow]) finds it already on its way.
      */
-    fun openQuickly() {
+    fun openInPlace() {
         dragging = false
         target = true
-        animateTo(open = true, velocity = 0f, spec = closeSpec)
+        inPlace = true
+        animateTo(open = true, velocity = 0f, spec = fadeSpec)
     }
 
     /** Predictive back: the open drawer gives way a little as the back gesture grows. */
     fun back(backProgress: Float) {
         animation?.cancel()
+        inPlace = false
         progress = 1f - backResistance(backProgress) * BACK_TRAVEL
     }
 
@@ -153,11 +166,13 @@ fun rememberDrawerMotion(open: Boolean, onSettle: (Boolean) -> Unit): DrawerMoti
     val motionScheme = MaterialTheme.motionScheme
     val openSpec = motionScheme.defaultSpatialSpec<Float>()
     val closeSpec = motionScheme.fastSpatialSpec<Float>()
+    val fadeSpec = motionScheme.defaultEffectsSpec<Float>()
     val fling = with(LocalDensity.current) { FLING_VELOCITY.toPx() }
-    val motion = remember(scope) { DrawerMotion(open, scope, openSpec, closeSpec) }
+    val motion = remember(scope) { DrawerMotion(open, scope, openSpec, closeSpec, fadeSpec) }
     SideEffect {
         motion.openSpec = openSpec
         motion.closeSpec = closeSpec
+        motion.fadeSpec = fadeSpec
         motion.flingVelocity = fling
         motion.onSettle = onSettle
         motion.onArm = { haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) }

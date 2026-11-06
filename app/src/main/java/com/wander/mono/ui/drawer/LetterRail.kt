@@ -43,18 +43,19 @@ import com.wander.mono.ui.theme.LocalReducedMotion
  * The fast-scroll rail, on the end edge or, [atStart], the start edge: ★ for the top of the list,
  * then [sections]' letters. Sliding a finger along it jumps the list to each entry ([onSelect] takes
  * the rail index; [current] is one too), shows the entry in a bubble and ticks once per entry.
- * Sliding the finger off the rail toward the list bows the letters around it out in a wave that
- * follows the finger, so it can scrub from wherever the thumb rests; wave and bubble face the list
- * whichever edge the rail is on. While scrubbing, the letter nearest the finger grows and its
- * neighbours less so. The letters sit straight on the drawer's background, shadowed like other text
- * on the wallpaper. With reduced motion the wave stays flat, nothing grows and only the letter under
- * the finger lights up. With a private space ([lock]) a lock ends the rail: scrubbing onto it
- * jumps to the space like a letter, tapping it alone locks or unlocks it. Letters tick lightly, ★
- * and the lock with a long buzz.
+ * A touch bends the rail toward the list at once, one long curve centred on the finger, and sliding
+ * the finger off the rail bends it further, so it can scrub from wherever the thumb rests; curve and
+ * bubble glide after the finger ([RailFinger.glideY]) and face the list whichever edge the rail is
+ * on. On release the curve springs back with a little overshoot. The letters sit straight on the
+ * background, shadowed like other text on the wallpaper. With reduced motion the rail stays flat and
+ * only the letter under the finger lights up. With a private space ([lock]) a lock ends the rail:
+ * scrubbing onto it jumps to the space like a letter, tapping it alone locks or unlocks it. Letters
+ * tick lightly, ★ and the lock with a long buzz.
  * TalkBack sees one adjustable control: swiping up or down moves to the next or previous entry,
  * with the same ticks, and the lock is a custom action. A [scrub] begun on home's edge drives the
  * same finger ([RailFinger]) as the rail's own touch: bubble, wave, ticks and jumps alike. [onHold]
- * hears the entry under the finger while it is down, and -1 once it lifts.
+ * hears the entry under the finger while it is down, and -1 once it lifts. With [reveal] (0 to 1)
+ * the letters appear from the edge nearest the finger first, and leave in reverse ([RailMath.revealAlpha]).
  */
 @Composable
 fun LetterRail(
@@ -66,6 +67,7 @@ fun LetterRail(
     lock: RailLock? = null,
     scrub: RailScrub? = null,
     onHold: (Int) -> Unit = {},
+    reveal: (() -> Float)? = null,
 ) {
     val view = LocalView.current
     val haptics = rememberMonoHaptics()
@@ -81,6 +83,7 @@ fun LetterRail(
     val lockIndex = if (lock != null) letters.lastIndex else -1
     val density = LocalDensity.current
     val pressBow = with(density) { PRESS_BOW.toPx() }
+    val revealSlide = with(density) { REVEAL_SLIDE.toPx() }
     // A drawn letter needs one labelMedium line, at the user's font scale.
     val minSlot = with(density) { MaterialTheme.typography.labelMedium.lineHeight.toPx() }
     val lettersTop = with(density) { TRACK_PADDING.toPx() }
@@ -104,8 +107,13 @@ fun LetterRail(
     LaunchedEffect(finger) {
         snapshotFlow { if (finger.scrubbing) finger.active else -1 }.collect { currentOnHold(it) }
     }
-    // A small bow on touch, eased in, so the press shows before the finger moves.
-    val pressed by animateFloatAsState(if (finger.scrubbing && !reducedMotion) 1f else 0f, motion.fastSpatialSpec())
+    // The bend on touch alone: in fast, so it shows before the finger moves; out on the default
+    // spring, whose overshoot lets the rail settle back like something elastic.
+    val pressing = finger.scrubbing && !reducedMotion
+    val pressed by animateFloatAsState(
+        if (pressing) 1f else 0f,
+        if (pressing) motion.fastSpatialSpec() else motion.defaultSpatialSpec(),
+    )
 
     val railLabel = stringResource(R.string.drawer_rail)
     val privateSpoken = stringResource(R.string.drawer_rail_private)
@@ -156,12 +164,13 @@ fun LetterRail(
                 val lit = finger.scrubbing && index == finger.active
                 val wave = Modifier.graphicsLayer {
                     val column = finger.lettersHeight.toFloat()
-                    val slot = RailMath.fingerSlot(finger.fingerY, lettersTop, column, letters.size)
+                    val slot = RailMath.fingerSlot(finger.glideY, lettersTop, column, letters.size)
                     val bow = pressBow * pressed + finger.dragBow
-                    translationX = -mirror * RailMath.letterOffset(index, slot, bow)
-                    // Grows with the press, so it eases back to size on release.
-                    scaleX = RailMath.letterScale(index, slot, pressed)
-                    scaleY = scaleX
+                    val shown = reveal?.let { RailMath.revealAlpha(index - slot, it()) } ?: 1f
+                    // Unrevealed letters wait just past the edge and slide in as they fade in.
+                    val waiting = (1f - shown) * revealSlide
+                    translationX = mirror * (waiting - RailMath.letterOffset(index, slot, bow))
+                    alpha = shown
                 }
                 Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
                     if (index == lockIndex && lock != null) {
@@ -182,7 +191,8 @@ fun LetterRail(
             letter = finger.bubbleLetter,
             symbol = lock?.symbol?.takeIf { finger.bubbleLetter.isEmpty() },
             visible = finger.scrubbing,
-            fingerY = { finger.fingerY },
+            index = finger.bubbleIndex,
+            fingerY = { finger.glideY },
             railHeight = { height.toFloat() },
             bow = { pressBow * pressed + finger.dragBow },
             mirror = mirror,
@@ -206,10 +216,13 @@ private val TRACK_INSET = 8.dp
 private val TRACK_PADDING = 8.dp
 
 /**
- * The furthest the letter under the finger moves out, however far the finger slides toward the list;
- * its neighbours move less, over [RailMath.WAVE_REACH] letters.
+ * The furthest the letter under the finger moves out from sliding toward the list, on top of
+ * [PRESS_BOW]; its neighbours move less, over [RailMath.WAVE_REACH] letters.
  */
-internal val WAVE_AMPLITUDE = 72.dp
+internal val WAVE_AMPLITUDE = 48.dp
 
 /** How far the letter under the finger bows out on touch alone, before the finger slides. */
-private val PRESS_BOW = 8.dp
+private val PRESS_BOW = 40.dp
+
+/** How far past the edge a letter waits before [LetterRail]'s reveal brings it in. */
+private val REVEAL_SLIDE = 12.dp

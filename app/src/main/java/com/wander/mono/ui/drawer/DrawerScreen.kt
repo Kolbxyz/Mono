@@ -1,5 +1,6 @@
 package com.wander.mono.ui.drawer
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,13 +17,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
@@ -33,7 +35,6 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.core.apps.AppIconImage
@@ -46,7 +47,6 @@ import com.wander.mono.data.settings.IconMode
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.readableColumn
 import com.wander.mono.ui.home.LocalWallpaperTextShadow
-import com.wander.mono.ui.home.onWallpaper
 import com.wander.mono.ui.theme.LocalHighContrast
 
 /**
@@ -57,10 +57,11 @@ import com.wander.mono.ui.theme.LocalHighContrast
  * sits right on it. While the empty field has focus, [recentSearches] show above it as chips;
  * contacts in the results offer [onReach]'s actions. Drawn on the background the user chose, an even
  * veil that stays put and fades in with the drawer while only the content rises, its blur following
- * how far the drawer is [revealed]. With [focusSearch] (opened from home's search bar, the search
+ * how far the drawer is [revealed]. With [focusSearch] (opened from home's search button, the search
  * tile or a search gesture), the search field takes focus and the keyboard opens; a plain swipe never
- * does, only a tap on the field. Once no longer [open], or gone, the keyboard goes. Dragging it
- * closed is handled by its container. [railScrub] lets a scrub begun on home's edge drive the rail.
+ * does: the field rests folded into a round button at the bottom end, and a tap grows it back out.
+ * Once no longer [open], or gone, the keyboard goes. Dragging it closed is handled by its container.
+ * A scrub of home's rail let go on a letter ([landing]) opens it at that letter.
  */
 @Composable
 fun DrawerScreen(
@@ -69,6 +70,7 @@ fun DrawerScreen(
     query: String,
     state: DrawerUiState,
     loadIcon: suspend (AppKey, IconMode, Int) -> AppIconImage?,
+    peekIcon: (AppKey, IconMode, Int) -> AppIconImage?,
     loadShortcutIcon: ShortcutIconLoader,
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
@@ -85,11 +87,13 @@ fun DrawerScreen(
     onReach: (SearchHit.Person, ContactReach) -> Unit,
     modifier: Modifier = Modifier,
     pickingApp: Boolean = false,
+    @StringRes pickHint: Int = R.string.edit_pick_hint,
+    onUseSearch: (() -> Unit)? = null,
     focusSearch: Boolean = false,
-    railScrub: RailScrub? = null,
+    landing: RailLanding? = null,
 ) {
-    val icons = remember(state.iconMode, state.iconPack, loadIcon) {
-        AppIcons(state.iconMode, loadIcon, state.iconPack)
+    val icons = remember(state.iconMode, state.iconPack, loadIcon, peekIcon) {
+        AppIcons(state.iconMode, loadIcon, peekIcon, state.iconPack)
     }
     // With the keyboard: the dock rides up on it, and results rest on the dock.
     val bottom = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)
@@ -97,23 +101,40 @@ fun DrawerScreen(
     val searchFocus = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
+    // The field folds into a round button at rest; opened for search, or tapped, it grows out of it.
+    var searchOpen by rememberSaveable { mutableStateOf(focusSearch) }
+    var focusAsked by remember { mutableStateOf(false) }
     LaunchedEffect(open, focusSearch) {
         if (!open) {
             // Closing: the keyboard leaves with the drawer instead of staying up over home.
             keyboard?.hide()
             focusManager.clearFocus()
+            searchOpen = false
         } else if (focusSearch) {
-            // The field can only take focus once it is laid out, a frame after the drawer first composes.
+            searchOpen = true
+            focusAsked = true
+        }
+    }
+    LaunchedEffect(focusAsked) {
+        if (focusAsked) {
+            // The field can only take focus once it is laid out, a frame after it first composes.
             withFrameNanos { }
             searchFocus.requestFocus()
             keyboard?.show()
+            focusAsked = false
         }
     }
     // Leaving while Mono is not on screen (an app launched from search) skips the frame above: the
     // keyboard must not come back over home, nor over the next opening, which may be a plain swipe.
     DisposableEffect(keyboard) { onDispose { keyboard?.hide() } }
+    // Taken once, as this opening first composes: a scrub from home lands the list on its letter.
+    var landed by remember {
+        mutableIntStateOf(landing?.take()?.takeIf { it in 1..state.sections.size } ?: RailLanding.NONE)
+    }
     // Hoisted, so the alphabetical list keeps its place through a search.
-    val appListState = rememberLazyListState()
+    val appListState = rememberLazyListState(
+        initialFirstVisibleItemIndex = if (landed > 0) RailEntries.listItemFor(landed, state.railLead) else 0,
+    )
     val shown = rememberShownResults(query, state)
     val density = LocalDensity.current
     // The dock's own height, keyboard and navigation bar aside: what the lists keep clear of.
@@ -134,14 +155,7 @@ fun DrawerScreen(
                 .windowInsetsPadding(topAndSides)
                 .readableColumn(),
         ) {
-            if (pickingApp) {
-                Text(
-                    stringResource(R.string.edit_pick_hint),
-                    style = MaterialTheme.typography.titleMedium.onWallpaper(),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 8.dp),
-                )
-            }
+            if (pickingApp) PickHint(pickHint, onUseSearch)
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 Crossfade(
                     targetState = query.isBlank(),
@@ -161,7 +175,9 @@ fun DrawerScreen(
                             onLongPress,
                             dock,
                             appListState,
-                            railScrub = railScrub,
+                            landed = landed,
+                            onLanded = { landed = RailLanding.NONE },
+                            revealed = revealed,
                         )
                     } else {
                         // Ends on the dock rather than running under it: nothing scrolls behind the field.
@@ -185,7 +201,14 @@ fun DrawerScreen(
                     onSubmit,
                     onOpenSettings,
                     searchFocus,
-                    Modifier
+                    collapsed = !searchOpen && query.isEmpty(),
+                    onExpand = {
+                        searchOpen = true
+                        focusAsked = true
+                    },
+                    // Left empty, the field folds back into its button.
+                    onBlur = { if (query.isEmpty()) searchOpen = false },
+                    modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .windowInsetsPadding(bottom)

@@ -59,11 +59,14 @@ class FavoritePickerViewModel @Inject constructor(
 
     /** Icons as home and the drawer draw them, in the user's mode and pack (a restored backup's, say). */
     val icons: StateFlow<AppIcons> = combine(settings[IconSettings.Mode], settings[IconSettings.Pack]) { mode, pack ->
-        AppIcons(mode, ::icon, pack)
-    }.stateIn(viewModelScope, SharingStarted.Eagerly, AppIcons(IconSettings.Mode.default, ::icon))
+        AppIcons(mode, ::icon, ::cachedIcon, pack)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, AppIcons(IconSettings.Mode.default, ::icon, ::cachedIcon))
 
     private suspend fun icon(key: AppKey, mode: IconMode, sizePx: Int): AppIconImage? =
         iconCache.icon(key, themed = mode == IconMode.Themed, sizePx)
+
+    private fun cachedIcon(key: AppKey, mode: IconMode, sizePx: Int): AppIconImage? =
+        iconCache.cached(key, themed = mode == IconMode.Themed, sizePx)
 
     fun toggle(key: AppKey) {
         val current = picks.value?.picked ?: return

@@ -12,11 +12,11 @@ import kotlin.math.cos
  * rail's top) is over the slot it falls in. [RailEntries] says which list item each entry stands for.
  */
 internal object RailMath {
-    /** How many letters on each side of the finger the wave reaches before it is flat again. */
-    const val WAVE_REACH = 4f
-
-    /** How much larger the letter nearest the finger is drawn while scrubbing. */
-    const val LETTER_ZOOM = 1.8f
+    /**
+     * How many letters on each side of the finger the wave reaches before it is flat again: wide, so
+     * the rail bends as one long curve toward the thumb rather than a bump under it.
+     */
+    const val WAVE_REACH = 9f
 
     /**
      * The letter under a finger at [y] over letters from [top] down, [height] tall; clamped, so
@@ -65,12 +65,14 @@ internal object RailMath {
     fun letterOffset(index: Int, slot: Float, bow: Float): Float = bow * waveFraction(index - slot)
 
     /**
-     * How large the letter at [index] is drawn while the finger, at [slot], has [pressed] the rail (0
-     * to 1): [LETTER_ZOOM] times under the finger at a full press, falling off along a wave half as
-     * wide as [letterOffset]'s, so close neighbours do not crowd it; 1 when not pressed.
+     * How much of the letter [distance] slots from the finger shows while a rail appears or leaves
+     * at [reveal] (0 gone, 1 fully shown): the letters near the finger come first and the far ones
+     * follow, up to [REVEAL_LAG] of the reveal later, so the rail seems to grow out of the thumb.
      */
-    fun letterScale(index: Int, slot: Float, pressed: Float): Float =
-        1f + (LETTER_ZOOM - 1f) * pressed * waveFraction((index - slot) * ZOOM_NARROWING)
+    fun revealAlpha(distance: Float, reveal: Float): Float {
+        val far = (abs(distance) / REVEAL_REACH).coerceAtMost(1f)
+        return ((reveal - far * REVEAL_LAG) / (1f - REVEAL_LAG)).coerceIn(0f, 1f)
+    }
 
     /**
      * Every how many letters one is drawn so each drawn letter gets at least [minSlot]: 1 on a
@@ -94,8 +96,11 @@ internal object RailMath {
      */
     fun bubbleX(mirror: Float, gap: Float, size: Float, bow: Float): Float = -mirror * (gap + size + bow)
 
-    /** The zoom wave is this many times narrower than the bow wave. */
-    private const val ZOOM_NARROWING = 2f
+    /** Letters this far from the finger and beyond appear last. */
+    private const val REVEAL_REACH = 14f
+
+    /** The share of a reveal the furthest letters wait before they start to show. */
+    private const val REVEAL_LAG = 0.5f
 
     private const val HALF = 0.5f
 }

@@ -5,19 +5,17 @@ import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -26,20 +24,19 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /**
- * Home's invisible way into the letter rail, Niagara's: a narrow strip down the rail's edge ([atStart]
- * puts it on the start edge, as the rail), over the lower part of home where the thumb rests on the
- * favourites. A finger landing on it while [enabled] runs [onStart] (open the drawer, on its list)
- * and starts [scrub]; the drawer's rail follows the same finger from there ([FollowRailScrub]), and
- * lifting it leaves the drawer at that letter. The strip keeps the finger however the drawer covers
- * it, and is kept out of the system's back gesture where the thumb lands most, as far as Android
- * allows an edge to be.
+ * Home's invisible way into the letter rail, Niagara's: a narrow strip down the whole of the rail's
+ * edge ([atStart] puts it on the start edge, as the rail), from under the status bar to just above
+ * the [bottomClearance] home keeps for its button. A finger landing on it while [enabled] starts
+ * [scrub]; home's rail follows the same finger from there ([FollowRailScrub]). The strip keeps the
+ * finger whatever shows over it, and is kept out of the system's back gesture where the thumb lands
+ * most, as far as Android allows an edge to be.
  */
 @Composable
-fun BoxScope.RailScrubStrip(scrub: RailScrub, enabled: Boolean, atStart: Boolean, onStart: () -> Unit) {
-    val currentOnStart by rememberUpdatedState(onStart)
+fun BoxScope.RailScrubStrip(scrub: RailScrub, enabled: Boolean, atStart: Boolean, bottomClearance: Dp) {
     val anchor = remember { StripAnchor() }
     val maxExclusion = with(LocalDensity.current) { MAX_EXCLUSION.toPx() }
     // A strip removed mid-scrub (edit mode, a new layout) must not leave the rail thinking a finger is down.
@@ -47,20 +44,20 @@ fun BoxScope.RailScrubStrip(scrub: RailScrub, enabled: Boolean, atStart: Boolean
     val catching = enabled || scrub.active
     Box(
         Modifier
-            .align(if (atStart) Alignment.BottomStart else Alignment.BottomEnd)
-            .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
-            // Clear of home's search dock along the bottom, which keeps its own tap.
-            .padding(bottom = DOCK_CLEARANCE)
-            .fillMaxHeight(BAND_FRACTION)
+            .align(if (atStart) Alignment.CenterStart else Alignment.CenterEnd)
+            .windowInsetsPadding(WindowInsets.systemBars.union(WindowInsets.displayCutout))
+            // Clear of home's button along the bottom, which keeps its own tap.
+            .padding(bottom = bottomClearance)
+            .fillMaxHeight()
             .width(STRIP_WIDTH)
             .onGloballyPositioned { anchor.coordinates = it }
             // Off, the strip catches nothing: home's rows under it keep their touches.
-            .then(if (catching) Modifier.scrubTouches(scrub, anchor, maxExclusion) { currentOnStart() } else Modifier),
+            .then(if (catching) Modifier.scrubTouches(scrub, anchor, maxExclusion) else Modifier),
     )
 }
 
 /** Starts [scrub] on a finger landing here and feeds it the finger's moves, in window pixels, till it lifts. */
-private fun Modifier.scrubTouches(scrub: RailScrub, anchor: StripAnchor, maxExclusion: Float, onStart: () -> Unit) =
+private fun Modifier.scrubTouches(scrub: RailScrub, anchor: StripAnchor, maxExclusion: Float) =
     systemGestureExclusion { ScrubBand.exclusion(it.size.width.toFloat(), it.size.height.toFloat(), maxExclusion) }
         .pointerInput(scrub, anchor) {
             awaitEachGesture {
@@ -68,7 +65,6 @@ private fun Modifier.scrubTouches(scrub: RailScrub, anchor: StripAnchor, maxExcl
                 down.consume()
                 val at = anchor.toWindow(down.position)
                 scrub.start(at.x, at.y)
-                onStart()
                 try {
                     do {
                         val event = awaitPointerEvent()
@@ -91,12 +87,6 @@ private class StripAnchor {
 
     fun toWindow(local: Offset): Offset = coordinates?.takeIf { it.isAttached }?.localToWindow(local) ?: local
 }
-
-/** The strip's share of the window's height, from the bottom: where the favourites sit. */
-private const val BAND_FRACTION = 0.6f
-
-/** Home's search dock and the space around it, at the bottom of the band. */
-private val DOCK_CLEARANCE = 72.dp
 
 /** Wide enough for a thumb on the edge, narrow enough to leave the rows' labels alone. */
 private val STRIP_WIDTH = 32.dp
