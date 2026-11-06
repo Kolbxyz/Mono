@@ -84,9 +84,9 @@ class IconCache @Inject constructor(
      * it depends on are still being read. Never loads: cheap enough for the first frame of a row.
      */
     fun cached(key: AppKey, themed: Boolean, sizePx: Int): AppIconImage? {
-        val unmask = unmasked.value ?: return null
-        val pack = if (themed) SYSTEM_ICON_PACK else packs.selected.value ?: return null
-        return cache.get(Entry(key, themed, pack, unmask, sizePx))
+        val unmask = unmasked.value
+        val pack = if (themed) SYSTEM_ICON_PACK else packs.selected.value
+        return if (unmask == null || pack == null) null else cache.get(Entry(key, themed, pack, unmask, sizePx))
     }
 
     fun evict(packageNames: Set<String>) {
