@@ -74,6 +74,7 @@ fun LauncherDrawer(
             query = query,
             state = state,
             loadIcon = drawer::icon,
+            peekIcon = drawer::cachedIcon,
             loadShortcutIcon = drawer::shortcutIcon,
             onQueryChange = drawer::setQuery,
             onSubmit = { drawer.withTopResult(pickingApp, onLaunchHit) },

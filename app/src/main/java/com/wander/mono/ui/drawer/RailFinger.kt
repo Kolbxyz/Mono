@@ -5,6 +5,7 @@ import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animate
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -14,8 +15,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 /**
@@ -84,6 +87,18 @@ internal class RailFinger(
     private var stayed = true
     private var settle: Job? = null
 
+    /**
+     * Moves [glideY] after the finger for as long as it runs (the rail's life): one follower,
+     * retargeted at most once a frame (snapshot changes are applied per frame), not a coroutine per
+     * touch event; the spring keeps its speed across retargets, so the glide never jolts.
+     */
+    internal suspend fun followGlide() {
+        snapshotFlow { fingerY }.collectLatest { y ->
+            if (landing) return@collectLatest
+            if (reducedMotion) glide.snapTo(y) else glide.animateTo(y, glideSpec)
+        }
+    }
+
     /** The finger lands at [x], [y]. */
     fun press(x: Float, y: Float) {
         settle?.cancel()
@@ -104,8 +119,6 @@ internal class RailFinger(
     /** The finger, still down, is now at [x], [y]. */
     fun move(x: Float, y: Float) {
         if (follow(y)) stayed = false
-        // Retargeted on every event; the spring keeps its speed, so the glide never jolts.
-        scope.launch { if (reducedMotion) glide.snapTo(y) else glide.animateTo(y, glideSpec) }
         if (!reducedMotion) dragBow = RailMath.bow(RailMath.travel(downX, x, mirror), bowLimit)
     }
 
@@ -159,6 +172,7 @@ internal fun rememberRailFinger(inputs: RailFingerInputs): RailFinger {
     val springBack = motion.defaultSpatialSpec<Float>()
     val glideSpec = motion.fastSpatialSpec<Float>()
     val finger = remember(scope) { RailFinger(scope, springBack, glideSpec) }
+    LaunchedEffect(finger) { finger.followGlide() }
     SideEffect {
         finger.letters = inputs.letters
         finger.lettersTop = inputs.lettersTop

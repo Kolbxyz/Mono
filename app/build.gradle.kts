@@ -109,6 +109,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.datastore.preferences)
+    // Compiles the scrolling, scrubbing and drawer code ahead of time on install, so the first
+    // scrubs after an install or update are as smooth as the hundredth.
+    implementation(libs.androidx.profileinstaller)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)

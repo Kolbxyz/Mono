@@ -9,6 +9,7 @@ import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.rememberMonoHaptics
 import com.wander.mono.ui.drawer.DrawerUiState
+import com.wander.mono.ui.drawer.PrewarmIcons
 import com.wander.mono.ui.drawer.RailScrubStrip
 import com.wander.mono.ui.home.HeldLetterGroup
 import com.wander.mono.ui.home.HomeButtonRoom
@@ -20,7 +21,8 @@ import com.wander.mono.ui.home.HomeRailState
  * lands on while [enabled], the rail it brings out, and the held letter's apps in home's place.
  * Letting go on a letter confirms with a light buzz and opens the drawer in place at that letter
  * ([DrawerMotion.openInPlace], then [onOpenDrawer]); the held letter fades with home behind the
- * drawer as it comes in, and once the drawer covers home, home goes back to showing itself.
+ * drawer as it comes in, and once the drawer covers home, home goes back to showing itself. Every
+ * letter's icons are loaded ahead ([PrewarmIcons]), so held letters draw complete from their first frame.
  */
 @Composable
 fun BoxScope.HomeRailLayer(
@@ -34,6 +36,8 @@ fun BoxScope.HomeRailLayer(
     onLongPress: (LaunchableApp) -> Unit,
 ) {
     val haptics = rememberMonoHaptics()
+    // Every letter's icons in memory before a finger ever holds one: no icon blinks in on home.
+    PrewarmIcons(drawer.groups, icons)
     LaunchedEffect(rail, drawerMotion) {
         snapshotFlow { drawerMotion.shown >= 1f }.collect { covered -> if (covered) rail.drawerCovers() }
     }

@@ -13,6 +13,8 @@ composeBom = "2026.08.00"
 # The alpha is what ships the Expressive APIs (ButtonGroup, LoadingIndicator, wavy progress, ...).
 material3 = "1.5.0-alpha26"
 datastore = "1.2.1"
+# Installs the baseline profiles (Compose's own and Mono's) on sideloaded installs: no Play to do it.
+profileinstaller = "1.4.1"
 coroutines = "1.11.0"
 
 junit = "4.13.2"
@@ -33,6 +35,7 @@ androidx-compose-animation = { module = "androidx.compose.animation:animation" }
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
 
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hilt" }
 hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.ref = "hilt" }

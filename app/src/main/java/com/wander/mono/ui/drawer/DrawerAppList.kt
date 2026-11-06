@@ -17,7 +17,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -34,6 +34,7 @@ import com.wander.mono.core.apps.WorkProfile
 import com.wander.mono.data.settings.DrawerSort
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.theme.schemeAnimateItem
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -49,7 +50,8 @@ import kotlinx.coroutines.launch
  * TalkBack gets a "Jump to" action per letter on the list itself. Rows rise in as the list first
  * shows, and its ends fade out while there is more to scroll to. While a finger holds a letter on the
  * rail, only that letter's apps stay; the rest fade out. Opened from a scrub on home that [landed] on a
- * letter, the list starts there as if that letter were still held, and the rest fade in around it;
+ * letter, the list starts there as if that letter were still held, and the rest fade in around it once
+ * the drawer is [revealed];
  * [onLanded] hears that it has, so the list shown again after a search starts as usual.
  */
 @Composable
@@ -66,6 +68,7 @@ internal fun DrawerAppList(
     modifier: Modifier = Modifier,
     landed: Int = RailLanding.NONE,
     onLanded: () -> Unit = {},
+    revealed: () -> Float = { 1f },
 ) {
     val scope = rememberCoroutineScope()
     val choices = state.controls.choices
@@ -86,10 +89,11 @@ internal fun DrawerAppList(
     // Landed from home, the held letter is already in place: no row makes an entrance.
     val entrance = rememberListEntrance(opening = landed == RailLanding.NONE)
     val hold = remember { RailHold().apply { entry = landed } }
-    // A frame later the landing lets go, and the other letters fade in around it.
+    // Once the drawer has faded in, the landing lets go and the other letters fade in around it:
+    // one fade after the other, never two at once.
     LaunchedEffect(hold) {
         if (hold.entry != RailLanding.NONE) {
-            withFrameNanos { }
+            snapshotFlow { revealed() }.first { it >= 1f }
             hold.entry = RailLanding.NONE
             onLanded()
         }

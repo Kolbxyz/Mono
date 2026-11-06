@@ -70,6 +70,7 @@ fun DrawerScreen(
     query: String,
     state: DrawerUiState,
     loadIcon: suspend (AppKey, IconMode, Int) -> AppIconImage?,
+    peekIcon: (AppKey, IconMode, Int) -> AppIconImage?,
     loadShortcutIcon: ShortcutIconLoader,
     onQueryChange: (String) -> Unit,
     onSubmit: () -> Unit,
@@ -91,8 +92,8 @@ fun DrawerScreen(
     focusSearch: Boolean = false,
     landing: RailLanding? = null,
 ) {
-    val icons = remember(state.iconMode, state.iconPack, loadIcon) {
-        AppIcons(state.iconMode, loadIcon, state.iconPack)
+    val icons = remember(state.iconMode, state.iconPack, loadIcon, peekIcon) {
+        AppIcons(state.iconMode, loadIcon, peekIcon, state.iconPack)
     }
     // With the keyboard: the dock rides up on it, and results rest on the dock.
     val bottom = WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom)
@@ -176,6 +177,7 @@ fun DrawerScreen(
                             appListState,
                             landed = landed,
                             onLanded = { landed = RailLanding.NONE },
+                            revealed = revealed,
                         )
                     } else {
                         // Ends on the dock rather than running under it: nothing scrolls behind the field.

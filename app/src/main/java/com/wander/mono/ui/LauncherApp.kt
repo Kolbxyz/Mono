@@ -87,7 +87,7 @@ fun LauncherApp(
     val homeList = rememberLazyListState()
     val scrimEdges = remember { ScrimEdges() }
     val homeIcons = remember(drawerState.iconMode, drawerState.iconPack) {
-        AppIcons(drawerState.iconMode, drawer::icon, drawerState.iconPack)
+        AppIcons(drawerState.iconMode, drawer::icon, drawer::cachedIcon, drawerState.iconPack)
     }
     val editing = rememberHomeEditing(
         editingOn,

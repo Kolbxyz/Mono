@@ -1,0 +1,14 @@
+# Mono's own hot paths, compiled ahead of time on install (androidx.profileinstaller); Compose's
+# libraries bring their own profiles, merged in at build time. Kept to what runs under a finger:
+# home and its rail, the drawer and its rail, the shared row and icon parts, and the theme.
+HSPLcom/wander/mono/ui/home/**;->**(**)**
+HSPLcom/wander/mono/ui/drawer/**;->**(**)**
+HSPLcom/wander/mono/ui/components/**;->**(**)**
+HSPLcom/wander/mono/ui/theme/**;->**(**)**
+HSPLcom/wander/mono/ui/*;->**(**)**
+HSPLcom/wander/mono/core/apps/IconCache;->**(**)**
+Lcom/wander/mono/ui/home/**;
+Lcom/wander/mono/ui/drawer/**;
+Lcom/wander/mono/ui/components/**;
+Lcom/wander/mono/ui/theme/**;
+Lcom/wander/mono/ui/*;

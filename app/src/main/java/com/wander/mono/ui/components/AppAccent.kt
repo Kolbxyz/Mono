@@ -29,8 +29,14 @@ import com.wander.mono.ui.theme.LocalIconTheming
 fun rememberRowAccent(key: AppKey?, icons: AppIcons, size: Dp = 40.dp): Color? {
     val tintRows = LocalIconTheming.current.tintRows
     val sizePx = with(LocalDensity.current) { size.roundToPx() }
-    val accent by produceState<Int?>(null, key, icons, sizePx, tintRows) {
-        value = if (tintRows && key != null) icons.load(key, icons.mode, sizePx)?.accent else null
+    // From memory at once when the icon is cached, so a row never shifts colour a frame in.
+    val cached = if (tintRows && key != null) icons.peek(key, icons.mode, sizePx)?.accent else null
+    val accent by produceState(cached, key, icons, sizePx, tintRows) {
+        value = if (tintRows && key != null) {
+            (icons.peek(key, icons.mode, sizePx) ?: icons.load(key, icons.mode, sizePx))?.accent
+        } else {
+            null
+        }
     }
     return accent?.let { readableOnSurface(it) }
 }

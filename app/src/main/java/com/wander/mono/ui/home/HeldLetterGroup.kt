@@ -83,7 +83,8 @@ internal fun HeldLetterGroup(
                     fadeIn(motion.fastEffectsSpec())
                 val exit = slideOutVertically(motion.fastSpatialSpec()) { -shift * down } +
                     fadeOut(motion.fastEffectsSpec())
-                enter togetherWith exit
+                // The box is always full size: no size to animate between letters.
+                (enter togetherWith exit).using(null)
             },
             contentKey = { it.group?.key },
             label = "heldLetter",
