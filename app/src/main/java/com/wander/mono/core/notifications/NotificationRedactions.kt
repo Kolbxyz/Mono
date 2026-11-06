@@ -34,7 +34,13 @@ class NotificationRedactions @Inject constructor(
         )
     }
 
-    /** A paused work profile, or one whose storage is still locked. */
+    /**
+     * A paused work profile, or one whose storage is still locked. Only Mono's own profiles are asked:
+     * a notification for every user at once, or for a user outside them, has no lock of Mono's to
+     * check, and asking about it throws a [SecurityException].
+     */
     private fun isLocked(user: UserHandle): Boolean =
-        user != profiles.main && (userManager.isQuietModeEnabled(user) || !userManager.isUserUnlocked(user))
+        user != profiles.main &&
+            profiles.isOwn(user) &&
+            (userManager.isQuietModeEnabled(user) || !userManager.isUserUnlocked(user))
 }
