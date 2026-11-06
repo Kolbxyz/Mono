@@ -18,9 +18,9 @@ private val Context.launchHoursStore by preferencesDataStore(name = "launch_hour
 
 /**
  * How often each app was opened (from home, the drawer's list or search) in each hour of the day,
- * so home can point out the likely favourite. A habit, not a choice: its own small file, on this phone only and left out of backups.
- * Apps no longer installed are dropped at the next launch, and an hour's counts halve once one of
- * them reaches [CAP], so old habits fade.
+ * so home can point out the likely favourite. A habit, not a choice: its own small file, on this
+ * phone only and left out of backups. Apps no longer installed are dropped at the next launch, and an
+ * hour's counts halve once one of them reaches [CAP], so old habits fade.
  */
 @Singleton
 class LaunchHours @Inject constructor(@ApplicationContext context: Context) {
