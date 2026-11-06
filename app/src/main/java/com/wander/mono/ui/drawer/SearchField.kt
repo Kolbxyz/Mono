@@ -1,10 +1,18 @@
 package com.wander.mono.ui.drawer
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -16,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -26,14 +35,19 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.data.RecentSearch
+import com.wander.mono.ui.components.expressivePress
 
 /**
  * The drawer's search box, with Mono's settings at its end. The keyboard's action key opens the top
  * result. [focusRequester] lets the drawer focus it when opened from home's search bar; otherwise only
  * a tap on it brings up the keyboard. It sits at the bottom of the drawer, in the thumb's reach: while
  * it is focused and empty, the [recent] searches show above it as chips ([RecentSearchChips]).
+ * [collapsed], it folds into a round search button at the bottom end, and a tap on that ([onExpand])
+ * grows the field back out of it, the button widening into the pill on the scheme's spatial spring.
+ * [onBlur] hears the field losing the focus it had.
  */
 @Composable
 fun SearchField(
@@ -45,11 +59,52 @@ fun SearchField(
     modifier: Modifier = Modifier,
     recent: List<RecentSearch> = emptyList(),
     onForgetRecent: (RecentSearch) -> Unit = {},
+    collapsed: Boolean = false,
+    onExpand: () -> Unit = {},
+    onBlur: () -> Unit = {},
 ) {
     var focused by remember { mutableStateOf(false) }
+    val motion = MaterialTheme.motionScheme
     Column(modifier) {
         RecentSearchChips(focused && query.isEmpty(), recent, onUse = onQueryChange, onForget = onForgetRecent)
-        Field(query, onQueryChange, onSubmit, onOpenSettings, focusRequester) { focused = it }
+        AnimatedContent(
+            targetState = collapsed,
+            // Wrapping what it shows, at the end, the thumb's side: as the pill takes the button's
+            // place the box widens from there, revealing the pill out of the button.
+            modifier = Modifier.align(Alignment.End),
+            contentAlignment = Alignment.BottomEnd,
+            transitionSpec = {
+                (fadeIn(motion.fastEffectsSpec()) togetherWith fadeOut(motion.fastEffectsSpec()))
+                    .using(SizeTransform(clip = true) { _, _ -> motion.defaultSpatialSpec() })
+            },
+            label = "searchField",
+        ) { folded ->
+            if (folded) {
+                SearchButton(onExpand)
+            } else {
+                Field(query, onQueryChange, onSubmit, onOpenSettings, focusRequester) { now ->
+                    if (focused && !now) onBlur()
+                    focused = now
+                }
+            }
+        }
+    }
+}
+
+/** The field folded away: a round search button, tonal like the pill it grows into. */
+@Composable
+private fun SearchButton(onExpand: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    FloatingActionButton(
+        onClick = onExpand,
+        modifier = Modifier.expressivePress(interaction, pressedScale = BUTTON_PRESSED_SCALE),
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        contentColor = MaterialTheme.colorScheme.onSurface,
+        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
+        interactionSource = interaction,
+    ) {
+        Icon(painterResource(R.drawable.sym_search), stringResource(R.string.drawer_search_open))
     }
 }
 
@@ -112,6 +167,9 @@ private fun fieldColors() = with(MaterialTheme.colorScheme) {
         unfocusedPlaceholderColor = onSurfaceVariant,
     )
 }
+
+/** How far the round button gives under a press. */
+private const val BUTTON_PRESSED_SCALE = 0.9f
 
 /** The pill at rest: translucent enough to float over the wallpaper, solid enough to read on any. */
 private const val RESTING_ALPHA = 0.82f

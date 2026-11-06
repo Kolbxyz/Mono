@@ -5,23 +5,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.wander.mono.R
 import com.wander.mono.core.apps.LaunchableApp
 import com.wander.mono.ui.drawer.DrawerScreen
 import com.wander.mono.ui.drawer.DrawerViewModel
 import com.wander.mono.ui.drawer.HitOutcome
 import com.wander.mono.ui.drawer.PrivateSpaceActions
-import com.wander.mono.ui.drawer.RailScrub
+import com.wander.mono.ui.drawer.RailLanding
 import com.wander.mono.ui.drawer.SearchHit
 import com.wander.mono.ui.edit.EditHomeViewModel
+import com.wander.mono.ui.home.HomeButtonViewModel
 import com.wander.mono.ui.quiet.QuietDrawerGate
 import com.wander.mono.ui.sheet.AppSheetViewModel
 
 /**
  * The drawer's content wired to the launcher, the same whether it rises over home or stands beside
- * it as the wide layout's side panel: launching closes it, picking for home adds the app, Mono's
- * own settings open over it. [open] and [revealed] are the drawer's. [unlockHidden] is hoisted
- * by the caller, so the screen lock's answer still has somewhere to arrive if the drawer has left.
- * [railScrub] is a scrub of the letter rail begun on home's edge, when the drawer rises over home.
+ * it as the wide layout's side panel: launching closes it, picking for home adds the app (or makes
+ * it what home's button opens), Mono's own settings open over it. [open] and [revealed] are the
+ * drawer's. [unlockHidden] is hoisted by the caller, so the screen lock's answer still has somewhere
+ * to arrive if the drawer has left.
+ * [landing] is the letter a scrub on home's edge let go on, for the drawer to open at.
  */
 @Composable
 fun LauncherDrawer(
@@ -34,16 +38,22 @@ fun LauncherDrawer(
     edit: EditHomeViewModel,
     unlockHidden: () -> Unit,
     modifier: Modifier = Modifier,
-    railScrub: RailScrub? = null,
+    landing: RailLanding? = null,
+    homeButton: HomeButtonViewModel = viewModel(),
 ) {
     val query by drawer.query.collectAsStateWithLifecycle()
     val state by drawer.state.collectAsStateWithLifecycle()
     val recentSearches by drawer.recentSearches.collectAsStateWithLifecycle()
     val focusSearch by launcher.focusSearch.collectAsStateWithLifecycle()
-    val pickingApp by launcher.pickingApp.collectAsStateWithLifecycle()
+    val picking by launcher.picking.collectAsStateWithLifecycle()
+    val pickingApp = picking != null
+    val buttonChosen by homeButton.chosen.collectAsStateWithLifecycle()
     val privateActions = remember(drawer) { PrivateSpaceActions(drawer::setPrivateLocked, drawer::openPrivateSettings) }
     val pick: (LaunchableApp) -> Unit = { app ->
-        edit.add(app.key)
+        when (picking) {
+            PickTarget.HomeButton -> homeButton.choose(app.key)
+            PickTarget.Favorite, null -> edit.add(app.key)
+        }
         launcher.closeDrawer()
     }
     val afterHit: (HitOutcome) -> Unit = { outcome ->
@@ -79,8 +89,22 @@ fun LauncherDrawer(
             onReach = { hit, how -> afterHit(drawer.reach(hit, how)) },
             modifier = modifier,
             pickingApp = pickingApp,
+            pickHint = if (picking == PickTarget.HomeButton) {
+                R.string.edit_pick_button_hint
+            } else {
+                R.string.edit_pick_hint
+            },
+            // Picking for the button, once it opens an app, it can go back to search.
+            onUseSearch = if (picking == PickTarget.HomeButton && buttonChosen) {
+                {
+                    homeButton.useSearch()
+                    launcher.closeDrawer()
+                }
+            } else {
+                null
+            },
             focusSearch = focusSearch,
-            railScrub = railScrub,
+            landing = landing,
         )
     }
 }

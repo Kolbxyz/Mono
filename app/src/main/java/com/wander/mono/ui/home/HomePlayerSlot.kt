@@ -32,10 +32,10 @@ import com.wander.mono.ui.settings.collect
  * The player's place under the clock: it grows in when something starts playing and folds away,
  * still showing what played, when it stops ([player] null). [compact] is the header's.
  *
- * The header is measured before home's list and search dock, so a tall player would take their
+ * The header is measured before home's list and button, so a tall player would take their
  * room. The slot sees the height left under the clock and hands the player only [playerRoom] of
  * it: with less than a roomy player's worth, the player goes compact (a smaller cover, no next
- * line), and whatever still does not fit is the player's to give up, never the dock's.
+ * line), and whatever still does not fit is the player's to give up, never the button's.
  */
 @Composable
 fun HomePlayerSlot(
@@ -69,13 +69,13 @@ fun HomePlayerSlot(
 }
 
 /**
- * How much of [left] (the height under the clock) the player may take. The search dock is always
+ * How much of [left] (the height under the clock) the player may take. Home's button is always
  * kept; [rows] of favourites are kept too while that leaves the compact player its height, else
  * the list gives way first (it scrolls, and a scroll collapses the player). The strip always fits.
  */
 private fun playerRoom(left: Dp, rows: Dp): Dp {
-    val withoutDock = left - SearchDockRoom
-    return maxOf(withoutDock - rows, minOf(withoutDock, PLAYER_GAP + COMPACT_PLAYER))
+    val withoutButton = left - HomeButtonRoom
+    return maxOf(withoutButton - rows, minOf(withoutButton, PLAYER_GAP + COMPACT_PLAYER))
         .coerceAtLeast(PLAYER_GAP + SMALLEST_PLAYER)
 }
 

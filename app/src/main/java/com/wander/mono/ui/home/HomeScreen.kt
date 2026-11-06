@@ -6,6 +6,8 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -55,7 +57,8 @@ import com.wander.mono.ui.theme.LocalHighContrast
  * The home screen over the wallpaper: the glance header at the top (or, [shell] reachable, just
  * over the dock) with the player under the clock ([nowPlaying], told whether the header is
  * compact), the rows where the user placed them ([HomeLook.listPosition], by default the bottom so
- * favourites sit in the thumb zone), and the search dock under them. [hero] is how far the hero
+ * favourites sit in the thumb zone), and the round button under them at the end ([HomeButton]):
+ * search, or the [buttonApp] chosen for it with a long press ([onChooseButton]). [hero] is how far the hero
  * pull has grown the clock. Drags anywhere (past the end of the list when it scrolls) go to
  * [gestureScroll]: up pulls the drawer, down opens the notification shade. Long-pressing an empty
  * spot opens the home options and double-tapping one runs [onDoubleTap]; rows consume their own
@@ -97,9 +100,11 @@ fun HomeScreen(
     shell: HomeShell = HomeShell(),
     hero: () -> Float = { 0f },
     nowPlaying: @Composable (compact: Boolean) -> Unit = {},
+    buttonApp: LaunchableApp? = null,
+    onChooseButton: () -> Unit = {},
     previews: NotificationPreviewViewModel = viewModel(),
 ) {
-    // The header and search dock are not scrollable; this lets drags on them reach gestureScroll too.
+    // The header and button are not scrollable; this lets drags on them reach gestureScroll too.
     val stillDrag = rememberScrollableState { 0f }
     val motion = MaterialTheme.motionScheme
     val scheme = MaterialTheme.colorScheme
@@ -192,16 +197,29 @@ fun HomeScreen(
                     hidden = editing.active || rows.orEmpty().none { it is HomeRow.App || it is HomeRow.Folder },
                     modifier = Modifier.align(Alignment.CenterHorizontally),
                 )
-                // In edit mode the floating toolbar takes this place; the dock folds away as the
+                // In edit mode the floating toolbar takes this place; the button shrinks away as the
                 // list's clearance grows on the same spec, so the rows never jump.
                 AnimatedVisibility(
                     visible = !editing.active,
-                    enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()),
-                    exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.fastEffectsSpec()),
+                    modifier = Modifier.align(Alignment.End),
+                    enter = expandVertically(motion.defaultSpatialSpec()) + fadeIn(motion.defaultEffectsSpec()) +
+                        scaleIn(motion.defaultSpatialSpec(), initialScale = HIDDEN_BUTTON_SCALE),
+                    exit = shrinkVertically(motion.defaultSpatialSpec()) + fadeOut(motion.fastEffectsSpec()) +
+                        scaleOut(motion.fastSpatialSpec(), targetScale = HIDDEN_BUTTON_SCALE),
                 ) {
-                    SearchDock(onSearch, Modifier.padding(top = 8.dp, bottom = 8.dp))
+                    HomeButton(
+                        app = buttonApp,
+                        icons = icons,
+                        onSearch = onSearch,
+                        onLaunch = { onLaunch(it, null) },
+                        onChoose = onChooseButton,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                    )
                 }
             }
         }
     }
 }
+
+/** How small home's button gets as it leaves for edit mode, and starts as it comes back. */
+private const val HIDDEN_BUTTON_SCALE = 0.6f

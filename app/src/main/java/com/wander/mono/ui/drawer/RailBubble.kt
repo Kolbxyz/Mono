@@ -1,20 +1,27 @@
 package com.wander.mono.ui.drawer
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.IntOffset
@@ -23,16 +30,19 @@ import com.wander.mono.ui.theme.capFontScale
 import kotlin.math.roundToInt
 
 /**
- * The letter being scrubbed, shown large beside the finger, just clear of the bowed letters. It sits
- * on an even twelve-sided cookie that grows in as the scrub starts, turns slowly as the finger moves
- * along the rail, and shrinks back and fades on release. It stays on the rail, [railHeight] tall,
- * at either end, and on the list's side of it: left of a rail on the right ([mirror] 1f), right of
- * one on the left (-1f), in screen terms whatever the layout direction. [modifier] places it at
- * the rail's top corner on that side. With a [symbol] (the private space's lock) it shows that instead.
+ * The letter being scrubbed, shown beside the finger, just clear of the bowed letters: a plain
+ * circle in the inverse surface, light on a dark wallpaper, that pops in as the scrub starts,
+ * glides along with the finger and shrinks back and fades on release. As the finger moves on, the
+ * letter rolls: up when the new entry ([index]) is further down the rail, down when it is further
+ * up. It stays on the rail, [railHeight] tall, at either end, and on the list's side of it: left of
+ * a rail on the right ([mirror] 1f), right of one on the left (-1f), in screen terms whatever the
+ * layout direction. [modifier] places it at the rail's top corner on that side. With a [symbol]
+ * (the private space's lock) it shows that instead.
  */
 @Composable
 internal fun RailBubble(
     letter: String,
+    index: Int,
     @DrawableRes symbol: Int?,
     visible: Boolean,
     fingerY: () -> Float,
@@ -43,10 +53,9 @@ internal fun RailBubble(
 ) {
     val motion = MaterialTheme.motionScheme
     val fade by animateFloatAsState(if (visible) 1f else 0f, motion.defaultEffectsSpec())
-    val grow by animateFloatAsState(if (visible) 1f else 0f, motion.defaultSpatialSpec())
+    val grow by animateFloatAsState(if (visible) 1f else 0f, motion.fastSpatialSpec())
     if (fade == 0f) return
 
-    val cookie = MaterialShapes.Cookie12Sided.toShape()
     Box(
         modifier
             .absoluteOffset {
@@ -62,46 +71,55 @@ internal fun RailBubble(
                 val scale = SMALLEST + (1f - SMALLEST) * grow
                 scaleX = scale
                 scaleY = scale
-            },
+            }
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.inverseSurface),
         contentAlignment = Alignment.Center,
     ) {
-        Box(
-            Modifier
-                .matchParentSize()
-                // Only the cookie turns; the letter stays upright.
-                .graphicsLayer { rotationZ = fingerY() / density * DEGREES_PER_DP }
-                .background(MaterialTheme.colorScheme.primaryContainer, cookie),
-        )
         if (symbol != null) {
             Icon(
                 painterResource(symbol),
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                tint = MaterialTheme.colorScheme.inverseOnSurface,
                 modifier = Modifier.size(SYMBOL_SIZE),
             )
         } else {
-            Text(
-                letter,
-                // Capped, so the letter stays inside the cookie at the largest font sizes.
-                style = MaterialTheme.typography.displaySmall.capFontScale(GLYPH_MAX_FONT_SCALE),
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
+            AnimatedContent(
+                targetState = BubbleGlyph(letter, index),
+                transitionSpec = {
+                    // Down the rail the letters come up from below, as the list scrolls; up the rail, from above.
+                    val down = if (targetState.index >= initialState.index) 1 else -1
+                    val enter = slideInVertically(motion.fastSpatialSpec()) { it * down } +
+                        fadeIn(motion.fastEffectsSpec())
+                    val exit = slideOutVertically(motion.fastSpatialSpec()) { -it * down } +
+                        fadeOut(motion.fastEffectsSpec())
+                    (enter togetherWith exit).using(SizeTransform(clip = false) { _, _ -> motion.fastSpatialSpec() })
+                },
+                label = "railBubble",
+            ) { shown ->
+                Text(
+                    shown.letter,
+                    // Capped, so the letter stays inside the circle at the largest font sizes.
+                    style = MaterialTheme.typography.headlineSmall.capFontScale(GLYPH_MAX_FONT_SCALE),
+                    color = MaterialTheme.colorScheme.inverseOnSurface,
+                )
+            }
         }
     }
 }
 
-private val BUBBLE_SIZE = 72.dp
+/** What the bubble shows, with where it is on the rail so its roll knows which way to go. */
+private data class BubbleGlyph(val letter: String, val index: Int)
 
-private val SYMBOL_SIZE = 32.dp
+private val BUBBLE_SIZE = 56.dp
 
-/** displaySmall grows with the font scale up to this inside the bubble: still clear of its edges. */
+private val SYMBOL_SIZE = 28.dp
+
+/** headlineSmall grows with the font scale up to this inside the bubble: still clear of its edges. */
 private const val GLYPH_MAX_FONT_SCALE = 1.3f
 
 /** Space between the bubble and the bowed letter under the finger. */
-private val BUBBLE_GAP = 16.dp
+private val BUBBLE_GAP = 8.dp
 
 /** The bubble's scale when it starts to grow in, and when it has shrunk away. */
 private const val SMALLEST = 0.6f
-
-/** How far the cookie turns as the finger slides along the rail: a quarter turn per 360 dp. */
-private const val DEGREES_PER_DP = 0.25f

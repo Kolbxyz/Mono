@@ -56,7 +56,7 @@ class RailMathTest {
 
     @Test
     fun `wave is symmetric and falls steadily away from the finger`() {
-        val samples = (0..40).map { it / 10f }
+        val samples = (0..100).map { it / 10f }
         samples.forEach { d -> assertEquals(RailMath.waveFraction(d), RailMath.waveFraction(-d), DELTA) }
         samples.zipWithNext().forEach { (near, far) ->
             assertTrue(RailMath.waveFraction(near) >= RailMath.waveFraction(far))
@@ -96,8 +96,9 @@ class RailMathTest {
     @Test
     fun `letters under the finger move furthest and the wave scales with the bow`() {
         assertEquals(40f, RailMath.letterOffset(index = 3, slot = 3f, bow = 40f), DELTA)
-        assertEquals(20f, RailMath.letterOffset(index = 5, slot = 3f, bow = 40f), DELTA)
-        assertEquals(0f, RailMath.letterOffset(index = 9, slot = 3f, bow = 40f), DELTA)
+        // Half the wave's reach away, a letter moves half as far.
+        assertEquals(20f, RailMath.letterOffset(index = 7, slot = 7f - RailMath.WAVE_REACH / 2, bow = 40f), DELTA)
+        assertEquals(0f, RailMath.letterOffset(index = 12, slot = 12f - RailMath.WAVE_REACH, bow = 40f), DELTA)
         assertEquals(0f, RailMath.letterOffset(index = 3, slot = 3f, bow = 0f), DELTA)
     }
 
@@ -158,12 +159,13 @@ class RailMathTest {
     }
 
     @Test
-    fun `letter under the finger grows most, falling off with distance, only while pressed`() {
-        assertEquals(RailMath.LETTER_ZOOM, RailMath.letterScale(index = 3, slot = 3f, pressed = 1f), DELTA)
-        val neighbour = RailMath.letterScale(index = 4, slot = 3f, pressed = 1f)
-        assertTrue(neighbour > 1f && neighbour < RailMath.LETTER_ZOOM)
-        assertEquals(1f, RailMath.letterScale(index = 9, slot = 3f, pressed = 1f), DELTA)
-        assertEquals(1f, RailMath.letterScale(index = 3, slot = 3f, pressed = 0f), DELTA)
+    fun `a rail appears from the finger outward and is whole once revealed`() {
+        assertEquals(0f, RailMath.revealAlpha(distance = 0f, reveal = 0f), DELTA)
+        assertEquals(1f, RailMath.revealAlpha(distance = 0f, reveal = 0.5f), DELTA)
+        assertEquals(0f, RailMath.revealAlpha(distance = 20f, reveal = 0.5f), DELTA)
+        val near = RailMath.revealAlpha(distance = 3f, reveal = 0.6f)
+        assertTrue(near > RailMath.revealAlpha(distance = 9f, reveal = 0.6f))
+        listOf(0f, 5f, 30f).forEach { assertEquals(1f, RailMath.revealAlpha(it, reveal = 1f), DELTA) }
     }
 
     private companion object {

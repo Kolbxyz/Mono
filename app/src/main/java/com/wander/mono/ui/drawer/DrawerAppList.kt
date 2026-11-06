@@ -12,10 +12,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -45,8 +47,10 @@ import kotlinx.coroutines.launch
  * ([PredictedAppRow]). [listState] is the caller's, so the list keeps its place while search
  * results show instead.
  * TalkBack gets a "Jump to" action per letter on the list itself. Rows rise in as the list first
- * shows, and its ends fade out while there is more to scroll to; [railScrub] drives the rail from home.
- * While a finger holds a letter on the rail, only that letter's apps stay; the rest fade out.
+ * shows, and its ends fade out while there is more to scroll to. While a finger holds a letter on the
+ * rail, only that letter's apps stay; the rest fade out. Opened from a scrub on home that [landed] on a
+ * letter, the list starts there as if that letter were still held, and the rest fade in around it;
+ * [onLanded] hears that it has, so the list shown again after a search starts as usual.
  */
 @Composable
 internal fun DrawerAppList(
@@ -60,7 +64,8 @@ internal fun DrawerAppList(
     dock: Dp,
     listState: LazyListState,
     modifier: Modifier = Modifier,
-    railScrub: RailScrub? = null,
+    landed: Int = RailLanding.NONE,
+    onLanded: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val choices = state.controls.choices
@@ -78,8 +83,17 @@ internal fun DrawerAppList(
             }
         }
     }
-    val entrance = rememberListEntrance()
-    val hold = remember { RailHold() }
+    // Landed from home, the held letter is already in place: no row makes an entrance.
+    val entrance = rememberListEntrance(opening = landed == RailLanding.NONE)
+    val hold = remember { RailHold().apply { entry = landed } }
+    // A frame later the landing lets go, and the other letters fade in around it.
+    LaunchedEffect(hold) {
+        if (hold.entry != RailLanding.NONE) {
+            withFrameNanos { }
+            hold.entry = RailLanding.NONE
+            onLanded()
+        }
+    }
     val letters = state.sections.size
     val toolbarScroll = rememberToolbarScroll()
     // Always there while the list cannot scroll back, so it is never lost on a short list.
@@ -135,7 +149,7 @@ internal fun DrawerAppList(
                     }
                 }
             }
-            if (showRail) DrawerRail(state, listState, space, privateActions, railScrub, hold)
+            if (showRail) DrawerRail(state, listState, space, privateActions, hold)
             DrawerToolbar(
                 visible = toolbarShown,
                 controls = state.controls,

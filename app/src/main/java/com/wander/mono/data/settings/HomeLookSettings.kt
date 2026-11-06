@@ -20,7 +20,7 @@ object HomeLookSettings {
     /** Home's row text in percent, on top of the system font size: it only ever grows. */
     val LabelScale = IntSetting("home_label_scale", default = 100, range = LABEL_SCALES)
 
-    /** One-handed: the clock moves down above the search dock, so everything sits in thumb reach. */
+    /** One-handed: the clock moves down above home's button, so everything sits in thumb reach. */
     val Reachable = BooleanSetting("home_reachable_layout", default = false)
 
     /**

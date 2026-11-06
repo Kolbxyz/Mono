@@ -27,7 +27,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * not scroll, pulls it back down with the finger; predictive back lets it give way before closing
  * through [onBack]. [onClosed] runs once it has closed and nothing of it shows, so whatever it was
  * showing stays put while it fades out. How far it is still drawn below its resting place reaches the
- * content as [LocalDrawerLift], so its backdrop can stay put while only the content rises.
+ * content as [LocalDrawerLift], so its backdrop can stay put while only the content rises; opened in
+ * place ([DrawerMotion.openInPlace]) it does not rise at all.
  */
 @Composable
 fun DrawerLayer(
@@ -46,7 +47,8 @@ fun DrawerLayer(
     val pullDown = rememberPullDownConnection(motion)
     // The search field and headers do not scroll; this lets drags on them reach pullDown too.
     val stillDrag = rememberScrollableState { 0f }
-    val lift = remember(motion) { { (1f - motion.shown) * motion.travel } }
+    // Opened in place, it only fades: no lift, so what home showed stays where it was.
+    val lift = remember(motion) { { if (motion.inPlace) 0f else (1f - motion.shown) * motion.travel } }
     PredictiveBackHandler(enabled = open && backEnabled) { events ->
         try {
             events.collect { motion.back(it.progress) }

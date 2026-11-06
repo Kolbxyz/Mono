@@ -22,7 +22,7 @@ import android.text.format.DateFormat as AndroidDateFormat
  * for the user's locale and 12/24-hour setting, styled and filtered by the user's clock settings.
  * Each line and pill opens what it names.
  * [compact] (a phone in landscape) trades the airy spacing and display size for list room;
- * [reachable] sits it low, over the search dock. [hero] is how far the hero pull has grown it.
+ * [reachable] sits it low, over home's button. [hero] is how far the hero pull has grown it.
  * A long press on the clock runs [onClockOptions]. [player] goes under it all: the player under the clock.
  */
 @Composable

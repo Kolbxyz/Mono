@@ -1,6 +1,5 @@
 package com.wander.mono.ui
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -29,16 +28,16 @@ import com.wander.mono.ui.components.outOfFocus
 import com.wander.mono.ui.components.rememberCredentialPrompt
 import com.wander.mono.ui.components.rememberPullUpConnection
 import com.wander.mono.ui.drawer.DrawerViewModel
-import com.wander.mono.ui.drawer.RailScrub
-import com.wander.mono.ui.drawer.RailScrubStrip
 import com.wander.mono.ui.edit.EditEffects
 import com.wander.mono.ui.edit.EditHomeViewModel
 import com.wander.mono.ui.edit.EditToolbar
 import com.wander.mono.ui.edit.rememberHomeEditing
 import com.wander.mono.ui.home.HomeLookViewModel
+import com.wander.mono.ui.home.HomeRailState
 import com.wander.mono.ui.home.HomeShellViewModel
 import com.wander.mono.ui.home.HomeViewModel
 import com.wander.mono.ui.home.ScrimEdges
+import com.wander.mono.ui.home.givesWayToHeldLetter
 import com.wander.mono.ui.home.rememberHeroConnection
 import com.wander.mono.ui.home.rememberHeroPull
 import com.wander.mono.ui.quiet.QuietViewModel
@@ -101,9 +100,9 @@ fun LauncherApp(
     val drawerMotion = rememberDrawerMotion(drawerOpen) { open ->
         if (open) launcher.openDrawer(focusSearch = swipeUp == SwipeUpAction.Search) else launcher.closeDrawer()
     }
-    // A scrub of the rail from home's edge; the rising drawer is drawn this far below where it comes to rest.
-    val railScrub = remember(drawerMotion) { RailScrub { (1f - drawerMotion.shown) * drawerMotion.travel } }
-    // Only while the drawer's list has its rail to scrub: A–Z, with letters.
+    // Home's own rail, from a finger on its edge.
+    val homeRail = remember { HomeRailState() }
+    // Only while the drawer's list has its rail to land in: A–Z, with letters.
     val railOnList = drawerState.controls.choices.sort == DrawerSort.Alphabetical && drawerState.sections.isNotEmpty()
     // Wide, the drawer has nowhere to rise: swiping up brings up the side panel, with its keyboard
     // only when the swipe up is set to search.
@@ -130,25 +129,9 @@ fun LauncherApp(
     }
     // Taps, launches, home presses and back move the drawer here; drags and flings move it themselves.
     LaunchedEffect(drawerOpen) { drawerMotion.follow(drawerOpen, overlaysAnimate) }
-    // The side panel never leaves, so closing it is where the next opening starts afresh.
-    LaunchedEffect(wide, drawerOpen) {
-        if (wide && !drawerOpen) {
-            drawer.setQuery("")
-            drawer.relockHidden()
-            drawer.clearListFilters()
-            launcher.drawerClosed()
-        }
-    }
+    SidePanelReset(wide, drawerOpen, launcher, drawer)
     EditEffects(editing, rows, homeList)
-    // Back on home has nothing to go back to; it only ever closes what is open. Settings, the drawer
-    // and the sheets take back first with their own predictive handlers.
-    BackHandler {
-        when {
-            query.isNotEmpty() && (drawerOpen || wide) -> drawer.setQuery("")
-            drawerOpen -> launcher.closeDrawer()
-            editingOn -> launcher.setEditing(false)
-        }
-    }
+    LauncherBack(launcher, drawer, query, drawerOpen, editingOn, wide)
 
     val homeLayer = @Composable { modifier: Modifier, contentModifier: Modifier ->
         LauncherHome(
@@ -193,15 +176,18 @@ fun LauncherApp(
                         }
                     }
                 } else {
-                    homeLayer(Modifier.fadeBehindDrawer(drawerMotion), Modifier.shrinkBehindDrawer(drawerMotion))
-                    RailScrubStrip(
-                        railScrub,
+                    homeLayer(
+                        Modifier.fadeBehindDrawer(drawerMotion),
+                        Modifier.shrinkBehindDrawer(drawerMotion).givesWayToHeldLetter(homeRail),
+                    )
+                    HomeRailLayer(
+                        homeRail, drawerState, homeIcons,
                         enabled = !drawerOpen && !editingOn && !quietOn && railOnList,
-                        atStart = drawerState.railAtStart,
-                    ) {
-                        drawerMotion.openQuickly()
-                        launcher.openDrawer()
-                    }
+                        drawerMotion = drawerMotion,
+                        onOpenDrawer = { launcher.openDrawer() },
+                        onLaunchApp = { drawer.launch(it) },
+                        onLongPress = { sheet.show(it.key) },
+                    )
                     DrawerLayer(
                         motion = drawerMotion,
                         open = drawerOpen,
@@ -214,14 +200,13 @@ fun LauncherApp(
                             drawer.setQuery("")
                             drawer.clearListFilters()
                             launcher.drawerClosed()
-                            railScrub.drawerClosed()
                         },
                     ) {
                         // Hidden apps unlocked for this opening only.
                         DisposableEffect(Unit) { onDispose(drawer::relockHidden) }
                         LauncherDrawer(
                             drawerOpen, { drawerMotion.shown }, quietOn, launcher, drawer, sheet, edit, unlockHidden,
-                            railScrub = railScrub,
+                            landing = homeRail.landing,
                         )
                     }
                 }
@@ -243,7 +228,7 @@ fun LauncherApp(
         EditToolbar(
             visible = editingOn && (!drawerOpen || wide) && !settingsOpen,
             onDone = { launcher.setEditing(false) },
-            onAddApp = launcher::pickApp,
+            onAddApp = { launcher.pickApp(PickTarget.Favorite) },
             onAddWidget = widgets::openPicker,
             onOpenSettings = launcher::openSettings,
             modifier = Modifier.align(Alignment.BottomCenter),

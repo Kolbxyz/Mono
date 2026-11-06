@@ -23,7 +23,7 @@ class LauncherViewModel @Inject constructor(
 ) : ViewModel() {
     val drawerOpen: StateFlow<Boolean> = savedState.getStateFlow(DRAWER_OPEN, false)
 
-    /** The drawer was opened from the search dock, so its search field takes focus and the keyboard. */
+    /** The drawer was opened from home's search button, so its search field takes focus and the keyboard. */
     val focusSearch: StateFlow<Boolean> = savedState.getStateFlow(FOCUS_SEARCH, false)
     val settingsOpen: StateFlow<Boolean> = savedState.getStateFlow(SETTINGS_OPEN, false)
     val homeOptionsOpen: StateFlow<Boolean> = savedState.getStateFlow(HOME_OPTIONS_OPEN, false)
@@ -37,8 +37,8 @@ class LauncherViewModel @Inject constructor(
     /** Edit mode: favourites can be dragged, renamed, removed and their live rows switched. */
     val editing: StateFlow<Boolean> = savedState.getStateFlow(EDITING, false)
 
-    /** The drawer was opened from edit mode to pick an app to add to home. */
-    val pickingApp: StateFlow<Boolean> = savedState.getStateFlow(PICKING_APP, false)
+    /** The drawer was opened to pick an app, and what for (a favourite, home's button); null otherwise. */
+    val picking: StateFlow<PickTarget?> = savedState.getStateFlow(PICK_TARGET, null)
     val messages: SharedFlow<UserMessage> = messages.messages
 
     private val mutableOverlaysAnimate = MutableStateFlow(true)
@@ -49,9 +49,9 @@ class LauncherViewModel @Inject constructor(
     private val mutableScrollToTop = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     val scrollToTop: SharedFlow<Unit> = mutableScrollToTop.asSharedFlow()
 
-    fun openDrawer(focusSearch: Boolean = false, picking: Boolean = false) {
+    fun openDrawer(focusSearch: Boolean = false, picking: PickTarget? = null) {
         savedState[FOCUS_SEARCH] = focusSearch
-        savedState[PICKING_APP] = picking
+        savedState[PICK_TARGET] = picking
         setAnimated(DRAWER_OPEN, true)
     }
 
@@ -60,7 +60,7 @@ class LauncherViewModel @Inject constructor(
 
     /** The drawer has finished closing and is off screen: the next opening starts afresh. */
     fun drawerClosed() {
-        savedState[PICKING_APP] = false
+        savedState[PICK_TARGET] = null
         savedState[FOCUS_SEARCH] = false
     }
 
@@ -69,8 +69,8 @@ class LauncherViewModel @Inject constructor(
         savedState[EDITING] = editing
     }
 
-    /** Opens the drawer so the next app tapped is added to home instead of launched. */
-    fun pickApp() = openDrawer(picking = true)
+    /** Opens the drawer so the next app tapped goes to [target] instead of being launched. */
+    fun pickApp(target: PickTarget) = openDrawer(picking = target)
 
     fun openSettings() {
         savedState[HOME_OPTIONS_OPEN] = false
@@ -103,7 +103,7 @@ class LauncherViewModel @Inject constructor(
         savedState[DRAWER_OPEN] = false
         savedState[FOCUS_SEARCH] = false
         savedState[SETTINGS_OPEN] = false
-        savedState[PICKING_APP] = false
+        savedState[PICK_TARGET] = null
         savedState[EDITING] = false
     }
 
@@ -135,6 +135,6 @@ class LauncherViewModel @Inject constructor(
         const val CLOCK_SHEET_OPEN = "clock_sheet_open"
         const val MEDIA_SHEET_OPEN = "media_sheet_open"
         const val EDITING = "editing"
-        const val PICKING_APP = "picking_app"
+        const val PICK_TARGET = "pick_target"
     }
 }
