@@ -72,7 +72,6 @@ class DrawerViewModel @Inject constructor(
     systemContrast: SystemContrast,
     openedNew: OpenedNewApps,
     muted: MutedApps,
-    private val recorder: LaunchRecorder,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
     val query: StateFlow<String> = savedState.getStateFlow(QUERY, "")
@@ -182,10 +181,7 @@ class DrawerViewModel @Inject constructor(
 
     /** True when the app opened, so the caller can close the drawer. */
     fun launch(app: LaunchableApp): Boolean = messages.report(actions.launch(app.key)).also { opened ->
-        if (opened) {
-            listChoices.opened(app, catalog.apps.value.orEmpty())
-            recorder.opened(app)
-        }
+        if (opened) listChoices.opened(app, catalog.apps.value.orEmpty())
     }
 
     /** The drawer closed: the next opening starts on every app again. */

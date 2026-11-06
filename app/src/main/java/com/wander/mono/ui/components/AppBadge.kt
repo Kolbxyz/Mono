@@ -21,5 +21,12 @@ fun appBadge(count: Int, showCounts: Boolean): AppBadge = when {
     else -> AppBadge.Dot
 }
 
+/**
+ * The badge beside a name whose notification already shows as text under it ([previewShown]): a lone
+ * notification needs no "1" next to its own words, so the pill only counts from two.
+ */
+fun AppBadge.besidePreview(previewShown: Boolean): AppBadge =
+    if (previewShown && this is AppBadge.Count && count < 2) AppBadge.None else this
+
 /** Past two digits a pill stops being glanceable; the exact count is still announced. */
 const val MAX_SHOWN_COUNT = 99

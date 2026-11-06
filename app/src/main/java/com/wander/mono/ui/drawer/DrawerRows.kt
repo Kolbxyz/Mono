@@ -33,6 +33,7 @@ import com.wander.mono.ui.components.AppIcon
 import com.wander.mono.ui.components.AppIcons
 import com.wander.mono.ui.components.AppLabel
 import com.wander.mono.ui.components.PreviewLine
+import com.wander.mono.ui.components.besidePreview
 import com.wander.mono.ui.components.rememberRowAccent
 
 /**
@@ -73,7 +74,7 @@ fun DrawerAppRow(
         val dim = Modifier.alpha(if (archived) ARCHIVED_ALPHA else 1f)
         AppIcon(entry.app.key, icons, dim, size = iconSize)
         Column(dim.weight(1f, fill = false)) {
-            AppLabel(entry.app, entry.badge, style = labelStyle, name = name)
+            AppLabel(entry.app, entry.badge.besidePreview(entry.preview != null), style = labelStyle, name = name)
             // Part of the row: a tap still opens the app, not the notification.
             entry.preview?.let { PreviewLine(it) }
         }
