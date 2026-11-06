@@ -201,7 +201,7 @@ Clock styles (setting): Default (above), Stacked (hours over minutes, like `ref:
 | Grouped lists (drawer letters, search results, settings, sheets) | Segmented: 26 dp outer corners, 8 dp at the seams, 2 dp gaps (`SegmentedColumn`) |
 | Live row card | `shapes.large` (26 dp) → `extraLarge` (36 dp) when expanded (morph) |
 | Play/pause | Round → squircle on press (`ToggleButton`/`IconButton` shape morph) |
-| Rail bubble | A circle (`CircleShape`) in `inverseSurface`, 56 dp, scaling up from 60 % on scrub start; its letter rolls up or down as it changes |
+| Rail bubble | A circle (`CircleShape`) in `inverseSurface`, 56 dp, scaling up from 60 % on scrub start; its letter swaps at once |
 | Sheets | `extraLarge` top corners on `surfaceContainerLow`; main actions as tall tonal tiles whose corners tighten on press |
 | Edit toolbar | `FloatingToolbar` (fully rounded) |
 | Icon mask (full-colour adaptive icons) | System mask by default; setting: Circle, Squircle, Cookie (`Cookie9Sided`), Clover (`Clover4Leaf`). Work icons keep the system mask under their badge |
@@ -248,7 +248,7 @@ All specs from `MaterialTheme.motionScheme` (Expressive scheme via `MaterialExpr
 | Widget row appear (media starts) | `slowSpatialSpec()` height from 0 + `defaultEffectsSpec()` alpha | Row below slides down; never jumps |
 | Widget row disappear | `fastSpatialSpec()` | Leave quickly |
 | Badge count change | `fastSpatialSpec()` scale 0.8→1 | No bounce for decrements |
-| Letter rail scrub | Wave centre and bubble glide after the finger on `fastSpatialSpec()`; the bend comes in on `fastSpatialSpec()` and settles back on `defaultSpatialSpec()` (a little overshoot); bubble scale `fastSpatialSpec()`; on home the letters fade in from the finger outward | Bend 40 dp on touch plus up to 48 dp more as the finger slides toward the list, raised-cosine falloff over ±9 letters, no letter zoom (`ref:niagara/03`) |
+| Letter rail scrub | Wave centre and bubble follow the finger one to one (direct manipulation); the bend comes in on `fastSpatialSpec()` and settles back on `defaultSpatialSpec()` (a little overshoot); bubble scale `fastSpatialSpec()`; on home the letters fade in from the finger outward | Bend 40 dp on touch plus up to 48 dp more as the finger slides toward the list, raised-cosine falloff over ±9 letters, no letter zoom (`ref:niagara/03`) |
 | Press feedback | `fastSpatialSpec()` shape/scale | |
 | Edit mode enter | `defaultEffectsSpec()` scrim + `defaultSpatialSpec()` handles slide in | |
 | Sheets | M3 `ModalBottomSheet` defaults | |

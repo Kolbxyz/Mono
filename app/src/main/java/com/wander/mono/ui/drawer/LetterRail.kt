@@ -45,7 +45,7 @@ import com.wander.mono.ui.theme.LocalReducedMotion
  * the rail index; [current] is one too), shows the entry in a bubble and ticks once per entry.
  * A touch bends the rail toward the list at once, one long curve centred on the finger, and sliding
  * the finger off the rail bends it further, so it can scrub from wherever the thumb rests; curve and
- * bubble glide after the finger ([RailFinger.glideY]) and face the list whichever edge the rail is
+ * bubble follow the finger one to one and face the list whichever edge the rail is
  * on. On release the curve springs back with a little overshoot. The letters sit straight on the
  * background, shadowed like other text on the wallpaper. With reduced motion the rail stays flat and
  * only the letter under the finger lights up. With a private space ([lock]) a lock ends the rail:
@@ -164,7 +164,7 @@ fun LetterRail(
                 val lit = finger.scrubbing && index == finger.active
                 val wave = Modifier.graphicsLayer {
                     val column = finger.lettersHeight.toFloat()
-                    val slot = RailMath.fingerSlot(finger.glideY, lettersTop, column, letters.size)
+                    val slot = RailMath.fingerSlot(finger.fingerY, lettersTop, column, letters.size)
                     val bow = pressBow * pressed + finger.dragBow
                     val shown = reveal?.let { RailMath.revealAlpha(index - slot, it()) } ?: 1f
                     // Unrevealed letters wait just past the edge and slide in as they fade in.
@@ -191,8 +191,7 @@ fun LetterRail(
             letter = finger.bubbleLetter,
             symbol = lock?.symbol?.takeIf { finger.bubbleLetter.isEmpty() },
             visible = finger.scrubbing,
-            index = finger.bubbleIndex,
-            fingerY = { finger.glideY },
+            fingerY = { finger.fingerY },
             railHeight = { height.toFloat() },
             bow = { pressBow * pressed + finger.dragBow },
             mirror = mirror,
