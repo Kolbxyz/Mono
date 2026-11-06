@@ -19,24 +19,6 @@ class HomeContextTest {
     private fun owner(app: LaunchableApp) = PackageUser(app.key.packageName, app.key.userSerial)
 
     @Test
-    fun `a clear habit at this hour is the likely favourite, its neighbours helping`() {
-        val counts = mapOf(9 to mapOf(mail.key to 3), 8 to mapOf(mail.key to 2, chat.key to 2))
-        assertEquals(mail.key, likelyFavorite(counts, 9, listOf(mail.key, chat.key)))
-    }
-
-    @Test
-    fun `no likely favourite without enough launches or a clear lead`() {
-        assertNull(likelyFavorite(mapOf(9 to mapOf(mail.key to 2)), 9, listOf(mail.key)))
-        assertNull(likelyFavorite(mapOf(9 to mapOf(mail.key to 4, chat.key to 4)), 9, listOf(mail.key, chat.key)))
-    }
-
-    @Test
-    fun `midnight's neighbour is the hour before it`() {
-        val counts = mapOf(23 to mapOf(maps.key to 6))
-        assertEquals(maps.key, likelyFavorite(counts, 0, listOf(maps.key)))
-    }
-
-    @Test
     fun `a focus strips the other badges and puts its row under the favourite`() {
         val rows = listOf(HomeRow.App(mail, AppBadge.Dot), HomeRow.App(chat, AppBadge.Count(2)))
         val focused = withFocus(rows, Focus(chat.key, until = 1_000))

@@ -26,6 +26,7 @@ import com.wander.mono.data.SwipeAction
 import com.wander.mono.data.settings.IconMode
 import com.wander.mono.data.settings.LIST_POSITIONS
 import com.wander.mono.ui.components.AppIcons
+import com.wander.mono.ui.components.besidePreview
 import com.wander.mono.ui.edit.HomeEditing
 import com.wander.mono.ui.edit.ReorderableFavorite
 import com.wander.mono.ui.edit.ReorderableWidget
@@ -48,7 +49,7 @@ import com.wander.mono.ui.theme.schemeAnimateItem
  * mode only. The [pulse] favourite, just added, pulses once. Open folders show their favourites
  * under them, indented; edit mode shows every favourite on its own, in the saved order, folders
  * and all. The quiet digest leads once quiet mode ends; a focus dims every row but the focused
- * favourite's, and otherwise the favourite likely wanted at this hour wears a soft pill.
+ * favourite's.
  */
 @Composable
 internal fun HomeList(
@@ -85,9 +86,8 @@ internal fun HomeList(
     )
     val swipes by extras.swipes.collectAsStateWithLifecycle()
     val overLimit by extras.overLimit.collectAsStateWithLifecycle()
-    // A focus sets the other rows back and quiets the hint of the likely favourite; edit mode shows neither.
+    // A focus sets the other rows back; edit mode shows none.
     val focused = focusedApp(rows).takeUnless { editing.active }
-    val likely = contextual.likely.collectAsStateWithLifecycle().value.takeUnless { editing.active || focused != null }
     val inline = rememberInlineShortcuts(listState, editing.active)
     // A preview lines up with its favourite's name, so it reads as that app's.
     val previewStart = favoriteRowMetrics(LocalRowDensity.current).labelStart(icons.mode != IconMode.TextOnly)
@@ -130,14 +130,14 @@ internal fun HomeList(
             val animated = placed.focusDim(dimmedByFocus(row, focused))
             when (row) {
                 is HomeRow.App -> ReorderableFavorite(
-                    row = row,
+                    // Its preview row says what one notification is: no "1" beside the name.
+                    row = row.copy(badge = row.badge.besidePreview(previewOf(rows, row) != null)),
                     icons = icons,
                     siblings = movable,
                     rows = flat.orEmpty(),
                     editing = editing,
                     onLaunch = { source ->
                         if (row.key in inFolder) folders.closeAround(row.app.key)
-                        contextual.launched(row.app.key)
                         onLaunch(row.app, source)
                     },
                     onLongPress = { onLongPress(row.app) },
@@ -145,7 +145,6 @@ internal fun HomeList(
                     // Swiping right unfolds its shortcuts; with none, it expands its preview (spec 8).
                     onShowPreview = previewOf(rows, row)?.let { preview -> { previews.setExpanded(preview, true) } },
                     modifier = animated
-                        .likelyPill(likely == row.app.key)
                         .addedPulse(pulse == row.app.key) { onPulsed(row.app.key) }
                         .then(if (row.key in inFolder) Modifier.padding(start = FolderIndent) else Modifier),
                     swipeLeft = swipes[row.app.key]?.let { action ->

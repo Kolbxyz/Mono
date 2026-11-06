@@ -242,9 +242,9 @@ All specs from `MaterialTheme.motionScheme` (Expressive scheme via `MaterialExpr
 
 | Transition | Spec | Notes |
 | --- | --- | --- |
-| Drawer open/close (swipe-up) | Opens on `fastSpatialSpec()` (the bounciest), drawn with half its overshoot so it lands with a small bounce; closes on `fastSpatialSpec()`; `defaultEffectsSpec()` for scrim alpha | Follows finger 1:1; settles with spring overshoot on release |
-| Drawer list rows | Rise 32 dp and fade in, staggered, on `fastSpatialSpec()` (a small settle) | Only as the drawer opens |
-| Drawer list ends | Rubber band past the end (up to 96 dp), spring back on `fastSpatialSpec()`; a fling into the end overshoots by its leftover speed | Replaces the platform stretch; the top end still pulls the drawer down |
+| Drawer open/close (swipe-up) | Opens on `defaultSpatialSpec()`, drawn with its slight overshoot so it lands softly; closes on `fastSpatialSpec()`; `defaultEffectsSpec()` for scrim alpha | Follows finger 1:1; settles with spring overshoot on release |
+| Drawer list rows | Rise 24 dp and fade in, staggered, on `defaultSpatialSpec()` | Only as the drawer opens |
+| Drawer list ends | Rubber band past the end (up to 64 dp), back on `defaultSpatialSpec()` without wobble; a fling into the end is nudged past it by a third of its leftover speed | Replaces the platform stretch; the top end still pulls the drawer down |
 | Drawer → search keyboard | `fastEffectsSpec()` fade of list chrome | IME inset animated by `WindowInsets.ime` (system) |
 | Row expand (live row) | `defaultSpatialSpec()` for height (`animateContentSize`), shape morph large→extraLarge via same spec; content `fastEffectsSpec()` fade-in after 50 % | One expanded at a time |
 | Widget row appear (media starts) | `slowSpatialSpec()` height from 0 + `defaultEffectsSpec()` alpha | Row below slides down; never jumps |

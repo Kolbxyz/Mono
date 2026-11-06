@@ -23,12 +23,13 @@ import kotlin.math.abs
 import kotlin.math.sign
 
 /**
- * A list end that gives like rubber and bounces back, instead of the platform's stretch: dragged
- * past its end the list follows the finger ever more stiffly ([rubberBand], up to [limit] px), and
- * springs back on release; flung into its end it overshoots by the speed it still had, and springs
- * back the same way, on the scheme's [spring]. Draw it with [offset] (a translation down the list,
- * read in the draw phase). Only the list's end it reaches is affected: what a parent takes first
- * (the drawer pulled down from its top) never reaches it.
+ * A list end that gives like rubber and comes back, instead of the platform's stretch: dragged past
+ * its end the list follows the finger ever more stiffly ([rubberBand], up to [limit] px), and
+ * springs back on release; flung into its end it is nudged past it by a share of the speed it still
+ * had ([FLING_SHARE]) and comes back the same way, on the scheme's [spring], without wobbling. Draw
+ * it with [offset] (a translation down the list, read in the draw phase). Only the list's end it
+ * reaches is affected: what a parent takes first (the drawer pulled down from its top) never
+ * reaches it.
  */
 @Stable
 internal class BounceOverscroll(private val limit: Float) : OverscrollEffect {
@@ -71,25 +72,30 @@ internal class BounceOverscroll(private val limit: Float) : OverscrollEffect {
         val spec = spring ?: return
         // A pull lets go, and a fling that hit the end carries on past it, both springing home.
         if (pulled != 0f || abs(leftover) > MIN_BOUNCE_SPEED) {
-            animate(pulled, 0f, initialVelocity = leftover, animationSpec = spec) { value, _ -> pulled = value }
+            animate(pulled, 0f, initialVelocity = leftover * FLING_SHARE, animationSpec = spec) { value, _ ->
+                pulled = value
+            }
         }
     }
 
     private companion object {
         /** Pixels per second below which a fling reaching the end just stops there. */
         const val MIN_BOUNCE_SPEED = 50f
+
+        /** How much of a fling's leftover speed carries the list past its end: a nudge, not a throw. */
+        const val FLING_SHARE = 1f / 3f
     }
 }
 
-/** A [BounceOverscroll] for a list, bouncing back on the scheme's fast spatial spring (its overshoot). */
+/** A [BounceOverscroll] for a list, coming back on the scheme's default spatial spring: no wobble. */
 @Composable
 internal fun rememberBounceOverscroll(): BounceOverscroll {
     val limit = with(LocalDensity.current) { BOUNCE_LIMIT.toPx() }
-    val spring = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
+    val spring = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
     val bounce = remember(limit) { BounceOverscroll(limit) }
     SideEffect { bounce.spring = spring }
     return bounce
 }
 
 /** How far a list end can ever be pulled out, however far the finger goes. */
-private val BOUNCE_LIMIT = 96.dp
+private val BOUNCE_LIMIT = 64.dp

@@ -11,8 +11,7 @@ import kotlinx.coroutines.launch
 
 /**
  * What tapping a search result (or the keyboard's Go on the top one) does, each kind to whatever
- * opens it, and remembering in [SearchMemory] what the query opened (and in [LaunchRecorder] the
- * app it opened).
+ * opens it, and remembering in [SearchMemory] what the query opened.
  */
 class SearchOpener @Inject constructor(
     private val actions: AppActions,
@@ -20,7 +19,6 @@ class SearchOpener @Inject constructor(
     private val sources: SourceOpener,
     private val handOffs: SearchHandOffs,
     private val memory: SearchMemory,
-    private val recorder: LaunchRecorder,
     private val messages: UserMessages,
     @AppScope private val scope: CoroutineScope,
 ) {
@@ -28,7 +26,6 @@ class SearchOpener @Inject constructor(
     fun open(hit: SearchHit, query: String): HitOutcome {
         val outcome = outcomeOf(hit)
         if (outcome == HitOutcome.Opened) {
-            if (hit is SearchHit.App) recorder.opened(hit.entry.app)
             scope.launch { memory.remember(query, hit) }
         }
         return outcome
