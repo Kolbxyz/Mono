@@ -19,7 +19,7 @@ data class ListChoices(
 )
 
 /**
- * The toolbar's and chips' state: the [choices] in effect (All without a work profile, no category
+ * The list options menu's and chips' state: the [choices] in effect (All without a work profile, no category
  * once none of its apps is left), whether a work profile exists, and the categories with apps.
  */
 data class ListControls(
@@ -28,7 +28,7 @@ data class ListControls(
     val categories: List<AppCategory> = emptyList(),
 )
 
-/** What the drawer's toolbar and chips change. */
+/** What the drawer's list options menu ([ListMenu]) and category chips change. */
 class DrawerListActions(
     val onProfile: (ProfileFilter) -> Unit,
     val onToggleCategories: () -> Unit,

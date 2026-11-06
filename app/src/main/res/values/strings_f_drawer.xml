@@ -7,5 +7,4 @@
     <string name="command_error_no_note_app">No app can save a note</string>
     <string name="command_call">Call %1$s</string>
     <!-- The drawer's suggestion: the app most often opened around this hour -->
-    <string name="drawer_predicted">Suggested now</string>
 </resources>

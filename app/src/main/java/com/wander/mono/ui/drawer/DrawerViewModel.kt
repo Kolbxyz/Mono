@@ -23,9 +23,7 @@ import com.wander.mono.core.notifications.PackageUser
 import com.wander.mono.core.security.HiddenAppsLock
 import com.wander.mono.core.siblings.PhalanxRooms
 import com.wander.mono.core.system.SystemContrast
-import com.wander.mono.core.system.SystemTime
 import com.wander.mono.core.system.Wallpaper
-import com.wander.mono.data.LaunchHours
 import com.wander.mono.data.LauncherPrefs
 import com.wander.mono.data.MutedApps
 import com.wander.mono.data.OpenedNewApps
@@ -74,8 +72,6 @@ class DrawerViewModel @Inject constructor(
     systemContrast: SystemContrast,
     openedNew: OpenedNewApps,
     muted: MutedApps,
-    launchHours: LaunchHours,
-    time: SystemTime,
     private val recorder: LaunchRecorder,
 ) : ViewModel() {
     /** Kept in saved state, so a half-typed search survives rotation and process death. */
@@ -83,7 +79,7 @@ class DrawerViewModel @Inject constructor(
 
     private val listChoices = ListChoiceState(savedState, settings, openedNew, viewModelScope)
 
-    /** What the drawer's toolbar and category chips change. */
+    /** What the drawer's list options menu and category chips change. */
     val listActions: DrawerListActions = listChoices.actions
 
     private val entries = combine(
@@ -148,10 +144,6 @@ class DrawerViewModel @Inject constructor(
         .combine(privateSpace.state) { state, space -> state.withPrivateSpace(space) }
         .combine(listChoices.inputs(catalog.apps.filterNotNull())) { state, (choices, opened, now) ->
             state.shaped(choices, opened, now)
-        }
-        .combine(combine(launchHours.counts, hourOfDay(time), ::Pair)) { state, (counts, hour) ->
-            val listed = state.apps + state.work.flatMap { it.apps }
-            state.copy(predicted = AppPrediction.entryFor(listed, counts, hour))
         }
         .combine(settings[DrawerSettings.RailAtStart]) { state, railAtStart -> state.copy(railAtStart = railAtStart) }
         .combine(conversationUnread(previews, phalanx, settings)) { state, unread ->

@@ -1,14 +1,7 @@
 package com.wander.mono.ui.drawer
 
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.absoluteOffset
@@ -32,9 +25,8 @@ import kotlin.math.roundToInt
 /**
  * The letter being scrubbed, shown beside the finger, just clear of the bowed letters: a plain
  * circle in the inverse surface, light on a dark wallpaper, that pops in as the scrub starts,
- * glides along with the finger and shrinks back and fades on release. As the finger moves on, the
- * letter rolls: up when the new entry ([index]) is further down the rail, down when it is further
- * up. It stays on the rail, [railHeight] tall, at either end, and on the list's side of it: left of
+ * stays right by the finger and shrinks back and fades on release; the letter in it simply changes
+ * as the finger moves on. It stays on the rail, [railHeight] tall, at either end, and on the list's side of it: left of
  * a rail on the right ([mirror] 1f), right of one on the left (-1f), in screen terms whatever the
  * layout direction. [modifier] places it at the rail's top corner on that side. With a [symbol]
  * (the private space's lock) it shows that instead.
@@ -42,7 +34,6 @@ import kotlin.math.roundToInt
 @Composable
 internal fun RailBubble(
     letter: String,
-    index: Int,
     @DrawableRes symbol: Int?,
     visible: Boolean,
     fingerY: () -> Float,
@@ -84,32 +75,16 @@ internal fun RailBubble(
                 modifier = Modifier.size(SYMBOL_SIZE),
             )
         } else {
-            AnimatedContent(
-                targetState = BubbleGlyph(letter, index),
-                transitionSpec = {
-                    // Down the rail the letters come up from below, as the list scrolls; up the rail, from above.
-                    val down = if (targetState.index >= initialState.index) 1 else -1
-                    val enter = slideInVertically(motion.fastSpatialSpec()) { it * down } +
-                        fadeIn(motion.fastEffectsSpec())
-                    val exit = slideOutVertically(motion.fastSpatialSpec()) { -it * down } +
-                        fadeOut(motion.fastEffectsSpec())
-                    (enter togetherWith exit).using(SizeTransform(clip = false) { _, _ -> motion.fastSpatialSpec() })
-                },
-                label = "railBubble",
-            ) { shown ->
-                Text(
-                    shown.letter,
-                    // Capped, so the letter stays inside the circle at the largest font sizes.
-                    style = MaterialTheme.typography.headlineSmall.capFontScale(GLYPH_MAX_FONT_SCALE),
-                    color = MaterialTheme.colorScheme.inverseOnSurface,
-                )
-            }
+            // Swapped at once, never rolled: mid-roll, a fast scrub shows two letters at a time.
+            Text(
+                letter,
+                // Capped, so the letter stays inside the circle at the largest font sizes.
+                style = MaterialTheme.typography.headlineSmall.capFontScale(GLYPH_MAX_FONT_SCALE),
+                color = MaterialTheme.colorScheme.inverseOnSurface,
+            )
         }
     }
 }
-
-/** What the bubble shows, with where it is on the rail so its roll knows which way to go. */
-private data class BubbleGlyph(val letter: String, val index: Int)
 
 private val BUBBLE_SIZE = 56.dp
 

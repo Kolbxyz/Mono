@@ -40,15 +40,16 @@ internal fun rememberListEntrance(opening: Boolean = true): ListEntrance {
 
 /**
  * How the row at [order] down the list comes in: during the [entrance]'s opening it starts a little
- * low and clear, and rises and fades in on the scheme's spatial spring, after the rows above it by a
- * short step (capped, so a row far down waits no longer than a few). With reduced motion, or after
- * the opening, it is just there.
+ * low and clear, and rises and fades in on the scheme's fast spatial spring, settling with a small
+ * bounce, after the rows above it by a short step (capped, so a row far down waits no longer than a
+ * few). With reduced motion, or after the opening, it is just there.
  */
 @Composable
 internal fun entranceMotion(entrance: ListEntrance, order: Int): Modifier {
     val animated = !LocalReducedMotion.current && entrance.opening
     val progress = remember { Animatable(if (animated) 0f else 1f) }
-    val spec = MaterialTheme.motionScheme.defaultSpatialSpec<Float>()
+    // The scheme's bounciest spring: each row overshoots its place a touch and settles.
+    val spec = MaterialTheme.motionScheme.fastSpatialSpec<Float>()
     val rise = with(LocalDensity.current) { ENTRANCE_RISE.toPx() }
     LaunchedEffect(progress) {
         if (progress.value < 1f) {
@@ -73,4 +74,4 @@ private const val STAGGER_STEP_MS = 24L
 private const val MAX_STAGGERED = 10
 
 /** How far below its place a row starts its entrance. */
-private val ENTRANCE_RISE = 24.dp
+private val ENTRANCE_RISE = 32.dp

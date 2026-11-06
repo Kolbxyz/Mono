@@ -6,19 +6,22 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +35,10 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.wander.mono.R
 import com.wander.mono.data.RecentSearch
 import com.wander.mono.ui.components.expressivePress
+import com.wander.mono.ui.components.rememberMonoHaptics
 
 /**
  * The drawer's search box, with Mono's settings at its end. The keyboard's action key opens the top
@@ -47,7 +55,8 @@ import com.wander.mono.ui.components.expressivePress
  * it is focused and empty, the [recent] searches show above it as chips ([RecentSearchChips]).
  * [collapsed], it folds into a round search button at the bottom end, and a tap on that ([onExpand])
  * grows the field back out of it, the button widening into the pill on the scheme's spatial spring.
- * [onBlur] hears the field losing the focus it had.
+ * [onBlur] hears the field losing the focus it had. A long press on the button ([onLongPress]) opens
+ * [menu], anchored to it.
  */
 @Composable
 fun SearchField(
@@ -62,6 +71,8 @@ fun SearchField(
     collapsed: Boolean = false,
     onExpand: () -> Unit = {},
     onBlur: () -> Unit = {},
+    onLongPress: () -> Unit = {},
+    menu: @Composable () -> Unit = {},
 ) {
     var focused by remember { mutableStateOf(false) }
     val motion = MaterialTheme.motionScheme
@@ -80,7 +91,7 @@ fun SearchField(
             label = "searchField",
         ) { folded ->
             if (folded) {
-                SearchButton(onExpand)
+                SearchButton(onExpand, onLongPress, menu)
             } else {
                 Field(query, onQueryChange, onSubmit, onOpenSettings, focusRequester) { now ->
                     if (focused && !now) onBlur()
@@ -91,20 +102,47 @@ fun SearchField(
     }
 }
 
-/** The field folded away: a round search button, tonal like the pill it grows into. */
+/**
+ * The field folded away: a round search button, tonal like the pill it grows into; a tap grows the
+ * field ([onExpand]), a long press opens [menu] next to it ([onLongPress]).
+ */
 @Composable
-private fun SearchButton(onExpand: () -> Unit) {
+private fun SearchButton(onExpand: () -> Unit, onLongPress: () -> Unit, menu: @Composable () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    FloatingActionButton(
-        onClick = onExpand,
-        modifier = Modifier.expressivePress(interaction, pressedScale = BUTTON_PRESSED_SCALE),
-        shape = CircleShape,
-        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-        contentColor = MaterialTheme.colorScheme.onSurface,
-        elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
-        interactionSource = interaction,
-    ) {
-        Icon(painterResource(R.drawable.sym_search), stringResource(R.string.drawer_search_open))
+    val haptics = rememberMonoHaptics()
+    val label = stringResource(R.string.drawer_search_open)
+    val optionsLabel = stringResource(R.string.drawer_list_options)
+    val openMenu = {
+        haptics.longPress()
+        onLongPress()
+    }
+    Box {
+        Surface(
+            modifier = Modifier
+                .size(BUTTON_SIZE)
+                .expressivePress(interaction, pressedScale = BUTTON_PRESSED_SCALE)
+                .clearAndSetSemantics {
+                    contentDescription = label
+                    onClick { onExpand().let { true } }
+                    onLongClick(optionsLabel) { openMenu().let { true } }
+                },
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ) {
+            Box(
+                Modifier.combinedClickable(
+                    interactionSource = interaction,
+                    indication = ripple(),
+                    onClick = onExpand,
+                    onLongClick = openMenu,
+                ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(painterResource(R.drawable.sym_search), contentDescription = null)
+            }
+        }
+        menu()
     }
 }
 
@@ -167,6 +205,8 @@ private fun fieldColors() = with(MaterialTheme.colorScheme) {
         unfocusedPlaceholderColor = onSurfaceVariant,
     )
 }
+
+private val BUTTON_SIZE = 56.dp
 
 /** How far the round button gives under a press. */
 private const val BUTTON_PRESSED_SCALE = 0.9f
