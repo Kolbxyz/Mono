@@ -45,6 +45,17 @@ class DrawerMotion internal constructor(
     val shown: Float get() = progress.coerceIn(0f, 1f)
 
     /**
+     * How far below its resting place the drawer is drawn: all of [travel] closed, none open, and a
+     * little above it while the opening spring overshoots, so the drawer lands with a bounce (half
+     * the spring's overshoot, enough to feel, never enough to slide under the status bar for long).
+     */
+    fun lift(): Float = if (progress > 1f) {
+        -(progress - 1f) * travel * OVERSHOOT_SHARE
+    } else {
+        (1f - shown) * travel
+    }
+
+    /**
      * This opening fades the drawer in where it rests instead of raising it ([openInPlace]): drawn
      * with no lift. Ends with the first drag, back gesture or closing, which move it as usual.
      */
@@ -155,6 +166,9 @@ class DrawerMotion internal constructor(
 
         /** How much of the travel a full back gesture takes the drawer before it lets go. */
         const val BACK_TRAVEL = 0.2f
+
+        /** How much of the opening spring's overshoot the drawer is drawn with. */
+        const val OVERSHOOT_SHARE = 0.5f
     }
 }
 
@@ -164,7 +178,8 @@ fun rememberDrawerMotion(open: Boolean, onSettle: (Boolean) -> Unit): DrawerMoti
     val scope = rememberCoroutineScope()
     val haptics = LocalHapticFeedback.current
     val motionScheme = MaterialTheme.motionScheme
-    val openSpec = motionScheme.defaultSpatialSpec<Float>()
+    // The fast spatial spring is the scheme's bounciest: the drawer lands with a small bounce.
+    val openSpec = motionScheme.fastSpatialSpec<Float>()
     val closeSpec = motionScheme.fastSpatialSpec<Float>()
     val fadeSpec = motionScheme.defaultEffectsSpec<Float>()
     val fling = with(LocalDensity.current) { FLING_VELOCITY.toPx() }

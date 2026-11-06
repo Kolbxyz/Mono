@@ -104,6 +104,7 @@ fun DrawerScreen(
     // The field folds into a round button at rest; opened for search, or tapped, it grows out of it.
     var searchOpen by rememberSaveable { mutableStateOf(focusSearch) }
     var focusAsked by remember { mutableStateOf(false) }
+    var listMenuOpen by remember { mutableStateOf(false) }
     LaunchedEffect(open, focusSearch) {
         if (!open) {
             // Closing: the keyboard leaves with the drawer instead of staying up over home.
@@ -208,6 +209,9 @@ fun DrawerScreen(
                     },
                     // Left empty, the field folds back into its button.
                     onBlur = { if (query.isEmpty()) searchOpen = false },
+                    // The list's options wait behind a long press on the button, out of the list's way.
+                    onLongPress = { listMenuOpen = true },
+                    menu = { ListMenu(listMenuOpen, { listMenuOpen = false }, state.controls, listActions) },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()

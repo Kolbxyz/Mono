@@ -12,7 +12,7 @@
     <string name="state_archived">Archived, opening it restores it</string>
 
     <!-- Drawer list: floating toolbar -->
-    <string name="drawer_toolbar">List options</string>
+    <string name="drawer_list_options">List options</string>
     <string name="drawer_profile_all">All apps</string>
     <string name="drawer_profile_personal">Personal apps</string>
     <string name="drawer_profile_work">Work apps</string>

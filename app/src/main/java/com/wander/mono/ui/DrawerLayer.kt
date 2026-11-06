@@ -48,7 +48,7 @@ fun DrawerLayer(
     // The search field and headers do not scroll; this lets drags on them reach pullDown too.
     val stillDrag = rememberScrollableState { 0f }
     // Opened in place, it only fades: no lift, so what home showed stays where it was.
-    val lift = remember(motion) { { if (motion.inPlace) 0f else (1f - motion.shown) * motion.travel } }
+    val lift = remember(motion) { { if (motion.inPlace) 0f else motion.lift() } }
     PredictiveBackHandler(enabled = open && backEnabled) { events ->
         try {
             events.collect { motion.back(it.progress) }

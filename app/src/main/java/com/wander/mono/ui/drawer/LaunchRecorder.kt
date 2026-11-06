@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
- * Counts an app opened from the drawer (its list or search) in [LaunchHours], for [AppPrediction].
+ * Counts an app opened from the drawer (its list or search) in [LaunchHours], toward home's likely favourite.
  * Never a private space app nor a hidden one: what the user keeps out of sight leaves no habit.
  */
 class LaunchRecorder @Inject constructor(

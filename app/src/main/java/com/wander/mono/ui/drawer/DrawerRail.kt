@@ -10,14 +10,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.wander.mono.core.apps.PrivateSpaceState
 import kotlinx.coroutines.launch
 
 /**
- * The drawer list's letter rail, down the full height of the list on its edge, its entries spread
- * evenly from ★ at the top to the last letter just above the search field. Jumps put their entry at
- * the top of [listState]; with the private space ([space] and [privateActions]) a lock ends the rail.
+ * The drawer list's letter rail, down the list's edge, its entries spread evenly from ★ at the top
+ * to the last letter [bottom] above the screen's foot, clear of the search button. Jumps put their
+ * entry at the top of [listState]; with the private space ([space] and [privateActions]) a lock ends the rail.
  * The entry held under the finger goes to [hold], for the list to keep only that letter in view.
  */
 @Composable
@@ -27,6 +28,7 @@ internal fun BoxScope.DrawerRail(
     space: PrivateSpaceState.Present?,
     privateActions: PrivateSpaceActions?,
     hold: RailHold,
+    bottom: Dp,
 ) {
     val scope = rememberCoroutineScope()
     val lead = state.railLead
@@ -59,7 +61,7 @@ internal fun BoxScope.DrawerRail(
         },
         modifier = Modifier
             .align(if (atStart) Alignment.CenterStart else Alignment.CenterEnd)
-            .padding(vertical = RAIL_MARGIN),
+            .padding(top = RAIL_MARGIN, bottom = RAIL_MARGIN + bottom),
         atStart = atStart,
         lock = lock,
         onHold = { hold.entry = it },

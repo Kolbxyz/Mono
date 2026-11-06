@@ -242,7 +242,9 @@ All specs from `MaterialTheme.motionScheme` (Expressive scheme via `MaterialExpr
 
 | Transition | Spec | Notes |
 | --- | --- | --- |
-| Drawer open/close (swipe-up) | `defaultSpatialSpec()` for offset, gesture-driven with `AnchoredDraggable`; `defaultEffectsSpec()` for scrim alpha | Follows finger 1:1; settles with spring overshoot on release |
+| Drawer open/close (swipe-up) | Opens on `fastSpatialSpec()` (the bounciest), drawn with half its overshoot so it lands with a small bounce; closes on `fastSpatialSpec()`; `defaultEffectsSpec()` for scrim alpha | Follows finger 1:1; settles with spring overshoot on release |
+| Drawer list rows | Rise 32 dp and fade in, staggered, on `fastSpatialSpec()` (a small settle) | Only as the drawer opens |
+| Drawer list ends | Rubber band past the end (up to 96 dp), spring back on `fastSpatialSpec()`; a fling into the end overshoots by its leftover speed | Replaces the platform stretch; the top end still pulls the drawer down |
 | Drawer → search keyboard | `fastEffectsSpec()` fade of list chrome | IME inset animated by `WindowInsets.ime` (system) |
 | Row expand (live row) | `defaultSpatialSpec()` for height (`animateContentSize`), shape morph large→extraLarge via same spec; content `fastEffectsSpec()` fade-in after 50 % | One expanded at a time |
 | Widget row appear (media starts) | `slowSpatialSpec()` height from 0 + `defaultEffectsSpec()` alpha | Row below slides down; never jumps |
@@ -368,6 +370,7 @@ Until it is known whether setup was done (a few ms on a cold start) nothing is d
 | Live card | Tap / swipe ← → / long-press | See 7.6 | No |
 | Drawer | Scroll down at top / back | Close drawer | No |
 | Drawer | Touch rail | Scrub letters | No |
+| Drawer | Tap / long-press round ⌕ | Search field grows out of it / list options (whose apps, categories, newest first) | No |
 | Drawer | Long-press app | App sheet | No |
 | Search | Keyboard Go | Launch top result | No |
 | Any | System back | Collapse expanded row → close drawer → nothing on home | No |
