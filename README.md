@@ -35,9 +35,9 @@ Built for hardened phones like GrapheneOS, in strict **Material 3 Expressive**: 
 ## Welcome to Mono! (FAQ for Newcomers)
 
 <details>
-<summary><b>Why "Mono", and what is the 物 in the logo?</b></summary>
+<summary><b>Why "Mono", and what is the ring in the logo?</b></summary>
 <br>
-物 (<i>mono</i>, "thing") is the first word of <i>mono no aware</i> (物の哀れ): the quiet feeling for things that pass. Mono keeps only a few things in front of you, and lets the rest go.
+物 (<i>mono</i>, "thing") is the first word of <i>mono no aware</i> (物の哀れ): the quiet feeling for things that pass. The logo is an ensō, the circle Zen calligraphers draw in one brushstroke, left open. Mono keeps only a few things in front of you, and lets the rest go.
 </details>
 
 <details>
