@@ -85,7 +85,7 @@ Yes. Every app, shortcut and launch goes through Android's <code>LauncherApps</c
 * **Icon modes**: Full colour, themed monochrome or text only.
 * **Hidden apps**: Out of the drawer and search, optionally behind your screen lock.
 * **Today's usage**: Long-press an app to see how long you spent in it today.
-* **Sibling apps**: With [Wanda](https://github.com/AgroUPlus/Wanda) or [Phalanx](https://github.com/Kolbxyz/Phalanx) installed, Mono shows their up next, searches your music library and counts unread per room; without them, nothing appears.
+* **Sibling apps**: With [Wanda](https://github.com/oikos-suite/Wanda) or [Phalanx](https://github.com/Kolbxyz/Phalanx) installed, Mono shows their up next, searches your music library and counts unread per room; without them, nothing appears.
 * **Themes**: System, light or dark, AMOLED black, colours from your wallpaper.
 
 ---
