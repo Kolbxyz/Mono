@@ -29,6 +29,13 @@ class Profiles @Inject constructor(@ApplicationContext context: Context) {
     /** Serials of the other profiles this launcher can show (work profile, private space). */
     fun otherSerials(): Set<Long> = launcherApps.profiles.filter { it != main }.mapTo(mutableSetOf(), ::serialOf)
 
+    /**
+     * One of this launcher's own profiles (main, work, private space), the only users Android lets
+     * it ask about. A notification can belong to another user: one posted for every user at once
+     * ([UserHandle.ALL]) or one outside this profile group, about which questions throw.
+     */
+    fun isOwn(user: UserHandle): Boolean = user in launcherApps.profiles
+
     /** Null once the profile has been removed. */
     fun userOf(serial: Long): UserHandle? = userManager.getUserForSerialNumber(serial)
 
